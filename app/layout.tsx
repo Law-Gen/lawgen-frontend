@@ -9,7 +9,6 @@ export const metadata: Metadata = {
   title: "LegalAid - Legal Information & Assistance Platform",
   description:
     "Get instant legal guidance, connect with professionals, and access comprehensive legal resources in English and Amharic.",
-  generator: "v0.app",
 }
 
 export default function RootLayout({
