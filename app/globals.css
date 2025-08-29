@@ -5,31 +5,45 @@
 
 :root {
   /* Updated to brown-themed color palette with earth tones */
-  --background: oklch(0.97 0.02 45); /* Warm ivory background */
-  --foreground: oklch(0.25 0.05 35); /* Dark brown text */
-  --card: oklch(0.98 0.01 45); /* Light beige cards */
+  --background: oklch(0.97 0.02 45);
+  /* Warm ivory background */
+  --foreground: oklch(0.25 0.05 35);
+  /* Dark brown text */
+  --card: oklch(0.98 0.01 45);
+  /* Light beige cards */
   --card-foreground: oklch(0.25 0.05 35);
   --popover: oklch(0.98 0.01 45);
   --popover-foreground: oklch(0.25 0.05 35);
-  --primary: oklch(0.35 0.08 40); /* Rich brown primary */
-  --primary-foreground: oklch(0.97 0.02 45); /* Light text on brown */
-  --secondary: oklch(0.88 0.03 45); /* Soft beige secondary */
+  --primary: oklch(0.35 0.08 40);
+  /* Rich brown primary */
+  --primary-foreground: oklch(0.97 0.02 45);
+  /* Light text on brown */
+  --secondary: oklch(0.88 0.03 45);
+  /* Soft beige secondary */
   --secondary-foreground: oklch(0.25 0.05 35);
-  --muted: oklch(0.92 0.02 45); /* Muted beige */
-  --muted-foreground: oklch(0.45 0.04 35); /* Medium brown muted text */
-  --accent: oklch(0.65 0.12 55); /* Golden accent */
+  --muted: oklch(0.92 0.02 45);
+  /* Muted beige */
+  --muted-foreground: oklch(0.45 0.04 35);
+  /* Medium brown muted text */
+  --accent: oklch(0.65 0.12 55);
+  /* Golden accent */
   --accent-foreground: oklch(0.97 0.02 45);
-  --destructive: oklch(0.55 0.15 25); /* Warm red for errors */
+  --destructive: oklch(0.55 0.15 25);
+  /* Warm red for errors */
   --destructive-foreground: oklch(0.97 0.02 45);
-  --border: oklch(0.85 0.03 45); /* Soft brown borders */
-  --input: oklch(0.94 0.02 45); /* Light input backgrounds */
-  --ring: oklch(0.65 0.12 55); /* Golden focus rings */
+  --border: oklch(0.85 0.03 45);
+  /* Soft brown borders */
+  --input: oklch(0.94 0.02 45);
+  /* Light input backgrounds */
+  --ring: oklch(0.65 0.12 55);
+  /* Golden focus rings */
   --chart-1: oklch(0.55 0.08 40);
   --chart-2: oklch(0.65 0.12 55);
   --chart-3: oklch(0.45 0.06 35);
   --chart-4: oklch(0.75 0.08 50);
   --chart-5: oklch(0.35 0.08 40);
-  --radius: 0.75rem; /* Slightly more rounded for modern feel */
+  --radius: 0.75rem;
+  /* Slightly more rounded for modern feel */
   --sidebar: oklch(0.95 0.02 45);
   --sidebar-foreground: oklch(0.25 0.05 35);
   --sidebar-primary: oklch(0.35 0.08 40);
@@ -42,19 +56,25 @@
 
 .dark {
   /* Dark mode with darker brown tones */
-  --background: oklch(0.15 0.03 35); /* Dark brown background */
-  --foreground: oklch(0.92 0.02 45); /* Light beige text */
-  --card: oklch(0.18 0.03 35); /* Slightly lighter brown cards */
+  --background: oklch(0.15 0.03 35);
+  /* Dark brown background */
+  --foreground: oklch(0.92 0.02 45);
+  /* Light beige text */
+  --card: oklch(0.18 0.03 35);
+  /* Slightly lighter brown cards */
   --card-foreground: oklch(0.92 0.02 45);
   --popover: oklch(0.18 0.03 35);
   --popover-foreground: oklch(0.92 0.02 45);
-  --primary: oklch(0.65 0.12 55); /* Golden primary in dark mode */
+  --primary: oklch(0.65 0.12 55);
+  /* Golden primary in dark mode */
   --primary-foreground: oklch(0.15 0.03 35);
-  --secondary: oklch(0.25 0.04 35); /* Darker brown secondary */
+  --secondary: oklch(0.25 0.04 35);
+  /* Darker brown secondary */
   --secondary-foreground: oklch(0.92 0.02 45);
   --muted: oklch(0.22 0.03 35);
   --muted-foreground: oklch(0.65 0.03 40);
-  --accent: oklch(0.75 0.15 55); /* Brighter gold accent */
+  --accent: oklch(0.75 0.15 55);
+  /* Brighter gold accent */
   --accent-foreground: oklch(0.15 0.03 35);
   --destructive: oklch(0.55 0.15 25);
   --destructive-foreground: oklch(0.92 0.02 45);
@@ -125,6 +145,7 @@
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 200ms;
   }
+
   body {
     @apply bg-background text-foreground;
     scroll-behavior: smooth;
@@ -136,6 +157,7 @@
       opacity: 0;
       transform: translateY(30px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -147,6 +169,7 @@
       opacity: 0;
       transform: translateY(20px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -158,6 +181,7 @@
       opacity: 0;
       transform: scale(0.9);
     }
+
     to {
       opacity: 1;
       transform: scale(1);
@@ -169,6 +193,7 @@
       opacity: 0;
       transform: translateX(-50px);
     }
+
     to {
       opacity: 1;
       transform: translateX(0);
@@ -180,6 +205,7 @@
       opacity: 0;
       transform: translateX(50px);
     }
+
     to {
       opacity: 1;
       transform: translateX(0);
@@ -187,10 +213,12 @@
   }
 
   @keyframes parallaxFloat {
+
     0%,
     100% {
       transform: translateY(0px);
     }
+
     50% {
       transform: translateY(-10px);
     }
@@ -362,6 +390,7 @@
 
   /* Reduced motion preferences */
   @media (prefers-reduced-motion: reduce) {
+
     *,
     *::before,
     *::after {
