@@ -28,7 +28,7 @@ const menuItems = [
   {
     title: "Quiz Categories",
     icon: FolderOpen,
-    href: "/admin/quiz-categories",
+    href: "/admin/quiz_categories",
     description: "Organize quiz categories",
   },
   {
@@ -40,13 +40,13 @@ const menuItems = [
   {
     title: "Legal Content",
     icon: FileText,
-    href: "/admin/legal-content",
+    href: "/admin/legal_content",
     description: "Manage legal documents",
   },
   {
     title: "Legal Aid",
     icon: ShieldCheck,
-    href: "/admin/legal-aid",
+    href: "/admin/legal_aid",
     description: "Manage legal assistance information",
   },
 ];
