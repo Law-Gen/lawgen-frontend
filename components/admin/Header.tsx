@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Menu, Bell, Settings, LogOut, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 // import { Input } from "@/components/ui/input";
@@ -14,12 +15,17 @@ interface HeaderProps {
 
 export default function Header({ userName, role, onMenuClick }: HeaderProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const router = useRouter();
 
   const initials = userName
     .split(" ")
     .map((n) => n[0])
     .join("")
     .toUpperCase();
+
+  const handleSettingsClick = () => {
+    router.push("/admin/setting");
+  };
 
   return (
     <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-card">
@@ -71,7 +77,12 @@ export default function Header({ userName, role, onMenuClick }: HeaderProps) {
           </motion.span>
         </Button>
 
-        <Button variant="ghost" size="sm" className="p-2 hover:bg-accent">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="p-2 hover:bg-accent"
+          onClick={handleSettingsClick}
+        >
           <Settings className="w-6 h-6 text-muted-foreground" />
         </Button>
 
