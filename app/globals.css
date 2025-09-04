@@ -56,12 +56,9 @@
 
 .dark {
   /* Dark mode with darker brown tones */
-  --background: oklch(0.15 0.03 35);
-  /* Dark brown background */
-  --foreground: oklch(0.92 0.02 45);
-  /* Light beige text */
-  --card: oklch(0.18 0.03 35);
-  /* Slightly lighter brown cards */
+  --background: #18181b; /* Dark brown background */
+  --foreground: oklch(0.92 0.02 45); /* Light beige text */
+  --card: #18181b; /* Slightly lighter brown cards */
   --card-foreground: oklch(0.92 0.02 45);
   --popover: oklch(0.18 0.03 35);
   --popover-foreground: oklch(0.92 0.02 45);

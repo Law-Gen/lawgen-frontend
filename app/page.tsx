@@ -1,67 +1,147 @@
-"use client"
+"use client";
 
-import { useEffect, useRef } from "react"
-import { MotionWrapper } from "@/components/ui/motion-wrapper"
-import { LanguageToggle } from "@/components/ui/language-toggle"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import Link from "next/link"
+import { useEffect, useRef, useState } from "react";
+import { MotionWrapper } from "@/components/ui/motion-wrapper";
+import { LanguageToggle } from "@/components/ui/language-toggle";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import Link from "next/link";
+import { useTheme } from "next-themes";
 
 export default function LandingPage() {
-  const heroRef = useRef<HTMLElement>(null)
-  const featuresRef = useRef<HTMLElement>(null)
-  const testimonialsRef = useRef<HTMLElement>(null)
-  const ctaRef = useRef<HTMLElement>(null)
+  const heroRef = useRef<HTMLElement>(null);
+  const featuresRef = useRef<HTMLElement>(null);
+  const testimonialsRef = useRef<HTMLElement>(null);
+  const ctaRef = useRef<HTMLElement>(null);
+
+  // Dark mode state
+  const { theme, setTheme } = useTheme();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const observerOptions = {
       threshold: 0.1,
       rootMargin: "0px 0px -50px 0px",
-    }
+    };
 
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          entry.target.classList.add("animate-in")
+          entry.target.classList.add("animate-in");
         }
-      })
-    }, observerOptions)
+      });
+    }, observerOptions);
 
-    const sections = [heroRef.current, featuresRef.current, testimonialsRef.current, ctaRef.current]
+    const sections = [
+      heroRef.current,
+      featuresRef.current,
+      testimonialsRef.current,
+      ctaRef.current,
+    ];
     sections.forEach((section) => {
-      if (section) observer.observe(section)
-    })
+      if (section) observer.observe(section);
+    });
 
-    return () => observer.disconnect()
-  }, [])
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10 overflow-x-hidden">
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/50">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <MotionWrapper animation="scaleIn">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-                <span className="text-lg text-primary-foreground">⚖️</span>
-              </div>
-              <h1 className="text-2xl font-bold text-primary">LegalAid</h1>
-            </Link>
-          </MotionWrapper>
-          <MotionWrapper animation="scaleIn" delay={100}>
-            <div className="flex items-center gap-4">
-              <LanguageToggle />
-              <Link href="/chat">
-                <Button variant="ghost" size="sm" className="hover:scale-105 transition-transform">
-                  Try Chat
-                </Button>
-              </Link>
-              <Link href="/auth/signin">
-                <Button variant="outline" size="sm" className="hover:scale-105 transition-transform bg-transparent">
-                  Sign In
-                </Button>
-              </Link>
+    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10">
+      {/* Mobile Sidebar (RIGHT SIDE) */}
+      <div
+        className={`fixed inset-0 z-[100] bg-black/40 transition-opacity ${
+          sidebarOpen ? "block md:hidden" : "hidden"
+        }`}
+        onClick={() => setSidebarOpen(false)}
+      />
+      <aside
+        className={`fixed top-0 right-0 z-[101] h-full w-64 bg-card dark:bg-zinc-900 shadow-lg transform transition-transform duration-300 ${
+          sidebarOpen ? "translate-x-0" : "translate-x-full"
+        } md:hidden`}
+      >
+        <div className="flex flex-col h-full p-6 gap-6">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-lg font-bold text-primary">Menu</span>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Close sidebar"
+              className="text-2xl"
+            >
+              &times;
+            </button>
+          </div>
+          <button
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="px-2 py-1 rounded border w-full flex items-center gap-2"
+            aria-label="Toggle dark mode"
+            title="Toggle dark mode"
+          >
+            {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
+          </button>
+          <LanguageToggle />
+          <Link href="/chat" className="w-full">
+            <Button size="lg" className="w-full mb-2">
+              Try Chat
+            </Button>
+          </Link>
+          <Link href="/auth/signin" className="w-full">
+            <Button className=" text-center  dark:text-white mb-2">
+              Sign In
+            </Button>
+          </Link>
+        </div>
+      </aside>
+
+      {/* Sticky header */}
+      <header className="bg-card/80 backdrop-blur-sm border-b border-border p-4 sticky top-0 z-50">
+        <div className="w-full flex items-center px-2 gap-4">
+          {/* Sidebar menu button for mobile (move to right) */}
+          <div className="flex flex-1 items-center min-w-0">
+            <div className="flex flex-col items-start min-w-0">
+              <h1 className="text-lg font-semibold text-primary truncate">
+                LegalAid
+              </h1>
+              <p className="text-sm text-muted-foreground truncate">
+                Your trusted platform for legal clarity and justice
+              </p>
             </div>
-          </MotionWrapper>
+          </div>
+          {/* Hamburger icon only, no box */}
+          <div className="md:hidden">
+            <button
+              className="p-0 bg-transparent border-none shadow-none outline-none focus:outline-none"
+              style={{ lineHeight: 0 }}
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open sidebar"
+            >
+              <svg
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M4 6h12M4 10h12M4 14h12" />
+              </svg>
+            </button>
+          </div>
+          {/* Right: toggles and buttons (hidden on mobile) */}
+          <div className="hidden md:flex items-center gap-3 min-w-0 ml-auto">
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="px-2 py-1 rounded border"
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
+              {theme === "dark" ? "🌙" : "☀️"}
+            </button>
+            <LanguageToggle />
+            <Link href="/auth/signin">
+              <Button className="text-center  dark:text-white mb-2">
+                Sign In
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -84,14 +164,18 @@ export default function LandingPage() {
           <MotionWrapper animation="fadeInUp" delay={200}>
             <h2 className="text-5xl md:text-7xl lg:text-8xl font-bold text-primary mb-8 text-balance leading-tight">
               Legal Information &
-              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent"> Assistance</span>
+              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                {" "}
+                Assistance
+              </span>
             </h2>
           </MotionWrapper>
 
           <MotionWrapper animation="fadeInUp" delay={400}>
             <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-4xl mx-auto text-pretty leading-relaxed">
-              Get instant legal guidance, connect with professionals, and access comprehensive legal resources in
-              English and Amharic. Your trusted companion for legal clarity and justice.
+              Get instant legal guidance, connect with professionals, and access
+              comprehensive legal resources in English and Amharic. Your trusted
+              companion for legal clarity and justice.
             </p>
           </MotionWrapper>
 
@@ -107,9 +191,8 @@ export default function LandingPage() {
               </Link>
               <Link href="/onboarding">
                 <Button
-                  variant="outline"
+                  className="w-full bg-primary text-white hover:bg-primary/90 hover:!text-white transition-colors"
                   size="lg"
-                  className="text-xl px-12 py-4 hover:scale-105 transition-all duration-300 bg-transparent border-2 hover:bg-primary hover:text-primary-foreground"
                 >
                   Get Started Free
                 </Button>
@@ -138,9 +221,12 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 relative z-10">
           <MotionWrapper animation="fadeInUp">
             <div className="text-center mb-20">
-              <h3 className="text-4xl md:text-5xl font-bold text-primary mb-6">Comprehensive Legal Support</h3>
+              <h3 className="text-4xl md:text-5xl font-bold text-primary mb-6">
+                Comprehensive Legal Support
+              </h3>
               <p className="text-xl text-muted-foreground max-w-3xl mx-auto text-pretty leading-relaxed">
-                Everything you need to navigate legal challenges with confidence, clarity, and professional guidance
+                Everything you need to navigate legal challenges with
+                confidence, clarity, and professional guidance
               </p>
             </div>
           </MotionWrapper>
@@ -180,7 +266,11 @@ export default function LandingPage() {
                 gradient: "from-orange-500/10 to-red-500/10",
               },
             ].map((feature, index) => (
-              <MotionWrapper key={feature.title} animation="staggerIn" delay={index * 150}>
+              <MotionWrapper
+                key={feature.title}
+                animation="staggerIn"
+                delay={index * 150}
+              >
                 <Link href={feature.href}>
                   <Card
                     className={`h-full hover:shadow-2xl hover:scale-105 transition-all duration-500 cursor-pointer group bg-gradient-to-br ${feature.gradient} border-border/50 backdrop-blur-sm`}
@@ -189,8 +279,12 @@ export default function LandingPage() {
                       <div className="text-5xl mb-6 group-hover:scale-125 transition-transform duration-300">
                         {feature.icon}
                       </div>
-                      <h4 className="text-2xl font-semibold text-primary mb-4">{feature.title}</h4>
-                      <p className="text-muted-foreground text-pretty leading-relaxed">{feature.description}</p>
+                      <h4 className="text-2xl font-semibold text-primary mb-4">
+                        {feature.title}
+                      </h4>
+                      <p className="text-muted-foreground text-pretty leading-relaxed">
+                        {feature.description}
+                      </p>
                     </CardContent>
                   </Card>
                 </Link>
@@ -208,10 +302,12 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 relative z-10">
           <MotionWrapper animation="fadeInUp">
             <div className="text-center mb-20">
-              <h3 className="text-4xl md:text-5xl font-bold text-primary mb-6">Trusted by Legal Professionals</h3>
+              <h3 className="text-4xl md:text-5xl font-bold text-primary mb-6">
+                Trusted by Legal Professionals
+              </h3>
               <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-                See what our users say about their experience with LegalAid and how it's transformed their legal
-                practice
+                See what our users say about their experience with LegalAid and
+                how it's transformed their legal practice
               </p>
             </div>
           </MotionWrapper>
@@ -243,7 +339,11 @@ export default function LandingPage() {
                 rating: 5,
               },
             ].map((testimonial, index) => (
-              <MotionWrapper key={testimonial.name} animation="staggerIn" delay={index * 200}>
+              <MotionWrapper
+                key={testimonial.name}
+                animation="staggerIn"
+                delay={index * 200}
+              >
                 <Card className="hover:shadow-2xl transition-all duration-500 bg-card/80 backdrop-blur-sm border-border/50 group hover:scale-105">
                   <CardContent className="p-8">
                     <div className="flex mb-4">
@@ -253,7 +353,9 @@ export default function LandingPage() {
                         </span>
                       ))}
                     </div>
-                    <p className="text-muted-foreground mb-6 italic text-lg leading-relaxed">"{testimonial.content}"</p>
+                    <p className="text-muted-foreground mb-6 italic text-lg leading-relaxed">
+                      "{testimonial.content}"
+                    </p>
                     <div className="flex items-center gap-4">
                       <img
                         src={testimonial.avatar || "/placeholder.svg"}
@@ -261,8 +363,12 @@ export default function LandingPage() {
                         className="w-16 h-16 rounded-full object-cover border-2 border-border group-hover:scale-110 transition-transform"
                       />
                       <div>
-                        <p className="font-semibold text-primary text-lg">{testimonial.name}</p>
-                        <p className="text-muted-foreground">{testimonial.role}</p>
+                        <p className="font-semibold text-primary text-lg">
+                          {testimonial.name}
+                        </p>
+                        <p className="text-muted-foreground">
+                          {testimonial.role}
+                        </p>
                       </div>
                     </div>
                   </CardContent>
@@ -280,10 +386,12 @@ export default function LandingPage() {
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.1),transparent_50%)]"></div>
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(255,255,255,0.1),transparent_50%)]"></div>
               <div className="relative z-10">
-                <h3 className="text-4xl md:text-6xl font-bold mb-6">Ready to Get Started?</h3>
+                <h3 className="text-4xl md:text-6xl font-bold mb-6">
+                  Ready to Get Started?
+                </h3>
                 <p className="text-xl md:text-2xl mb-12 opacity-90 max-w-4xl mx-auto leading-relaxed">
-                  Join thousands of users who trust LegalAid for their legal information needs. Start your journey to
-                  legal clarity today.
+                  Join thousands of users who trust LegalAid for their legal
+                  information needs. Start your journey to legal clarity today.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-6 justify-center">
                   <Link href="/chat">
@@ -320,17 +428,26 @@ export default function LandingPage() {
                 <h5 className="font-semibold text-primary mb-4">About</h5>
                 <ul className="space-y-2 text-muted-foreground">
                   <li>
-                    <Link href="/about" className="hover:text-primary transition-colors">
+                    <Link
+                      href="/about"
+                      className="hover:text-primary transition-colors"
+                    >
                       Our Mission
                     </Link>
                   </li>
                   <li>
-                    <Link href="/team" className="hover:text-primary transition-colors">
+                    <Link
+                      href="/team"
+                      className="hover:text-primary transition-colors"
+                    >
                       Team
                     </Link>
                   </li>
                   <li>
-                    <Link href="/careers" className="hover:text-primary transition-colors">
+                    <Link
+                      href="/careers"
+                      className="hover:text-primary transition-colors"
+                    >
                       Careers
                     </Link>
                   </li>
@@ -340,17 +457,26 @@ export default function LandingPage() {
                 <h5 className="font-semibold text-primary mb-4">Contact</h5>
                 <ul className="space-y-2 text-muted-foreground">
                   <li>
-                    <Link href="/support" className="hover:text-primary transition-colors">
+                    <Link
+                      href="/support"
+                      className="hover:text-primary transition-colors"
+                    >
                       Support
                     </Link>
                   </li>
                   <li>
-                    <Link href="/feedback" className="hover:text-primary transition-colors">
+                    <Link
+                      href="/feedback"
+                      className="hover:text-primary transition-colors"
+                    >
                       Feedback
                     </Link>
                   </li>
                   <li>
-                    <Link href="/partners" className="hover:text-primary transition-colors">
+                    <Link
+                      href="/partners"
+                      className="hover:text-primary transition-colors"
+                    >
                       Partners
                     </Link>
                   </li>
@@ -360,17 +486,26 @@ export default function LandingPage() {
                 <h5 className="font-semibold text-primary mb-4">Legal</h5>
                 <ul className="space-y-2 text-muted-foreground">
                   <li>
-                    <Link href="/terms" className="hover:text-primary transition-colors">
+                    <Link
+                      href="/terms"
+                      className="hover:text-primary transition-colors"
+                    >
                       Terms of Service
                     </Link>
                   </li>
                   <li>
-                    <Link href="/privacy" className="hover:text-primary transition-colors">
+                    <Link
+                      href="/privacy"
+                      className="hover:text-primary transition-colors"
+                    >
                       Privacy Policy
                     </Link>
                   </li>
                   <li>
-                    <Link href="/disclaimer" className="hover:text-primary transition-colors">
+                    <Link
+                      href="/disclaimer"
+                      className="hover:text-primary transition-colors"
+                    >
                       Disclaimer
                     </Link>
                   </li>
@@ -380,17 +515,26 @@ export default function LandingPage() {
                 <h5 className="font-semibold text-primary mb-4">Resources</h5>
                 <ul className="space-y-2 text-muted-foreground">
                   <li>
-                    <Link href="/guides" className="hover:text-primary transition-colors">
+                    <Link
+                      href="/guides"
+                      className="hover:text-primary transition-colors"
+                    >
                       Legal Guides
                     </Link>
                   </li>
                   <li>
-                    <Link href="/faq" className="hover:text-primary transition-colors">
+                    <Link
+                      href="/faq"
+                      className="hover:text-primary transition-colors"
+                    >
                       FAQ
                     </Link>
                   </li>
                   <li>
-                    <Link href="/blog" className="hover:text-primary transition-colors">
+                    <Link
+                      href="/blog"
+                      className="hover:text-primary transition-colors"
+                    >
                       Blog
                     </Link>
                   </li>
@@ -404,5 +548,5 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
-  )
+  );
 }

@@ -1,48 +1,51 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState } from "react"
-import { signIn } from "next-auth/react"
-import { useRouter } from "next/navigation"
-import { MotionWrapper } from "@/components/ui/motion-wrapper"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import Link from "next/link"
+import type React from "react";
+import { useState } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { MotionWrapper } from "@/components/ui/motion-wrapper";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import Link from "next/link";
+import dynamic from "next/dynamic";
+const GoogleSignIn = dynamic(() => import("@/components/auth/GoogleSignIn"), {
+  ssr: false,
+});
 
 export default function SignInPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
     try {
       const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
-      })
+      });
 
       if (result?.error) {
-        setError("Invalid email or password")
+        setError("Invalid email or password");
       } else {
-        router.push("/chat")
+        router.push("/chat");
       }
     } catch (error) {
-      setError("An error occurred. Please try again.")
+      setError("An error occurred. Please try again.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10 flex items-center justify-center p-4">
@@ -57,10 +60,25 @@ export default function SignInPage() {
               </Link>
             </MotionWrapper>
             <MotionWrapper animation="fadeInUp" delay={100}>
-              <CardTitle className="text-2xl text-primary">Welcome Back</CardTitle>
+              <CardTitle className="text-2xl text-primary">
+                Welcome Back
+              </CardTitle>
             </MotionWrapper>
             <MotionWrapper animation="fadeInUp" delay={200}>
-              <p className="text-muted-foreground">Sign in to your LegalAid account</p>
+              <p className="text-muted-foreground">
+                Sign in to your LegalAid account
+              </p>
+              <div className="mt-2">
+                <Link
+                  href="/"
+                  className="text-sm text-muted-foreground hover:underline transition-colors"
+                >
+                  &larr; Back to Home
+                </Link>
+              </div>
+              <div className="mt-4 flex justify-center">
+                <GoogleSignIn />
+              </div>
             </MotionWrapper>
           </CardHeader>
           <CardContent>
@@ -104,14 +122,21 @@ export default function SignInPage() {
               )}
 
               <MotionWrapper animation="fadeInUp" delay={500}>
-                <Button type="submit" className="w-full hover:scale-105 transition-transform" disabled={isLoading}>
+                <Button
+                  type="submit"
+                  className="w-full hover:scale-105 transition-transform"
+                  disabled={isLoading}
+                >
                   {isLoading ? "Signing in..." : "Sign In"}
                 </Button>
               </MotionWrapper>
 
               <MotionWrapper animation="fadeInUp" delay={600}>
                 <div className="text-center space-y-2">
-                  <Link href="/auth/forgot-password" className="text-sm text-primary hover:underline transition-colors">
+                  <Link
+                    href="/auth/forgot-password"
+                    className="text-sm text-primary hover:underline transition-colors"
+                  >
                     Forgot your password?
                   </Link>
                 </div>
@@ -121,7 +146,10 @@ export default function SignInPage() {
                 <div className="text-center">
                   <p className="text-sm text-muted-foreground">
                     Don't have an account?{" "}
-                    <Link href="/auth/signup" className="text-primary hover:underline transition-colors">
+                    <Link
+                      href="/auth/signup"
+                      className="text-primary hover:underline transition-colors"
+                    >
                       Sign up
                     </Link>
                   </p>
@@ -130,7 +158,9 @@ export default function SignInPage() {
 
               <MotionWrapper animation="fadeInUp" delay={800}>
                 <div className="text-center">
-                  <p className="text-xs text-muted-foreground">Demo: email: demo@legalaid.com, password: demo123</p>
+                  <p className="text-xs text-muted-foreground">
+                    Demo: email: demo@legalaid.com, password: demo123
+                  </p>
                 </div>
               </MotionWrapper>
             </form>
@@ -138,5 +168,5 @@ export default function SignInPage() {
         </Card>
       </MotionWrapper>
     </div>
-  )
+  );
 }
