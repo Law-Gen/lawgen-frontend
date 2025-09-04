@@ -14,44 +14,44 @@ export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState("general");
 
   const handleGeneralSave = async (data: any) => {
-    console.log("[v0] Saving general settings:", data);
+    console.log(" Saving general settings:", data);
     // await fetch('/api/settings/general', { method: 'PUT', body: JSON.stringify(data) })
   };
 
   const handleAccountSave = async (data: any) => {
-    console.log("[v0] Saving account settings:", data);
+    console.log(" Saving account settings:", data);
     // await fetch('/api/settings/account', { method: 'PUT', body: JSON.stringify(data) })
   };
 
   const handlePhotoUpload = async (file: File) => {
-    console.log("[v0] Uploading photo:", file.name);
+    console.log(" Uploading photo:", file.name);
     // const formData = new FormData()
     // formData.append('photo', file)
     // await fetch('/api/settings/account/photo', { method: 'POST', body: formData })
   };
 
   const handlePhotoRemove = async () => {
-    console.log("[v0] Removing photo");
+    console.log(" Removing photo");
     // await fetch('/api/settings/account/photo', { method: 'DELETE' })
   };
 
   const handleNotificationPreferencesSave = async (preferences: any) => {
-    console.log("[v0] Saving notification preferences:", preferences);
+    console.log(" Saving notification preferences:", preferences);
     // await fetch('/api/settings/notifications', { method: 'PUT', body: JSON.stringify(preferences) })
   };
 
   const handleSendNotification = async (notification: any) => {
-    console.log("[v0] Sending admin notification:", notification);
+    console.log(" Sending admin notification:", notification);
     // await fetch('/api/admin/notifications', { method: 'POST', body: JSON.stringify(notification) })
   };
 
   const handleSecuritySave = async (data: any) => {
-    console.log("[v0] Saving security settings:", data);
+    console.log(" Saving security settings:", data);
     // await fetch('/api/settings/security', { method: 'PUT', body: JSON.stringify(data) })
   };
 
   const handleChangePassword = () => {
-    console.log("[v0] Opening change password modal");
+    console.log(" Opening change password modal");
     // This could open a modal or redirect to a password change form
   };
 

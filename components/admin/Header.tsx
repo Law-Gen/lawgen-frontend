@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Menu, Bell, Settings, LogOut, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-// import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 interface HeaderProps {
@@ -25,6 +24,9 @@ export default function Header({ userName, role, onMenuClick }: HeaderProps) {
 
   const handleSettingsClick = () => {
     router.push("/admin/setting");
+  };
+  const handleLogoutClick = () => {
+    router.push("/");
   };
 
   return (
@@ -128,6 +130,7 @@ export default function Header({ userName, role, onMenuClick }: HeaderProps) {
                 <Button
                   variant="ghost"
                   className="flex items-center gap-2 px-4 py-2 w-full text-sm text-brown-700 hover:bg-brown-50 hover:text-brown-900"
+                  onClick={handleLogoutClick}
                 >
                   <LogOut className="w-4 h-4" />
                   Logout

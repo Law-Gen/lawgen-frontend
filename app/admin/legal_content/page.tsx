@@ -6,7 +6,9 @@ import {
   DocumentCard,
   DocumentFilter,
   DocumentTable,
+  UploadDocument,
 } from "@/components/admin/legal_content";
+// import Document  from "@/components/admin/legal_content";
 
 const dummyDocuments = [
   {
@@ -67,10 +69,10 @@ const dummyDocuments = [
 ];
 
 export default function LegalContent() {
-  const [isUploadModalOpen, SetIsUploadModalOpen] = useState(true);
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedType, setSelectedType] = useState("all");
+
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const filteredDocuments = dummyDocuments.filter((doc) => {
@@ -80,9 +82,8 @@ export default function LegalContent() {
     const matchesCategory =
       selectedCategory === "all" ||
       doc.category.toLowerCase().replace(" ", "-") === selectedCategory;
-    const matchesType = selectedType === "all" || doc.type === selectedType;
 
-    return matchesSearch && matchesCategory && matchesType;
+    return matchesSearch && matchesCategory;
   });
 
   const handleDownload = (id: string) => {
@@ -100,23 +101,22 @@ export default function LegalContent() {
     // Open share modal or copy link to clipboard
   };
 
-  const handleUpload = () => {
-    console.log(" Upload document clicked");
-    // Open upload modal or file picker
+  const handleUploadDocument = (documentData: any) => {
+    // TODO: Add logic to upload or add document to state
+    console.log("Uploaded document:", documentData);
+    setIsUploadOpen(false);
   };
 
   return (
     <AdminLayout>
       <div className="p-6 space-y-6">
-        <DocumentHeader onUploadClick={() => SetIsUploadModalOpen(true)} />
+        <DocumentHeader onUploadClick={() => setIsUploadOpen(true)} />
 
         <DocumentFilter
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           selectedCategory={selectedCategory}
           onCategoryChange={setSelectedCategory}
-          selectedType={selectedType}
-          onTypeChange={setSelectedType}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
         />
@@ -165,6 +165,13 @@ export default function LegalContent() {
             </p>
           </div>
         )}
+
+        {/* Upload Document Popup */}
+        <UploadDocument
+          isOpen={isUploadOpen}
+          onClose={() => setIsUploadOpen(false)}
+          onUpload={handleUploadDocument}
+        />
       </div>
     </AdminLayout>
   );

@@ -41,12 +41,12 @@
   --chart-2: oklch(0.65 0.12 55);
   --chart-3: oklch(0.45 0.06 35);
   --chart-4: oklch(0.75 0.08 50);
-  --chart-5: oklch(0.35 0.08 40);
+  --chart-5: rgb(92, 42, 23);
   --radius: 0.75rem;
   /* Slightly more rounded for modern feel */
   --sidebar: oklch(0.95 0.02 45);
-  --sidebar-foreground: oklch(0.25 0.05 35);
-  --sidebar-primary: oklch(0.35 0.08 40);
+  --sidebar-foreground: rgb(54, 24, 16);
+  --sidebar-primary: rgb(92, 42, 23);
   --sidebar-primary-foreground: oklch(0.97 0.02 45);
   --sidebar-accent: oklch(0.88 0.03 45);
   --sidebar-accent-foreground: oklch(0.25 0.05 35);

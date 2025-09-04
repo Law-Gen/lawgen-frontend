@@ -16,8 +16,7 @@ interface DocumentFiltersProps {
   onSearchChange: (query: string) => void;
   selectedCategory: string;
   onCategoryChange: (category: string) => void;
-  selectedType: string;
-  onTypeChange: (type: string) => void;
+
   viewMode: "grid" | "list";
   onViewModeChange: (mode: "grid" | "list") => void;
 }
@@ -27,8 +26,6 @@ export default function DocumentFilter({
   onSearchChange,
   selectedCategory,
   onCategoryChange,
-  selectedType,
-  onTypeChange,
   viewMode,
   onViewModeChange,
 }: DocumentFiltersProps) {
@@ -61,47 +58,27 @@ export default function DocumentFilter({
               <SelectItem value="real-estate-law">Real Estate Law</SelectItem>
             </SelectContent>
           </Select>
-
-          <Select value={selectedType} onValueChange={onTypeChange}>
-            <SelectTrigger className="w-full sm:w-36 border-primary-200 focus:border-primary-500">
-              <SelectValue placeholder="All Types" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="template">Template</SelectItem>
-              <SelectItem value="guide">Guide</SelectItem>
-              <SelectItem value="checklist">Checklist</SelectItem>
-              <SelectItem value="form">Form</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
       <div className="flex border border-primary-200 rounded-lg overflow-hidden bg-white">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onViewModeChange("grid")}
-          className={`px-3 py-2 border-0 rounded-none ${
-            viewMode === "grid"
-              ? "bg-primary-700 text-white hover:bg-primary-800"
-              : "text-primary-600 hover:bg-primary-50 hover:text-primary-700"
-          }`}
-        >
-          <Grid3X3 className="w-4 h-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onViewModeChange("list")}
-          className={`px-3 py-2 border-0 rounded-none ${
-            viewMode === "list"
-              ? "bg-primary-700 text-white hover:bg-primary-800"
-              : "text-primary-600 hover:bg-primary-50 hover:text-primary-700"
-          }`}
-        >
-          <List className="w-4 h-4" />
-        </Button>
+        {viewMode == "grid" ? (
+          <Button
+            size="sm"
+            onClick={() => onViewModeChange("list")}
+            className="text-primary-500"
+          >
+            <List className="w-4 h-4" />
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            onClick={() => onViewModeChange("grid")}
+            className="text-primary-500"
+          >
+            <Grid3X3 className="w-4 h-4" />
+          </Button>
+        )}
       </div>
     </div>
   );

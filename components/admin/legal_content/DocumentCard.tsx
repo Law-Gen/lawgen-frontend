@@ -6,7 +6,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  Badge,
   Button,
 } from "@/components/ui";
 
@@ -41,21 +40,6 @@ const getIconColorClass = (color: string) => {
       return "bg-blue-100 text-blue-700";
     default:
       return "bg-primary-100 text-primary-700";
-  }
-};
-
-const getTypeColorClass = (type: string) => {
-  switch (type) {
-    case "template":
-      return "bg-primary-100 text-primary-800";
-    case "guide":
-      return "bg-yellow-100 text-yellow-800";
-    case "checklist":
-      return "bg-red-100 text-red-800";
-    case "form":
-      return "bg-blue-100 text-blue-800";
-    default:
-      return "bg-gray-100 text-gray-800";
   }
 };
 
@@ -104,13 +88,6 @@ export default function DocumentCard({
           {document.title}
         </h3>
         <div className="flex items-center gap-2 mb-3">
-          <Badge
-            className={`text-xs font-medium ${getTypeColorClass(
-              document.type
-            )}`}
-          >
-            {document.type}
-          </Badge>
           <span className="text-sm text-primary-600">{document.category}</span>
         </div>
       </div>
