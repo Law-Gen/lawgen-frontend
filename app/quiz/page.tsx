@@ -1,48 +1,33 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { MotionWrapper } from "@/components/ui/motion-wrapper"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { LanguageToggle } from "@/components/ui/language-toggle"
-import { BottomNavigation } from "@/components/ui/bottom-navigation"
-import { useSession } from "next-auth/react"
-import Link from "next/link"
+import { useState, useEffect } from "react";
+import { MotionWrapper } from "@/components/ui/motion-wrapper";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { LanguageToggle } from "@/components/ui/language-toggle";
+import { BottomNavigation } from "@/components/ui/bottom-navigation";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
+import { MainNavigation } from "@/components/ui/main-navigation";
+import { useTheme } from "next-themes";
 
 interface QuizCategory {
-  id: string
-  name: string
-  description: string
-  icon: string
-  quizCount: number
-  difficulty: "beginner" | "intermediate" | "advanced"
-  estimatedTime: string
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  quizCount: number;
+  difficulty: "beginner" | "intermediate" | "advanced";
+  quizzes: Quiz[];
 }
 
 interface Quiz {
-  id: string
-  title: string
-  description: string
-  categoryId: string
-  difficulty: "beginner" | "intermediate" | "advanced"
-  questions: Question[]
-  estimatedTime: string
-}
-
-interface Question {
-  id: string
-  question: string
-  options: string[]
-  correctAnswer: number
-  explanation: string
-}
-
-interface QuizResult {
-  score: number
-  totalQuestions: number
-  answers: { questionId: string; selectedAnswer: number; correct: boolean }[]
+  id: string;
+  question: string;
+  options: string[];
+  answer: string;
+  difficulty: "beginner" | "intermediate" | "advanced";
 }
 
 const mockQuizCategories: QuizCategory[] = [
@@ -53,7 +38,31 @@ const mockQuizCategories: QuizCategory[] = [
     icon: "💼",
     quizCount: 3,
     difficulty: "beginner",
-    estimatedTime: "10-15 min",
+    quizzes: [
+      {
+        id: "employment-basics",
+        question:
+          "What is the standard working week in Ethiopia according to labor law?",
+        options: ["40 hours", "44 hours", "48 hours", "50 hours"],
+        answer: "48 hours",
+        difficulty: "beginner",
+      },
+      {
+        id: "termination-notice",
+        question:
+          "How much notice must an employer give before terminating an employee without cause?",
+        options: ["1 week", "2 weeks", "1 month", "3 months"],
+        answer: "1 month",
+        difficulty: "beginner",
+      },
+      {
+        id: "minimum-age",
+        question: "What is the minimum age for employment in Ethiopia?",
+        options: ["14 years", "16 years", "18 years", "21 years"],
+        answer: "14 years",
+        difficulty: "beginner",
+      },
+    ],
   },
   {
     id: "2",
@@ -62,7 +71,43 @@ const mockQuizCategories: QuizCategory[] = [
     icon: "👨‍👩‍👧‍👦",
     quizCount: 4,
     difficulty: "intermediate",
-    estimatedTime: "15-20 min",
+    quizzes: [
+      {
+        id: "divorce-grounds",
+        question: "What is not a ground for divorce in Ethiopia?",
+        options: ["Adultery", "Desertion", "Imprisonment", "Incompatibility"],
+        answer: "Incompatibility",
+        difficulty: "intermediate",
+      },
+      {
+        id: "child-custody",
+        question:
+          "In case of divorce, which factor is not considered for child custody?",
+        options: [
+          "Child's preference",
+          "Parental income",
+          "Parental relationship",
+          "Child's education",
+        ],
+        answer: "Parental income",
+        difficulty: "intermediate",
+      },
+      {
+        id: "marriage-age",
+        question: "What is the legal age for marriage in Ethiopia?",
+        options: ["16", "18", "21", "25"],
+        answer: "18",
+        difficulty: "intermediate",
+      },
+      {
+        id: "dowry",
+        question:
+          "What is the maximum amount of bride price (dowry) in Ethiopia?",
+        options: ["10 cows", "20 cows", "50 cows", "No limit"],
+        answer: "No limit",
+        difficulty: "intermediate",
+      },
+    ],
   },
   {
     id: "3",
@@ -71,7 +116,34 @@ const mockQuizCategories: QuizCategory[] = [
     icon: "🏠",
     quizCount: 2,
     difficulty: "intermediate",
-    estimatedTime: "12-18 min",
+    quizzes: [
+      {
+        id: "property-transfer",
+        question:
+          "What is required for the valid transfer of immovable property in Ethiopia?",
+        options: [
+          "Verbal agreement",
+          "Written contract",
+          "Notarization",
+          "All of the above",
+        ],
+        answer: "Written contract",
+        difficulty: "intermediate",
+      },
+      {
+        id: "lease-agreement",
+        question:
+          "Which of the following is not essential for a lease agreement to be valid?",
+        options: [
+          "Offer and acceptance",
+          "Consideration",
+          "Capacity to contract",
+          "Registration",
+        ],
+        answer: "Registration",
+        difficulty: "intermediate",
+      },
+    ],
   },
   {
     id: "4",
@@ -80,429 +152,298 @@ const mockQuizCategories: QuizCategory[] = [
     icon: "🏢",
     quizCount: 2,
     difficulty: "advanced",
-    estimatedTime: "20-25 min",
+    quizzes: [
+      {
+        id: "company-formation",
+        question:
+          "What is the minimum number of shareholders required to form a private limited company in Ethiopia?",
+        options: ["1", "2", "3", "5"],
+        answer: "2",
+        difficulty: "advanced",
+      },
+      {
+        id: "trade-mark",
+        question: "What is the duration of trademark registration in Ethiopia?",
+        options: ["10 years", "7 years", "5 years", "Indefinitely"],
+        answer: "7 years",
+        difficulty: "advanced",
+      },
+    ],
   },
-]
-
-const mockQuiz: Quiz = {
-  id: "employment-basics",
-  title: "Employment Law Basics",
-  description: "Test your knowledge of fundamental employment rights in Ethiopia",
-  categoryId: "1",
-  difficulty: "beginner",
-  estimatedTime: "10 min",
-  questions: [
-    {
-      id: "q1",
-      question: "What is the standard working week in Ethiopia according to labor law?",
-      options: ["40 hours", "44 hours", "48 hours", "50 hours"],
-      correctAnswer: 2,
-      explanation:
-        "According to Ethiopian labor law, the standard working week is 48 hours, typically spread over 6 days with 8 hours per day.",
-    },
-    {
-      id: "q2",
-      question: "How much notice must an employer give before terminating an employee without cause?",
-      options: ["1 week", "2 weeks", "1 month", "3 months"],
-      correctAnswer: 2,
-      explanation:
-        "Ethiopian labor law requires employers to give at least one month's notice before terminating an employee without cause, or payment in lieu of notice.",
-    },
-    {
-      id: "q3",
-      question: "What is the minimum age for employment in Ethiopia?",
-      options: ["14 years", "16 years", "18 years", "21 years"],
-      correctAnswer: 0,
-      explanation:
-        "The minimum age for employment in Ethiopia is 14 years, though there are restrictions on the type of work and hours for minors.",
-    },
-    {
-      id: "q4",
-      question: "Are employees entitled to overtime pay in Ethiopia?",
-      options: ["No, never", "Yes, always", "Only for government employees", "Yes, for work beyond normal hours"],
-      correctAnswer: 3,
-      explanation:
-        "Yes, employees in Ethiopia are entitled to overtime pay for work performed beyond normal working hours, typically at a rate of 1.5 times the regular wage.",
-    },
-    {
-      id: "q5",
-      question: "What is the minimum annual leave entitlement for employees?",
-      options: ["10 days", "14 days", "21 days", "30 days"],
-      correctAnswer: 1,
-      explanation:
-        "Ethiopian labor law provides for a minimum of 14 working days of annual leave for employees who have completed one year of service.",
-    },
-  ],
-}
+];
 
 const difficultyColors = {
   beginner: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  intermediate: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+  intermediate:
+    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
   advanced: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-}
+};
 
 export default function QuizPage() {
-  const { data: session } = useSession()
-  const [selectedCategory, setSelectedCategory] = useState<QuizCategory | null>(null)
-  const [currentQuiz, setCurrentQuiz] = useState<Quiz | null>(null)
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
-  const [selectedAnswers, setSelectedAnswers] = useState<{ [questionId: string]: number }>({})
-  const [showResults, setShowResults] = useState(false)
-  const [quizResult, setQuizResult] = useState<QuizResult | null>(null)
-
-  const handleStartQuiz = () => {
-    setCurrentQuiz(mockQuiz)
-    setCurrentQuestionIndex(0)
-    setSelectedAnswers({})
-    setShowResults(false)
-    setQuizResult(null)
-  }
-
-  const handleAnswerSelect = (answerIndex: number) => {
-    if (!currentQuiz) return
-
-    const currentQuestion = currentQuiz.questions[currentQuestionIndex]
-    setSelectedAnswers((prev) => ({
-      ...prev,
-      [currentQuestion.id]: answerIndex,
-    }))
-  }
-
-  const handleNextQuestion = () => {
-    if (!currentQuiz) return
-
-    if (currentQuestionIndex < currentQuiz.questions.length - 1) {
-      setCurrentQuestionIndex((prev) => prev + 1)
-    } else {
-      // Calculate results
-      const answers = currentQuiz.questions.map((question) => ({
-        questionId: question.id,
-        selectedAnswer: selectedAnswers[question.id] ?? -1,
-        correct: selectedAnswers[question.id] === question.correctAnswer,
-      }))
-
-      const score = answers.filter((answer) => answer.correct).length
-
-      setQuizResult({
-        score,
-        totalQuestions: currentQuiz.questions.length,
-        answers,
-      })
-      setShowResults(true)
-    }
-  }
-
-  const handleRetakeQuiz = () => {
-    setCurrentQuestionIndex(0)
-    setSelectedAnswers({})
-    setShowResults(false)
-    setQuizResult(null)
-  }
-
-  const handleBackToCategories = () => {
-    setSelectedCategory(null)
-    setCurrentQuiz(null)
-    setCurrentQuestionIndex(0)
-    setSelectedAnswers({})
-    setShowResults(false)
-    setQuizResult(null)
-  }
-
-  // Quiz Results View
-  if (showResults && quizResult && currentQuiz) {
-    const percentage = Math.round((quizResult.score / quizResult.totalQuestions) * 100)
-
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10">
-        <header className="bg-card/80 backdrop-blur-sm border-b border-border p-4">
-          <div className="container mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleBackToCategories}
-                className="hover:scale-105 transition-transform"
-              >
-                ← Back to Quizzes
-              </Button>
-              <div>
-                <h1 className="text-lg font-semibold text-primary">Quiz Results</h1>
-                <p className="text-sm text-muted-foreground">{currentQuiz.title}</p>
-              </div>
-            </div>
-            <LanguageToggle />
-          </div>
-        </header>
-
-        <div className="container mx-auto p-4 max-w-4xl">
-          <MotionWrapper animation="fadeInUp">
-            <Card className="mb-6">
-              <CardHeader className="text-center">
-                <div className="text-6xl mb-4">{percentage >= 80 ? "🎉" : percentage >= 60 ? "👍" : "📚"}</div>
-                <CardTitle className="text-2xl text-primary">
-                  {percentage >= 80 ? "Excellent!" : percentage >= 60 ? "Good Job!" : "Keep Learning!"}
-                </CardTitle>
-                <p className="text-muted-foreground">
-                  You scored {quizResult.score} out of {quizResult.totalQuestions} questions correctly
-                </p>
-              </CardHeader>
-              <CardContent className="text-center">
-                <div className="mb-6">
-                  <div className="text-4xl font-bold text-primary mb-2">{percentage}%</div>
-                  <Progress value={percentage} className="w-full max-w-md mx-auto" />
-                </div>
-                <div className="flex gap-4 justify-center">
-                  <Button onClick={handleRetakeQuiz} variant="outline" className="bg-transparent">
-                    Retake Quiz
-                  </Button>
-                  <Button onClick={handleBackToCategories}>Try Another Quiz</Button>
-                </div>
-              </CardContent>
-            </Card>
-          </MotionWrapper>
-
-          {/* Detailed Results */}
-          <div className="space-y-4">
-            {currentQuiz.questions.map((question, index) => {
-              const userAnswer = quizResult.answers.find((a) => a.questionId === question.id)
-              const isCorrect = userAnswer?.correct ?? false
-
-              return (
-                <MotionWrapper key={question.id} animation="staggerIn" delay={index * 100}>
-                  <Card className={`border-l-4 ${isCorrect ? "border-l-green-500" : "border-l-red-500"}`}>
-                    <CardContent className="p-6">
-                      <div className="flex items-start gap-3 mb-4">
-                        <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold ${
-                            isCorrect ? "bg-green-500" : "bg-red-500"
-                          }`}
-                        >
-                          {index + 1}
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-primary mb-2">{question.question}</h3>
-                          <div className="space-y-2 mb-4">
-                            {question.options.map((option, optionIndex) => {
-                              const isUserAnswer = userAnswer?.selectedAnswer === optionIndex
-                              const isCorrectAnswer = optionIndex === question.correctAnswer
-
-                              return (
-                                <div
-                                  key={optionIndex}
-                                  className={`p-3 rounded-lg border ${
-                                    isCorrectAnswer
-                                      ? "bg-green-50 border-green-200 text-green-800"
-                                      : isUserAnswer && !isCorrectAnswer
-                                        ? "bg-red-50 border-red-200 text-red-800"
-                                        : "bg-muted border-border"
-                                  }`}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    {isCorrectAnswer && <span className="text-green-600">✓</span>}
-                                    {isUserAnswer && !isCorrectAnswer && <span className="text-red-600">✗</span>}
-                                    <span>{option}</span>
-                                  </div>
-                                </div>
-                              )
-                            })}
-                          </div>
-                          <div className="bg-accent/20 p-4 rounded-lg">
-                            <p className="text-sm text-muted-foreground">
-                              <strong>Explanation:</strong> {question.explanation}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </MotionWrapper>
-              )
-            })}
-          </div>
-        </div>
-
-        {session && <BottomNavigation />}
-      </div>
-    )
-  }
-
-  // Quiz Taking View
-  if (currentQuiz && !showResults) {
-    const currentQuestion = currentQuiz.questions[currentQuestionIndex]
-    const progress = ((currentQuestionIndex + 1) / currentQuiz.questions.length) * 100
-    const selectedAnswer = selectedAnswers[currentQuestion.id]
-
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10">
-        <header className="bg-card/80 backdrop-blur-sm border-b border-border p-4">
-          <div className="container mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setCurrentQuiz(null)}
-                className="hover:scale-105 transition-transform"
-              >
-                ← Exit Quiz
-              </Button>
-              <div>
-                <h1 className="text-lg font-semibold text-primary">{currentQuiz.title}</h1>
-                <p className="text-sm text-muted-foreground">
-                  Question {currentQuestionIndex + 1} of {currentQuiz.questions.length}
-                </p>
-              </div>
-            </div>
-            <LanguageToggle />
-          </div>
-        </header>
-
-        <div className="container mx-auto p-4 max-w-4xl">
-          <MotionWrapper animation="fadeInUp">
-            <Card className="mb-6">
-              <CardContent className="p-6">
-                <div className="mb-6">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-muted-foreground">Progress</span>
-                    <span className="text-sm font-medium">{Math.round(progress)}%</span>
-                  </div>
-                  <Progress value={progress} className="w-full" />
-                </div>
-
-                <div className="mb-8">
-                  <h2 className="text-xl font-semibold text-primary mb-6">{currentQuestion.question}</h2>
-
-                  <div className="space-y-3">
-                    {currentQuestion.options.map((option, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleAnswerSelect(index)}
-                        className={`w-full p-4 text-left rounded-lg border transition-all duration-200 hover:scale-[1.02] ${
-                          selectedAnswer === index
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-border bg-card hover:border-primary/50"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                              selectedAnswer === index
-                                ? "border-primary bg-primary text-primary-foreground"
-                                : "border-muted-foreground"
-                            }`}
-                          >
-                            {selectedAnswer === index && <span className="text-xs">✓</span>}
-                          </div>
-                          <span>{option}</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <Button
-                    variant="outline"
-                    onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
-                    disabled={currentQuestionIndex === 0}
-                    className="bg-transparent"
-                  >
-                    Previous
-                  </Button>
-
-                  <Button
-                    onClick={handleNextQuestion}
-                    disabled={selectedAnswer === undefined}
-                    className="hover:scale-105 transition-transform"
-                  >
-                    {currentQuestionIndex === currentQuiz.questions.length - 1 ? "Finish Quiz" : "Next Question"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </MotionWrapper>
-        </div>
-
-        {session && <BottomNavigation />}
-      </div>
-    )
-  }
+  const { data: session } = useSession();
+  const [selectedCategory, setSelectedCategory] = useState<QuizCategory | null>(
+    null
+  );
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   // Quiz Selection View (Category selected)
   if (selectedCategory) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10">
-        <header className="bg-card/80 backdrop-blur-sm border-b border-border p-4">
-          <div className="container mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedCategory(null)}
-                className="hover:scale-105 transition-transform"
+      <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10 overflow-x-hidden">
+        {/* Mobile Sidebar (RIGHT SIDE) */}
+        <div
+          className={`fixed inset-0 z-[100] bg-black/40 transition-opacity ${
+            sidebarOpen ? "block md:hidden" : "hidden"
+          }`}
+          onClick={() => setSidebarOpen(false)}
+        />
+        <aside
+          className={`fixed top-0 right-0 z-[101] h-full w-64 bg-card dark:bg-zinc-900 shadow-lg transform transition-transform duration-300 ${
+            sidebarOpen ? "translate-x-0" : "translate-x-full"
+          } md:hidden`}
+        >
+          <div className="flex flex-col h-full p-6 gap-6">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-lg font-bold text-primary">Menu</span>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                aria-label="Close sidebar"
+                className="text-2xl"
               >
-                ← Back to Categories
-              </Button>
-              <div>
-                <h1 className="text-lg font-semibold text-primary flex items-center gap-2">
-                  <span className="text-2xl">{selectedCategory.icon}</span>
-                  {selectedCategory.name} Quizzes
-                </h1>
-                <p className="text-sm text-muted-foreground">{selectedCategory.description}</p>
-              </div>
+                &times;
+              </button>
             </div>
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="px-2 py-1 rounded border w-full flex items-center gap-2"
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
+              {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
+            </button>
             <LanguageToggle />
+            {!session && (
+              <Link href="/auth/signin" className="w-full">
+                <Button size="lg" variant="outline" className="w-full">
+                  Sign In
+                </Button>
+              </Link>
+            )}
+          </div>
+        </aside>
+
+        {/* Header */}
+        <header className="bg-card/80 backdrop-blur-sm border-b border-border p-4 sticky top-0 z-50">
+          <div className="w-full flex items-center px-2 gap-4">
+            {/* Left: Title and description */}
+            <div className="flex flex-col items-start min-w-0 flex-1">
+              <h1 className="text-lg font-semibold text-primary truncate">
+                Legal Quiz
+              </h1>
+              <p className="text-sm text-muted-foreground truncate">
+                Test your legal knowledge by category
+              </p>
+            </div>
+            {/* Hamburger icon for mobile */}
+            <div className="md:hidden" style={{ marginLeft: "4px" }}>
+              <button
+                className="p-0 bg-transparent border-none shadow-none outline-none focus:outline-none"
+                style={{ lineHeight: 0 }}
+                onClick={() => setSidebarOpen(true)}
+                aria-label="Open sidebar"
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M4 6h12M4 10h12M4 14h12" />
+                </svg>
+              </button>
+            </div>
+            {/* Center: Main navigation (desktop only) */}
+            <div className="hidden md:flex flex-1 justify-center">
+              <MainNavigation />
+            </div>
+            {/* Right: Language toggle, dark mode, and sign in (desktop only) */}
+            <div className="hidden md:flex items-center gap-3 min-w-0 ml-auto">
+              <button
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="px-2 py-1 rounded border"
+                aria-label="Toggle dark mode"
+                title="Toggle dark mode"
+              >
+                {theme === "dark" ? "🌙" : "☀️"}
+              </button>
+              <LanguageToggle />
+              {!session && (
+                <Link href="/auth/signin">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="bg-transparent"
+                  >
+                    Sign In
+                  </Button>
+                </Link>
+              )}
+            </div>
           </div>
         </header>
 
-        <div className="container mx-auto p-4">
+        <div className="container mx-auto px-2 mt-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedCategory(null)}
+            className="hover:scale-105 transition-transform"
+          >
+            ← Back to Quizzes
+          </Button>
+        </div>
+
+        <div className="container mx-auto p-4 min-h-[100vh]">
           <MotionWrapper animation="fadeInUp">
-            <Card className="hover:shadow-lg transition-all duration-300">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-primary">{mockQuiz.title}</CardTitle>
-                    <p className="text-muted-foreground text-sm mt-1">{mockQuiz.description}</p>
+            {selectedCategory.quizzes.map((quiz) => (
+              <Card
+                key={quiz.id}
+                className="mb-6 hover:shadow-lg transition-all duration-300"
+              >
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-primary">
+                        {quiz.question}
+                      </CardTitle>
+                      <p className="text-muted-foreground text-sm mt-1">
+                        {quiz.options.join(", ")}
+                      </p>
+                    </div>
+                    <Badge
+                      className={difficultyColors[quiz.difficulty]}
+                      variant="secondary"
+                    >
+                      {quiz.difficulty}
+                    </Badge>
                   </div>
-                  <Badge className={difficultyColors[mockQuiz.difficulty]} variant="secondary">
-                    {mockQuiz.difficulty}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-4 mb-4 text-sm text-muted-foreground">
-                  <span>📝 {mockQuiz.questions.length} questions</span>
-                  <span>⏱️ {mockQuiz.estimatedTime}</span>
-                </div>
-                <Button onClick={handleStartQuiz} className="w-full hover:scale-105 transition-transform">
-                  Start Quiz
-                </Button>
-              </CardContent>
-            </Card>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    onClick={() => {
+                      // Handle quiz start
+                    }}
+                    className="w-full hover:scale-105 transition-transform"
+                  >
+                    Start Quiz
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
           </MotionWrapper>
         </div>
 
-        {session && <BottomNavigation />}
+        {session && (
+          <div className="md:hidden">
+            <BottomNavigation />
+          </div>
+        )}
       </div>
-    )
+    );
   }
 
   // Main Categories View
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10">
-      <header className="bg-card/80 backdrop-blur-sm border-b border-border p-4">
-        <div className="container mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/">
-              <Button variant="ghost" size="sm" className="hover:scale-105 transition-transform">
-                ← Back
+    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10 overflow-x-hidden">
+      {/* Mobile Sidebar (RIGHT SIDE) */}
+      <div
+        className={`fixed inset-0 z-[100] bg-black/40 transition-opacity ${
+          sidebarOpen ? "block md:hidden" : "hidden"
+        }`}
+        onClick={() => setSidebarOpen(false)}
+      />
+      <aside
+        className={`fixed top-0 right-0 z-[101] h-full w-64 bg-card dark:bg-zinc-900 shadow-lg transform transition-transform duration-300 ${
+          sidebarOpen ? "translate-x-0" : "translate-x-full"
+        } md:hidden`}
+      >
+        <div className="flex flex-col h-full p-6 gap-6">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-lg font-bold text-primary">Menu</span>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Close sidebar"
+              className="text-2xl"
+            >
+              &times;
+            </button>
+          </div>
+          <button
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="px-2 py-1 rounded border w-full flex items-center gap-2"
+            aria-label="Toggle dark mode"
+            title="Toggle dark mode"
+          >
+            {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
+          </button>
+          <LanguageToggle />
+          {!session && (
+            <Link href="/auth/signin" className="w-full">
+              <Button size="lg" variant="outline" className="w-full">
+                Sign In
               </Button>
             </Link>
-            <div>
-              <h1 className="text-lg font-semibold text-primary">Legal Knowledge Quizzes</h1>
-              <p className="text-sm text-muted-foreground">Test and improve your legal knowledge</p>
-            </div>
+          )}
+        </div>
+      </aside>
+
+      {/* Header */}
+      <header className="bg-card/80 backdrop-blur-sm border-b border-border p-4 sticky top-0 z-50">
+        <div className="w-full flex items-center px-2 gap-4">
+          {/* Left: Title and description */}
+          <div className="flex flex-col items-start min-w-0 flex-1">
+            <h1 className="text-lg font-semibold text-primary truncate">
+              Legal Quiz
+            </h1>
+            <p className="text-sm text-muted-foreground truncate">
+              Test your legal knowledge by category
+            </p>
           </div>
-          <div className="flex items-center gap-3">
+          {/* Hamburger icon for mobile */}
+          <div className="md:hidden" style={{ marginLeft: "4px" }}>
+            <button
+              className="p-0 bg-transparent border-none shadow-none outline-none focus:outline-none"
+              style={{ lineHeight: 0 }}
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open sidebar"
+            >
+              <svg
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M4 6h12M4 10h12M4 14h12" />
+              </svg>
+            </button>
+          </div>
+          {/* Center: Main navigation (desktop only) */}
+          <div className="hidden md:flex flex-1 justify-center">
+            <MainNavigation />
+          </div>
+          {/* Right: Language toggle, dark mode, and sign in (desktop only) */}
+          <div className="hidden md:flex items-center gap-3 min-w-0 ml-auto">
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="px-2 py-1 rounded border"
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
+              {theme === "dark" ? "🌙" : "☀️"}
+            </button>
             <LanguageToggle />
             {!session && (
               <Link href="/auth/signin">
@@ -515,28 +456,45 @@ export default function QuizPage() {
         </div>
       </header>
 
-      <div className="container mx-auto p-4">
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="container min-h-[100vh] mx-auto p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {mockQuizCategories.map((category, index) => (
-            <MotionWrapper key={category.id} animation="staggerIn" delay={index * 100}>
+            <MotionWrapper
+              key={category.id}
+              animation="staggerIn"
+              delay={index * 100}
+            >
               <Card
                 className="hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer h-full"
                 onClick={() => setSelectedCategory(category)}
               >
                 <CardHeader className="text-center">
                   <div className="text-4xl mb-2">{category.icon}</div>
-                  <CardTitle className="text-primary">{category.name}</CardTitle>
+                  <CardTitle className="text-primary">
+                    {category.name}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="text-center space-y-4">
-                  <p className="text-muted-foreground text-sm">{category.description}</p>
+                  <p className="text-muted-foreground text-sm">
+                    {category.description}
+                  </p>
                   <div className="flex justify-center gap-2">
-                    <Badge variant="secondary">{category.quizCount} quizzes</Badge>
-                    <Badge className={difficultyColors[category.difficulty]} variant="secondary">
+                    <Badge variant="secondary">
+                      {category.quizCount} quizzes
+                    </Badge>
+                    <Badge
+                      className={difficultyColors[category.difficulty]}
+                      variant="secondary"
+                    >
                       {category.difficulty}
                     </Badge>
                   </div>
-                  <div className="text-sm text-muted-foreground">⏱️ {category.estimatedTime}</div>
-                  <Button className="w-full hover:scale-105 transition-transform">Take Quiz</Button>
+                  <div className="text-sm text-muted-foreground">
+                    ⏱️ {category.quizzes[0].options.length} questions
+                  </div>
+                  <Button className="w-full hover:scale-105 transition-transform">
+                    Take Quiz
+                  </Button>
                 </CardContent>
               </Card>
             </MotionWrapper>
@@ -546,20 +504,29 @@ export default function QuizPage() {
         {/* Call to Action */}
         <MotionWrapper animation="fadeInUp">
           <Card className="mt-8 bg-gradient-to-r from-primary/10 to-accent/10">
-            <CardContent className="p-6 text-center">
-              <h3 className="text-xl font-semibold text-primary mb-2">Need Personalized Legal Guidance?</h3>
-              <p className="text-muted-foreground mb-4">
-                Our AI assistant can provide tailored legal advice based on your specific situation.
+            <CardContent className="p-4 md:p-6 text-center space-y-2 md:space-y-4">
+              <h3 className="text-xl font-semibold text-primary mb-2">
+                Need Personalized Legal Guidance?
+              </h3>
+              <p className="text-muted-foreground mb-4 leading-relaxed">
+                Our AI assistant can provide tailored legal advice based on your
+                specific situation.
               </p>
               <Link href="/chat">
-                <Button className="hover:scale-105 transition-transform">Chat with AI Assistant</Button>
+                <Button className="hover:scale-105 transition-transform mt-2">
+                  Chat with AI Assistant
+                </Button>
               </Link>
             </CardContent>
           </Card>
         </MotionWrapper>
       </div>
 
-      {session && <BottomNavigation />}
+      {session && (
+        <div className="md:hidden">
+          <BottomNavigation />
+        </div>
+      )}
     </div>
-  )
+  );
 }

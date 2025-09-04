@@ -1,6 +1,22 @@
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
-import type { NextAuthOptions } from "next-auth"
+import type { NextAuthOptions, User } from "next-auth"
+
+// Extend the User and Session types to include 'role'
+declare module "next-auth" {
+  interface User {
+    role?: string
+  }
+  interface Session {
+    user: {
+      name?: string | null
+      email?: string | null
+      image?: string | null
+      id?: string
+      role?: string
+    }
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -35,7 +51,6 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: "/auth/signin",
-    signUp: "/auth/signup",
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -45,9 +60,9 @@ export const authOptions: NextAuthOptions = {
       return token
     },
     async session({ session, token }) {
-      if (token) {
+      if (token && session.user) {
         session.user.id = token.sub
-        session.user.role = token.role
+        session.user.role = typeof token.role === "string" ? token.role : undefined
       }
       return session
     },
