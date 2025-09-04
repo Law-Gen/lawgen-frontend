@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { SessionProvider } from "./providers/session-provider";
-import FooterNavWrapper from "./FooterNavWrapper";
 import "./globals.css";
+import { ThemeProvider } from "next-themes";
 
 export const metadata: Metadata = {
   title: "LegalAid - Legal Information & Assistance Platform",
@@ -20,7 +20,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-        <SessionProvider>{children}</SessionProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <SessionProvider>{children}</SessionProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

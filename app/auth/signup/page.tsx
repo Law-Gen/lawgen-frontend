@@ -12,6 +12,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+const GoogleSignUp = dynamic(() => import("@/components/auth/GoogleSignIn"), {
+  ssr: false,
+});
 
 import { api } from "@/src/lib/api";
 
@@ -90,6 +94,14 @@ export default function SignUpPage() {
             </MotionWrapper>
           </CardHeader>
           <CardContent>
+            <div className="mt-4 flex justify-center">
+              <GoogleSignUp />
+            </div>
+            <div className="my-4 flex items-center justify-center gap-2">
+              <span className="h-px w-16 bg-border" />
+              <span className="text-muted-foreground text-xs">or</span>
+              <span className="h-px w-16 bg-border" />
+            </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <MotionWrapper animation="fadeInUp" delay={300}>
                 <div className="space-y-2">

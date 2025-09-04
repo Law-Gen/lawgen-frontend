@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useTheme } from "next-themes";
 import { api } from "@/src/lib/api";
 
 declare global {
@@ -16,6 +17,8 @@ export default function GoogleSignIn({
 }) {
   const divRef = useRef<HTMLDivElement>(null);
   const fallbackRef = useRef<HTMLDivElement>(null);
+  const { theme } = useTheme();
+
   useEffect(() => {
     // Inject the Google script
     const s = document.createElement("script");
@@ -52,6 +55,8 @@ export default function GoogleSignIn({
           type: "standard",
           size: "large",
           shape: "pill",
+          theme: theme === "dark" ? "filled_black" : "outline", // dark mode support
+          text: "continue_with",
         });
       }
     };
@@ -59,14 +64,15 @@ export default function GoogleSignIn({
     return () => {
       document.body.removeChild(s);
     };
-  }, []);
+  }, [theme]);
 
   return (
     <>
       <div
         ref={divRef}
-        className="w-full flex justify-center items-center min-h-[44px] py-2 rounded-lg shadow-sm"
-        style={{ backgroundColor: "#f5ede6" }}
+        className={`w-full flex justify-center items-center min-h-[44px] py-2 rounded-lg shadow-sm ${
+          theme === "dark" ? "bg-zinc-800" : "bg-[#f5ede6]"
+        }`}
       ></div>
       <div
         ref={fallbackRef}

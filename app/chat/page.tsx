@@ -1,29 +1,31 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useRef, useEffect } from "react"
-import { useSession } from "next-auth/react"
-import { MotionWrapper } from "@/components/ui/motion-wrapper"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { LanguageToggle } from "@/components/ui/language-toggle"
-import { BottomNavigation } from "@/components/ui/bottom-navigation"
-import { ChatHistory } from "@/components/chat/chat-history"
-import Link from "next/link"
+import { useState, useRef, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { MotionWrapper } from "@/components/ui/motion-wrapper";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { LanguageToggle } from "@/components/ui/language-toggle";
+import { BottomNavigation } from "@/components/ui/bottom-navigation";
+import { ChatHistory } from "@/components/chat/chat-history";
+import { MainNavigation } from "@/components/ui/main-navigation";
+import Link from "next/link";
+import { useTheme } from "next-themes";
 
 interface Message {
-  id: string
-  content: string
-  sender: "user" | "ai"
-  timestamp: Date
+  id: string;
+  content: string;
+  sender: "user" | "ai";
+  timestamp: Date;
 }
 
 export default function ChatPage() {
-  const { data: session } = useSession()
+  const { data: session } = useSession();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -32,33 +34,35 @@ export default function ChatPage() {
       sender: "ai",
       timestamp: new Date(),
     },
-  ])
-  const [inputMessage, setInputMessage] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  ]);
+  const [inputMessage, setInputMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    scrollToBottom();
+  }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return
+    if (!inputMessage.trim()) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       content: inputMessage,
       sender: "user",
       timestamp: new Date(),
-    }
+    };
 
-    setMessages((prev) => [...prev, userMessage])
-    const currentInput = inputMessage
-    setInputMessage("")
-    setIsLoading(true)
+    setMessages((prev) => [...prev, userMessage]);
+    const currentInput = inputMessage;
+    setInputMessage("");
+    setIsLoading(true);
 
     // Simulate AI response with more realistic legal guidance
     setTimeout(() => {
@@ -67,48 +71,121 @@ export default function ChatPage() {
         "That's an interesting legal question. Based on general legal principles, here are some key points to consider... However, laws can vary by jurisdiction, so it's important to verify this information with local legal resources.",
         "I understand your concern about this legal issue. Let me provide some general guidance that might help you understand the basic concepts involved. For personalized advice, please consider speaking with a lawyer who specializes in this area.",
         "This is a common legal question that many people have. Here's some general information that might be helpful... Remember, every situation is unique, so professional legal consultation is always recommended for specific cases.",
-      ]
+      ];
 
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)]
+      const randomResponse =
+        responses[Math.floor(Math.random() * responses.length)];
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: randomResponse,
         sender: "ai",
         timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, aiMessage])
-      setIsLoading(false)
-    }, 1500)
-  }
+      };
+      setMessages((prev) => [...prev, aiMessage]);
+      setIsLoading(false);
+    }, 1500);
+  };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSendMessage()
+      e.preventDefault();
+      handleSendMessage();
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10 flex flex-col">
-      <header className="bg-card/90 backdrop-blur-md border-b border-border/50 p-4 sticky top-0 z-40">
-        <div className="container mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/">
-              <div className="w-12 h-12 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-lg">
-                <span className="text-xl text-primary-foreground">⚖️</span>
-              </div>
-            </Link>
-            <div>
-              <h1 className="text-xl font-bold text-primary">Legal Assistant</h1>
-              <p className="text-sm text-muted-foreground">AI-powered legal guidance</p>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10 flex flex-col overflow-x-hidden">
+      {/* Mobile Sidebar (RIGHT SIDE) */}
+      <div
+        className={`fixed inset-0 z-[100] bg-black/40 transition-opacity ${
+          sidebarOpen ? "block md:hidden" : "hidden"
+        }`}
+        onClick={() => setSidebarOpen(false)}
+      />
+      <aside
+        className={`fixed top-0 right-0 z-[101] h-full w-64 bg-card dark:bg-zinc-900 shadow-lg transform transition-transform duration-300 ${
+          sidebarOpen ? "translate-x-0" : "translate-x-full"
+        } md:hidden`}
+      >
+        <div className="flex flex-col h-full p-6 gap-6">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-lg font-bold text-primary">Menu</span>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Close sidebar"
+              className="text-2xl"
+            >
+              &times;
+            </button>
           </div>
-          <div className="flex items-center gap-4">
+          <button
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="px-2 py-1 rounded border w-full flex items-center gap-2"
+            aria-label="Toggle dark mode"
+            title="Toggle dark mode"
+          >
+            {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
+          </button>
+          <LanguageToggle />
+          {!session && (
+            <Link href="/auth/signin" className="w-full">
+              <Button size="lg" variant="outline" className="w-full">
+                Sign In
+              </Button>
+            </Link>
+          )}
+        </div>
+      </aside>
+
+      <header className="bg-card/80 backdrop-blur-sm border-b border-border p-4">
+        <div className="w-full flex items-center px-2 gap-4">
+          {/* Left: Title and description */}
+          <div className="flex flex-col items-start min-w-0 flex-1">
+            <h1 className="text-lg font-semibold text-primary truncate">
+              Legal Assistant Chat
+            </h1>
+            <p className="text-sm text-muted-foreground truncate">
+              AI-powered legal guidance and conversation
+            </p>
+          </div>
+          {/* Hamburger icon for mobile */}
+          <div className="md:hidden" style={{ marginLeft: "4px" }}>
+            <button
+              className="p-0 bg-transparent border-none shadow-none outline-none focus:outline-none"
+              style={{ lineHeight: 0 }}
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open sidebar"
+            >
+              <svg
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M4 6h12M4 10h12M4 14h12" />
+              </svg>
+            </button>
+          </div>
+          {/* Center: Main navigation (desktop only) */}
+          <div className="hidden md:flex flex-1 justify-center">
+            <MainNavigation />
+          </div>
+          {/* Right: Language toggle, dark mode, and sign in (desktop only) */}
+          <div className="hidden md:flex items-center gap-3 min-w-0 ml-auto">
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="px-2 py-1 rounded border"
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
+              {theme === "dark" ? "🌙" : "☀️"}
+            </button>
             <LanguageToggle />
             {!session && (
               <Link href="/auth/signin">
-                <Button size="sm" variant="outline" className="bg-transparent hover:scale-105 transition-transform">
+                <Button size="sm" variant="outline" className="bg-transparent">
                   Sign In
                 </Button>
               </Link>
@@ -121,9 +198,13 @@ export default function ChatPage() {
         <MotionWrapper animation="fadeInUp">
           <Alert className="mx-4 mt-4 border-accent bg-gradient-to-r from-accent/10 to-primary/10 backdrop-blur-sm">
             <AlertDescription className="text-center py-2">
-              <strong className="text-primary">Guest Mode:</strong> This chat provides general legal information only
-              and does not constitute legal advice.
-              <Link href="/auth/signup" className="text-primary hover:underline ml-2 font-semibold">
+              <strong className="text-primary">Guest Mode:</strong> This chat
+              provides general legal information only and does not constitute
+              legal advice.
+              <Link
+                href="/auth/signup"
+                className="text-primary hover:underline ml-2 font-semibold"
+              >
                 Sign up for free
               </Link>{" "}
               to unlock personalized features and save your chat history.
@@ -143,11 +224,21 @@ export default function ChatPage() {
         <div className="flex-1 flex flex-col">
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {messages.map((message, index) => (
-              <MotionWrapper key={message.id} animation="staggerIn" delay={index * 50}>
-                <div className={`flex gap-4 ${message.sender === "user" ? "justify-end" : "justify-start"}`}>
+              <MotionWrapper
+                key={message.id}
+                animation="staggerIn"
+                delay={index * 50}
+              >
+                <div
+                  className={`flex gap-4 ${
+                    message.sender === "user" ? "justify-end" : "justify-start"
+                  }`}
+                >
                   {message.sender === "ai" && (
                     <Avatar className="w-10 h-10 bg-gradient-to-r from-primary to-accent shadow-lg">
-                      <AvatarFallback className="text-primary-foreground font-semibold">AI</AvatarFallback>
+                      <AvatarFallback className="text-primary-foreground font-semibold">
+                        AI
+                      </AvatarFallback>
                     </Avatar>
                   )}
                   <Card
@@ -158,13 +249,20 @@ export default function ChatPage() {
                     }`}
                   >
                     <CardContent className="p-4">
-                      <p className="text-sm leading-relaxed">{message.content}</p>
+                      <p className="text-sm leading-relaxed">
+                        {message.content}
+                      </p>
                       <p
                         className={`text-xs mt-3 opacity-70 ${
-                          message.sender === "user" ? "text-primary-foreground" : "text-muted-foreground"
+                          message.sender === "user"
+                            ? "text-primary-foreground"
+                            : "text-muted-foreground"
                         }`}
                       >
-                        {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        {message.timestamp.toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </p>
                     </CardContent>
                   </Card>
@@ -183,7 +281,9 @@ export default function ChatPage() {
               <MotionWrapper animation="fadeInUp">
                 <div className="flex gap-4 justify-start">
                   <Avatar className="w-10 h-10 bg-gradient-to-r from-primary to-accent shadow-lg">
-                    <AvatarFallback className="text-primary-foreground font-semibold">AI</AvatarFallback>
+                    <AvatarFallback className="text-primary-foreground font-semibold">
+                      AI
+                    </AvatarFallback>
                   </Avatar>
                   <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-lg">
                     <CardContent className="p-4">
@@ -206,12 +306,16 @@ export default function ChatPage() {
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="border-t border-border bg-card/90 backdrop-blur-md p-6">
-            <div className="container mx-auto">
-              <div className="flex gap-4 items-end">
-                <div className="flex-1">
+          <div className="border-t border-border bg-card/90 backdrop-blur-md p-4 md:p-6">
+            <div className="container mx-auto px-0 md:px-2">
+              <div className="flex gap-2 md:gap-4 items-end">
+                <div className="flex-1 min-w-0">
                   <Input
-                    placeholder={session ? "Ask a legal question..." : "Ask a legal question (guest mode)..."}
+                    placeholder={
+                      session
+                        ? "Ask a legal question..."
+                        : "Ask a legal question (guest mode)..."
+                    }
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
@@ -222,7 +326,7 @@ export default function ChatPage() {
                 <Button
                   onClick={handleSendMessage}
                   disabled={!inputMessage.trim() || isLoading}
-                  className="hover:scale-105 transition-transform px-6 py-3 shadow-lg"
+                  className="hover:scale-105 transition-transform px-4 md:px-6 py-3 shadow-lg"
                 >
                   Send
                 </Button>
@@ -239,11 +343,16 @@ export default function ChatPage() {
               {!session && (
                 <div className="mt-4 text-center">
                   <p className="text-sm text-muted-foreground mb-3">
-                    Enjoying the chat? Sign up to save your conversations and unlock premium features!
+                    Enjoying the chat? Sign up to save your conversations and
+                    unlock premium features!
                   </p>
                   <div className="flex gap-3 justify-center">
                     <Link href="/auth/signup">
-                      <Button variant="default" size="sm" className="hover:scale-105 transition-transform">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="hover:scale-105 transition-transform"
+                      >
                         Sign Up Free
                       </Button>
                     </Link>
@@ -265,7 +374,11 @@ export default function ChatPage() {
       </div>
 
       {/* Bottom Navigation - Only for logged-in users */}
-      {session && <BottomNavigation />}
+      {session && (
+        <div className="md:hidden">
+          <BottomNavigation />
+        </div>
+      )}
     </div>
-  )
+  );
 }
