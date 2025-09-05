@@ -25,13 +25,28 @@ export default function VerifyResetOTPPage() {
   async function onVerify(e: React.FormEvent) {
     e.preventDefault();
     setStatus(null);
-    // Dummy OTP check: accept 123456 as valid
-    if (otp === "123456") {
-      // Simulate a reset token
-      const token = "dummy-reset-token";
-      router.push(`/auth/reset-password?token=${encodeURIComponent(token)}`);
-    } else {
-      setStatus({ type: "error", msg: "Invalid or expired code (try 123456)" });
+    try {
+      const res = await api.post("/auth/verify-otp", {
+        email,
+        otp_code: otp,
+      });
+      // Assume backend returns { reset_token: "..." }
+      const token = res.reset_token;
+      if (token) {
+        setStatus({ type: "success", msg: "OTP verified!" });
+        setTimeout(() => {
+          router.push(
+            `/auth/reset-password?token=${encodeURIComponent(token)}`
+          );
+        }, 800);
+      } else {
+        setStatus({ type: "error", msg: "No reset token received." });
+      }
+    } catch (err: any) {
+      setStatus({
+        type: "error",
+        msg: err.message || "Invalid or expired code.",
+      });
     }
   }
 
@@ -55,10 +70,6 @@ export default function VerifyResetOTPPage() {
             <MotionWrapper animation="fadeInUp" delay={200}>
               <p className="text-muted-foreground">
                 Enter the 6-digit code sent to your email
-              </p>
-              <p className="text-xs text-muted-foreground mt-2">
-                Dummy OTP:{" "}
-                <span className="font-mono font-bold text-primary">123456</span>
               </p>
             </MotionWrapper>
           </CardHeader>

@@ -1,8 +1,9 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { api } from "@/src/lib/api";
+import { useState, useEffect } from "react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { MotionWrapper } from "@/components/ui/motion-wrapper";
 import { Button } from "@/components/ui/button";
@@ -22,35 +23,75 @@ export default function SignInPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { data: session, status } = useSession();
+  const [pendingRedirect, setPendingRedirect] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-
     try {
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        setError("Invalid email or password");
-      } else {
-        router.push("/chat");
+      const res = await fetch(
+        "https://lawgen-backend.onrender.com/auth/login",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        if (data?.error === "google") {
+          setError(
+            "This account was registered with Google. Please sign in using Google."
+          );
+        } else {
+          setError(data?.error || "Invalid email or password");
+        }
+        setIsLoading(false);
+        return;
       }
-    } catch (error) {
-      setError("An error occurred. Please try again.");
+      // Store tokens if needed (localStorage/sessionStorage)
+      // localStorage.setItem("access_token", data.access_token);
+      // localStorage.setItem("refresh_token", data.refresh_token);
+
+      // Role-based redirect
+      const role = data.user?.role || data.role;
+      if (role === "admin") {
+        router.push("/admin");
+      } else if (role === "user" || role === "enterprise_user") {
+        router.push("/chat");
+      } else {
+        router.push("/"); // fallback
+      }
+    } catch (error: any) {
+      setError("Network error. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Role-based redirect after sign-in
+  useEffect(() => {
+    if (pendingRedirect && session) {
+      if (session.user?.role === "admin") {
+        router.push("/admin");
+      } else if (
+        session.user?.role === "user" ||
+        session.user?.role === "enterprise_user"
+      ) {
+        router.push("/chat");
+      }
+    }
+  }, [pendingRedirect, session, router]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10 flex items-center justify-center p-4">
       <MotionWrapper animation="scaleIn">
-        <Card className="w-full max-w-md">
+        <Card
+          className="w-full max-w-md"
+          style={{ width: "350px", maxWidth: "90vw" }}
+        >
           <CardHeader className="text-center">
             <MotionWrapper animation="fadeInUp">
               <Link href="/" className="inline-block">
@@ -152,14 +193,6 @@ export default function SignInPage() {
                     >
                       Sign up
                     </Link>
-                  </p>
-                </div>
-              </MotionWrapper>
-
-              <MotionWrapper animation="fadeInUp" delay={800}>
-                <div className="text-center">
-                  <p className="text-xs text-muted-foreground">
-                    Demo: email: demo@legalaid.com, password: demo123
                   </p>
                 </div>
               </MotionWrapper>

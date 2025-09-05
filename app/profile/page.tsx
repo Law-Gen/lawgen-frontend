@@ -190,16 +190,37 @@ export default function ProfilePage() {
   };
   const { data: session } = useSession();
   const router = useRouter();
-  const [profile, setProfile] = useState<UserProfile>(mockUserProfile);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   // Mobile sidebar state
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { theme, setTheme } = useTheme();
 
+
+  useEffect(() => {
+    if (!session?.accessToken) return;
+    setLoadingProfile(true);
+    fetch("https://lawgen-backend.onrender.com/users/me", {
+      headers: {
+        Authorization: `Bearer ${session.accessToken}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setProfile(data);
+        setLoadingProfile(false);
+      })
+      .catch(() => setLoadingProfile(false));
+  }, [session]);
+
   if (!session) {
     router.push("/auth/signin");
     return null;
+  }
+  if (loadingProfile || !profile) {
+    return <div className="text-center py-10">Loading profile...</div>;
   }
 
   const handleSaveProfile = () => {
@@ -504,40 +525,6 @@ export default function ProfilePage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                     <div className="space-y-4">
                       <div>
-                        <Label htmlFor="name">Full Name</Label>
-                        <Input
-                          id="name"
-                          value={profile.name}
-                          onChange={(e) =>
-                            setProfile({ ...profile, name: e.target.value })
-                          }
-                          disabled={!isEditing}
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="email">Email Address</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          value={profile.email}
-                          disabled
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="phone">Phone Number</Label>
-                        <Input
-                          id="phone"
-                          value={profile.phone}
-                          onChange={(e) =>
-                            setProfile({ ...profile, phone: e.target.value })
-                          }
-                          disabled={!isEditing}
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
                         <Label htmlFor="gender">Gender</Label>
                         <select
                           id="gender"
@@ -552,8 +539,8 @@ export default function ProfilePage() {
                           className="mt-1 w-full border rounded px-3 py-2"
                         >
                           <option value="">Select gender</option>
-                          <option value="female">Female</option>
                           <option value="male">Male</option>
+                          <option value="female">Female</option>
                           <option value="other">Other</option>
                         </select>
                       </div>
@@ -574,28 +561,46 @@ export default function ProfilePage() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="location">Location</Label>
-                        <Input
-                          id="location"
-                          value={profile.location}
-                          onChange={(e) =>
-                            setProfile({ ...profile, location: e.target.value })
-                          }
+                        <Label htmlFor="langauge_preference">Language Preference</Label>
+                        <select
+                          id="langauge_preference"
+                          value={profile.preferences?.language || "en"}
                           disabled={!isEditing}
-                          className="mt-1"
-                        />
+                          onChange={(e) =>
+                            setProfile({
+                              ...profile,
+                              preferences: {
+                                ...profile.preferences,
+                                language: e.target.value,
+                              },
+                            })
+                          }
+                          className="mt-1 w-full border rounded px-3 py-2"
+                        >
+                          <option value="en">English</option>
+                          <option value="amharic">Amharic</option>
+                        </select>
                       </div>
                       <div>
-                        <Label htmlFor="bio">Bio</Label>
-                        <Textarea
-                          id="bio"
-                          value={profile.bio}
-                          onChange={(e) =>
-                            setProfile({ ...profile, bio: e.target.value })
-                          }
+                        <Label>Profile Picture</Label>
+                        <input
+                          type="file"
+                          accept="image/*"
                           disabled={!isEditing}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = (ev) => {
+                                setProfile((p) => ({
+                                  ...p,
+                                  avatar: ev.target?.result as string,
+                                }));
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
                           className="mt-1"
-                          rows={4}
                         />
                       </div>
                     </div>

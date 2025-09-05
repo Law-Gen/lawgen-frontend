@@ -23,6 +23,17 @@ export default function ResetPasswordPage() {
 
   async function onReset(e: React.FormEvent) {
     e.preventDefault();
+    if (!token) {
+      setStatus({ type: "error", msg: "Invalid or missing reset token." });
+      return;
+    }
+    if (password.length < 8) {
+      setStatus({
+        type: "error",
+        msg: "Password must be at least 8 characters long.",
+      });
+      return;
+    }
     if (password !== confirm) {
       setStatus({ type: "error", msg: "Passwords do not match" });
       return;
