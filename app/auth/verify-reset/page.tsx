@@ -30,8 +30,10 @@ export default function VerifyResetOTPPage() {
         email,
         otp_code: otp,
       });
-      // Assume backend returns { reset_token: "..." }
-      const token = res.reset_token;
+      // Log the full backend response for debugging
+      console.log("/auth/verify-otp response:", res);
+      // Support both reset_token and password_reset_token from backend
+      const token = res.reset_token || res.password_reset_token || (res.data && (res.data.reset_token || res.data.password_reset_token));
       if (token) {
         setStatus({ type: "success", msg: "OTP verified!" });
         setTimeout(() => {
@@ -40,7 +42,7 @@ export default function VerifyResetOTPPage() {
           );
         }, 800);
       } else {
-        setStatus({ type: "error", msg: "No reset token received." });
+        setStatus({ type: "error", msg: "No reset token received. Response: " + JSON.stringify(res) });
       }
     } catch (err: any) {
       setStatus({

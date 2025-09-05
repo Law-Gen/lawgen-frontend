@@ -1,9 +1,8 @@
 "use client";
 
 import type React from "react";
-import { api } from "@/src/lib/api";
-import { useState, useEffect } from "react";
-import { signIn, useSession } from "next-auth/react";
+import { useState } from "react";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { MotionWrapper } from "@/components/ui/motion-wrapper";
 import { Button } from "@/components/ui/button";
@@ -23,67 +22,48 @@ export default function SignInPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { data: session, status } = useSession();
-  const [pendingRedirect, setPendingRedirect] = useState(false);
+  // No NextAuth session logic needed
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-    try {
-      const res = await fetch(
-        "https://lawgen-backend.onrender.com/auth/login",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        }
+    // Use NextAuth signIn with credentials provider
+    const result = await signIn("credentials", {
+      redirect: false,
+      email,
+      password,
+    });
+    if (result?.error) {
+      setError(
+        result.error === "CredentialsSignin"
+          ? "Invalid email or password"
+          : result.error
       );
-      const data = await res.json();
-      if (!res.ok) {
-        if (data?.error === "google") {
-          setError(
-            "This account was registered with Google. Please sign in using Google."
-          );
-        } else {
-          setError(data?.error || "Invalid email or password");
-        }
-        setIsLoading(false);
-        return;
-      }
-      // Store tokens if needed (localStorage/sessionStorage)
-      // localStorage.setItem("access_token", data.access_token);
-      // localStorage.setItem("refresh_token", data.refresh_token);
-
-      // Role-based redirect
-      const role = data.user?.role || data.role;
-      if (role === "admin") {
-        router.push("/admin");
-      } else if (role === "user" || role === "enterprise_user") {
-        router.push("/chat");
-      } else {
-        router.push("/"); // fallback
-      }
-    } catch (error: any) {
-      setError("Network error. Please try again.");
-    } finally {
       setIsLoading(false);
+      return;
     }
+    // Fetch session to get user role and access token
+    const res = await fetch("/api/auth/session");
+    const session = await res.json();
+    console.log('session',session)
+    
+    const role = session?.user?.role;
+    const accessToken = session?.accessToken;
+    if (accessToken) {
+      localStorage.setItem("access_token", accessToken);
+    }
+    if (role === "admin") {
+      router.push("/admin");
+    } else if (role === "user" || role === "enterprise_user") {
+      router.push("/chat");
+    } else {
+      router.push("/");
+    }
+    setIsLoading(false);
   };
 
-  // Role-based redirect after sign-in
-  useEffect(() => {
-    if (pendingRedirect && session) {
-      if (session.user?.role === "admin") {
-        router.push("/admin");
-      } else if (
-        session.user?.role === "user" ||
-        session.user?.role === "enterprise_user"
-      ) {
-        router.push("/chat");
-      }
-    }
-  }, [pendingRedirect, session, router]);
+  // No NextAuth session redirect logic needed
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10 flex items-center justify-center p-4">

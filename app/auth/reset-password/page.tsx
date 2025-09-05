@@ -14,6 +14,9 @@ export default function ResetPasswordPage() {
   const router = useRouter();
   const sp = useSearchParams();
   const token = sp.get("token") || "";
+  // Optionally get access token from localStorage for Bearer auth
+  const accessToken =
+    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [status, setStatus] = useState<null | {
@@ -40,7 +43,9 @@ export default function ResetPasswordPage() {
     }
     setStatus(null);
     try {
-      await api.post("/auth/reset-password", {
+      // Send both password_reset_token and reset_token for backend compatibility
+      const res = await api.post("/auth/reset-password", {
+        password_reset_token: token,
         reset_token: token,
         new_password: password,
       });
