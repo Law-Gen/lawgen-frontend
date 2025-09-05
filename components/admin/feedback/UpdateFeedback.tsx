@@ -23,7 +23,7 @@ import {
 } from "@/components/ui";
 
 import { motion, AnimatePresence } from "framer-motion";
-import type { Feedback } from "./FeedbackCard";
+import type { Feedback } from "@/src/store/slices/feedbackSlice";
 
 interface UpdateFeedbackProps {
   feedback: Feedback | null;
@@ -35,7 +35,6 @@ interface UpdateFeedbackProps {
 }
 
 const statusLabels = {
-  open: "Open",
   "in-progress": "In Progress",
   "under-review": "Under Review",
   resolved: "Resolved",
@@ -54,28 +53,12 @@ const severityColors = {
   low: "bg-green-100 text-green-800",
 };
 
-const typeIcons = {
-  bug: AlertTriangle,
-  feature: Lightbulb,
-  improvement: Zap,
-  general: MessageCircle,
-};
-
-const typeColors = {
-  bug: "text-red-600 bg-red-50",
-  feature: "text-yellow-600 bg-yellow-50",
-  improvement: "text-blue-600 bg-blue-50",
-  general: "text-gray-600 bg-gray-50",
-};
-
 export default function UpdateFeedback({
   feedback,
   isOpen,
   onClose,
   onUpdateStatus,
-}: //   onUpdateSeverity,
-//   onUpdateType,
-UpdateFeedbackProps) {
+}: UpdateFeedbackProps) {
   if (!feedback) return null;
 
   const handleSave = () => {
@@ -148,30 +131,24 @@ UpdateFeedbackProps) {
                     <User className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">
                       <span className="font-medium">Submitted by:</span>{" "}
-                      {feedback.submittedBy}
+                      {feedback.submitter_user_id}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">
-                      <span className="font-medium">Date:</span> {feedback.date}
+                      <span className="font-medium">Date:</span>{" "}
+                      {feedback.timestamp}
                     </span>
                   </div>
 
-                  {/* <div className="flex items-center gap-2">
-                    <span className="text-sm">
-                      <span className="font-medium">Category:</span>{" "}
-                      {feedback.category}
-                    </span>
-                  </div> */}
-
-                  {feedback.device && (
+                  {feedback.type && (
                     <div className="flex items-center gap-2">
                       <Monitor className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm">
                         <span className="font-medium">Device:</span>{" "}
-                        {feedback.device}
+                        {feedback.id}
                       </span>
                     </div>
                   )}

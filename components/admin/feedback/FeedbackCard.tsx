@@ -9,38 +9,26 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { motion } from "framer-motion";
-
-export interface Feedback {
-  id: string;
-  title: string;
-  description: string;
-  type: "bug" | "feature" | "improvement" | "general";
-  severity: "high" | "medium" | "low";
-  status: "open" | "in-progress" | "under-review" | "resolved";
-  submittedBy: string;
-  submittedByEmail: string;
-  date: string;
-  device?: string;
-}
+import type { Feedback } from "@/src/store/slices/feedbackSlice";
 
 interface FeedbackCardProps {
   feedback: Feedback;
   onViewDetails: (feedback: Feedback) => void;
 }
 
-const typeIcons = {
-  bug: AlertTriangle,
-  feature: Lightbulb,
-  improvement: Zap,
-  general: MessageCircle,
-};
+// const typeIcons = {
+//   bug: AlertTriangle,
+//   feature: Lightbulb,
+//   improvement: Zap,
+//   general: MessageCircle,
+// };
 
-const typeColors = {
-  bug: "text-red-600 bg-red-50",
-  feature: "text-yellow-600 bg-yellow-50",
-  improvement: "text-blue-600 bg-blue-50",
-  general: "text-gray-600 bg-gray-50",
-};
+// const typeColors = {
+//   bug: "text-red-600 bg-red-50",
+//   feature: "text-yellow-600 bg-yellow-50",
+//   improvement: "text-blue-600 bg-blue-50",
+//   general: "text-gray-600 bg-gray-50",
+// };
 
 const severityColors = {
   high: "bg-red-100 text-red-800",
@@ -56,7 +44,6 @@ const statusColors = {
 };
 
 const statusLabels = {
-  open: "Open",
   "in-progress": "In Progress",
   "under-review": "Under Review",
   resolved: "Resolved",
@@ -66,8 +53,6 @@ export default function FeedbackCard({
   feedback,
   onViewDetails,
 }: FeedbackCardProps) {
-  const TypeIcon = typeIcons[feedback.type];
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -77,9 +62,6 @@ export default function FeedbackCard({
       <Card className="h-full hover:shadow-md transition-shadow duration-200">
         <CardContent className="p-6">
           <div className="flex items-start justify-between mb-4">
-            <div className={`p-2 rounded-lg ${typeColors[feedback.type]}`}>
-              <TypeIcon className="h-5 w-5" />
-            </div>
             <div className="flex gap-2">
               <Badge
                 variant="outline"
@@ -93,7 +75,7 @@ export default function FeedbackCard({
           <div className="space-y-3">
             <div>
               <h3 className="font-semibold text-lg text-foreground line-clamp-2">
-                {feedback.title}
+                {feedback.type}
               </h3>
               <p className="text-sm text-muted-foreground mt-1 line-clamp-3">
                 {feedback.description}
@@ -115,15 +97,11 @@ export default function FeedbackCard({
             <div className="space-y-2 text-sm text-muted-foreground">
               <div>
                 <span className="font-medium">Submitted by:</span>{" "}
-                {feedback.submittedBy}
+                {feedback.submitter_user_id}
               </div>
               <div>
-                <span className="font-medium">Date:</span> {feedback.date}
+                <span className="font-medium">Date:</span> {feedback.timestamp}
               </div>
-              {/* <div>
-                <span className="font-medium">Category:</span>{" "}
-                {feedback.category}
-              </div> */}
             </div>
 
             <Button
