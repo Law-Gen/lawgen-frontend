@@ -19,14 +19,28 @@ export default function ForgotPasswordPage() {
 
   const router = useRouter();
 
+  const [status, setStatus] = useState<null | {
+    type: "success" | "error";
+    msg: string;
+  }>(null);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Mock API call: always succeed after short delay
-    setTimeout(() => {
+    setStatus(null);
+    try {
+      const res = await api.post("/auth/forgot-password", { email });
+      setStatus({
+        type: "success",
+        msg: res.message || "OTP sent to your email.",
+      });
+      setTimeout(() => {
+        router.push(`/auth/verify-reset?email=${encodeURIComponent(email)}`);
+      }, 1200);
+    } catch (err: any) {
+      setStatus({ type: "error", msg: err.message || "Failed to send OTP." });
+    } finally {
       setIsLoading(false);
-      router.push(`/auth/verify-reset?email=${encodeURIComponent(email)}`);
-    }, 800);
+    }
   };
 
   return (
@@ -70,6 +84,17 @@ export default function ForgotPasswordPage() {
               </MotionWrapper>
 
               <MotionWrapper animation="fadeInUp" delay={400}>
+                {status && (
+                  <div
+                    className={`text-center text-sm mb-2 ${
+                      status.type === "success"
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }`}
+                  >
+                    {status.msg}
+                  </div>
+                )}
                 <Button
                   type="submit"
                   className="w-full hover:scale-105 transition-transform"

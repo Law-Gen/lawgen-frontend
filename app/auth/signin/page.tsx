@@ -22,35 +22,56 @@ export default function SignInPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  // No NextAuth session logic needed
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-
-    try {
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        setError("Invalid email or password");
-      } else {
-        router.push("/chat");
-      }
-    } catch (error) {
-      setError("An error occurred. Please try again.");
-    } finally {
+    // Use NextAuth signIn with credentials provider
+    const result = await signIn("credentials", {
+      redirect: false,
+      email,
+      password,
+    });
+    if (result?.error) {
+      setError(
+        result.error === "CredentialsSignin"
+          ? "Invalid email or password"
+          : result.error
+      );
       setIsLoading(false);
+      return;
     }
+    // Fetch session to get user role and access token
+    const res = await fetch("/api/auth/session");
+    const session = await res.json();
+    console.log('session',session)
+    
+    const role = session?.user?.role;
+    const accessToken = session?.accessToken;
+    if (accessToken) {
+      localStorage.setItem("access_token", accessToken);
+    }
+    if (role === "admin") {
+      router.push("/admin");
+    } else if (role === "user" || role === "enterprise_user") {
+      router.push("/chat");
+    } else {
+      router.push("/");
+    }
+    setIsLoading(false);
   };
+
+  // No NextAuth session redirect logic needed
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10 flex items-center justify-center p-4">
       <MotionWrapper animation="scaleIn">
-        <Card className="w-full max-w-md">
+        <Card
+          className="w-full max-w-md"
+          style={{ width: "350px", maxWidth: "90vw" }}
+        >
           <CardHeader className="text-center">
             <MotionWrapper animation="fadeInUp">
               <Link href="/" className="inline-block">
@@ -152,14 +173,6 @@ export default function SignInPage() {
                     >
                       Sign up
                     </Link>
-                  </p>
-                </div>
-              </MotionWrapper>
-
-              <MotionWrapper animation="fadeInUp" delay={800}>
-                <div className="text-center">
-                  <p className="text-xs text-muted-foreground">
-                    Demo: email: demo@legalaid.com, password: demo123
                   </p>
                 </div>
               </MotionWrapper>

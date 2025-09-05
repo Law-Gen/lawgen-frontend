@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { api } from "@/src/lib/api";
 import { MotionWrapper } from "@/components/ui/motion-wrapper";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,8 +25,6 @@ interface UserProfile {
   name: string;
   email: string;
   phone: string;
-  location: string;
-  bio: string;
   avatar?: string;
   birthdate?: string;
   gender?: "male" | "female" | "other";
@@ -165,32 +164,113 @@ export default function ProfilePage() {
     setPasswordSuccess("");
     setPasswordLoading(true);
     try {
-      const res = await fetch("/users/me/password", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          old_password: oldPassword,
-          new_password: newPassword,
-        }),
-      });
+      let token = "";
+      if (typeof window !== "undefined") {
+        token = localStorage.getItem("access_token") || "";
+      }
+      const res = await fetch(
+        "https://lawgen-backend.onrender.com/users/me/change-password",
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            old_password: oldPassword,
+            new_password: newPassword,
+          }),
+        }
+      );
       if (res.ok) {
-        setPasswordSuccess("Password updated successfully.");
+        setPasswordSuccess("Password changed successfully");
         setOldPassword("");
         setNewPassword("");
         setShowPasswordForm(false);
+        window.confirm("Your password has been changed successfully.");
       } else {
-        const data = await res.json();
-        setPasswordError(data?.message || "Failed to update password.");
+        let errMsg = "Failed to change password.";
+        try {
+          const data = await res.json();
+          console.error("Change password backend error:", data);
+          errMsg = data?.message || JSON.stringify(data) || errMsg;
+        } catch (e) {
+          errMsg += " (no JSON error body)";
+        }
+        setPasswordError(errMsg);
+        alert("Backend error: " + errMsg);
       }
-    } catch {
-      setPasswordError("Failed to update password.");
+    } catch (err: any) {
+      setPasswordError(err?.message || "Failed to change password.");
+      alert("Request error: " + (err?.message || "Failed to change password."));
     } finally {
       setPasswordLoading(false);
     }
   };
   const { data: session } = useSession();
   const router = useRouter();
-  const [profile, setProfile] = useState<UserProfile>(mockUserProfile);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileError, setProfileError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchProfile() {
+      setProfileLoading(true);
+      setProfileError(null);
+      try {
+        let token = "";
+        if (typeof window !== "undefined") {
+          token = localStorage.getItem("access_token") || "";
+        }
+        const res = await api.get("/users/me", {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        // Map backend response to UserProfile shape
+        const d = res.data;
+        const mappedProfile: UserProfile = {
+          name: d.full_name || "",
+          email: d.email || "",
+          phone: d.profile?.phone || "",
+          avatar: d.profile?.profile_picture_url || "",
+          birthdate: d.profile?.birth_date || "",
+          gender: d.profile?.gender || "",
+          joinDate: d.created_at || "",
+          subscription: {
+            plan: (d.subscription_status || "free") as any,
+            status: "active",
+            features: [],
+          },
+          usage: {
+            chatMessages: 0,
+            chatLimit: 0,
+            quizzesTaken: 0,
+            quizLimit: 0,
+            documentsGenerated: 0,
+            documentLimit: 0,
+          },
+          preferences: {
+            // Map backend value ('en'|'am'|'english'|'amharic') to frontend value
+            language:
+              d.profile?.language_preference === "amharic" ||
+              d.profile?.language_preference === "am"
+                ? "amharic"
+                : d.profile?.language_preference === "english" ||
+                  d.profile?.language_preference === "en"
+                ? "english"
+                : "english",
+            notifications: { email: true, sms: false, push: false },
+            privacy: { profileVisible: true, shareUsageData: false },
+          },
+        };
+        setProfile(mappedProfile);
+      } catch (err: any) {
+        setProfileError(err.message || "Failed to load profile");
+      } finally {
+        setProfileLoading(false);
+      }
+    }
+    fetchProfile();
+  }, [session]);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   // Mobile sidebar state
@@ -201,10 +281,107 @@ export default function ProfilePage() {
     router.push("/auth/signin");
     return null;
   }
+  if (profileLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        Loading profile...
+      </div>
+    );
+  }
+  if (profileError) {
+    return (
+      <div className="flex justify-center items-center min-h-screen text-red-600">
+        {profileError}
+      </div>
+    );
+  }
+  if (!profile) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        No profile data found.
+      </div>
+    );
+  }
 
-  const handleSaveProfile = () => {
-    // Here you would typically save to your backend
-    setIsEditing(false);
+  const handleSaveProfile = async () => {
+    if (!profile) return;
+    // Validate gender
+    if (
+      !profile.gender ||
+      !["male", "female", "other"].includes(profile.gender)
+    ) {
+      alert("Please select a gender.");
+      return;
+    }
+    if (
+      !profile.preferences.language ||
+      !["english", "amharic"].includes(profile.preferences.language)
+    ) {
+      alert("Please select a language preference.");
+      return;
+    }
+    // Validate and format birthdate
+    let birth_date = (profile.birthdate || "").trim();
+    // Accept both YYYY-MM-DD and MM/DD/YYYY, convert to YYYY-MM-DD
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(birth_date)) {
+      // MM/DD/YYYY to YYYY-MM-DD
+      const [mm, dd, yyyy] = birth_date.split("/");
+      birth_date = `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(birth_date)) {
+      alert("Please enter a valid birthdate in YYYY-MM-DD format.");
+      return;
+    }
+    let token = "";
+    if (typeof window !== "undefined") {
+      token = localStorage.getItem("access_token") || "";
+    }
+    const formData = new FormData();
+    const gender = profile.gender.trim();
+    // Always send language as 'en' or 'am' for backend
+    let langPref = profile.preferences.language;
+    if (langPref === "english") langPref = "en";
+    if (langPref === "amharic") langPref = "am";
+    formData.append("gender", gender);
+    formData.append("birth_date", birth_date);
+    formData.append("langauge_preference", langPref);
+    // Only include profile_picture if uploading a new image
+    if (
+      profile.avatar &&
+      typeof profile.avatar !== "string" &&
+      typeof window !== "undefined" &&
+      window.File &&
+      (profile.avatar as any) instanceof window.File
+    ) {
+      formData.append("profile_picture", profile.avatar);
+    }
+    for (const [key, value] of formData.entries()) {
+      console.log("FormData:", key, value);
+    }
+    try {
+      const res = await fetch("https://lawgen-backend.onrender.com/users/me", {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+      if (!res.ok) {
+        let errMsg = "Failed to update profile";
+        try {
+          const errData = await res.json();
+          console.error("Backend error response:", errData);
+          errMsg = JSON.stringify(errData, null, 2);
+        } catch (e) {
+          errMsg += " (no JSON error body)";
+        }
+        alert("Backend error: " + errMsg);
+        throw new Error(errMsg);
+      }
+      setIsEditing(false);
+    } catch (err: any) {
+      alert(err.message || "Failed to update profile");
+    }
   };
 
   const handleUpgrade = (planId: string) => {
@@ -309,7 +486,7 @@ export default function ProfilePage() {
             variant="outline"
             size="sm"
             className="w-full text-primary dark:text-white border-primary hover:bg-primary hover:!text-white transition-colors"
-            onClick={() => signOut()}
+            onClick={() => signOut({ callbackUrl: "/" })}
           >
             Sign Out
           </Button>
@@ -360,7 +537,7 @@ export default function ProfilePage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => signOut()}
+              onClick={() => signOut({ callbackUrl: "/" })}
               className="bg-transparent hover:bg-primary hover:text-white text-primary dark:text-white border-primary"
             >
               Sign Out
@@ -435,14 +612,10 @@ export default function ProfilePage() {
                             onChange={(e) => {
                               const file = e.target.files?.[0];
                               if (file) {
-                                const reader = new FileReader();
-                                reader.onload = (ev) => {
-                                  setProfile((p) => ({
-                                    ...p,
-                                    avatar: ev.target?.result as string,
-                                  }));
-                                };
-                                reader.readAsDataURL(file);
+                                setProfile((p) => ({
+                                  ...p,
+                                  avatar: file, // store File object directly
+                                }));
                               }
                             }}
                           />
@@ -525,44 +698,40 @@ export default function ProfilePage() {
                           className="mt-1"
                         />
                       </div>
-                      <div>
-                        <Label htmlFor="phone">Phone Number</Label>
-                        <Input
-                          id="phone"
-                          value={profile.phone}
-                          onChange={(e) =>
-                            setProfile({ ...profile, phone: e.target.value })
-                          }
-                          disabled={!isEditing}
-                          className="mt-1"
-                        />
-                      </div>
+                      {/* Phone number field removed as requested */}
                       <div>
                         <Label htmlFor="gender">Gender</Label>
                         <select
                           id="gender"
-                          value={profile.gender || ""}
+                          value={profile.gender || "male"}
                           disabled={!isEditing}
                           onChange={(e) =>
                             setProfile({
                               ...profile,
-                              gender: e.target.value as any,
+                              gender: e.target.value as
+                                | "male"
+                                | "female"
+                                | "other",
                             })
                           }
                           className="mt-1 w-full border rounded px-3 py-2"
                         >
-                          <option value="">Select gender</option>
-                          <option value="female">Female</option>
                           <option value="male">Male</option>
+                          <option value="female">Female</option>
                           <option value="other">Other</option>
                         </select>
                       </div>
                       <div>
                         <Label htmlFor="birthdate">Birthdate</Label>
-                        <Input
+                        <input
                           id="birthdate"
                           type="date"
-                          value={profile.birthdate || ""}
+                          value={
+                            profile.birthdate &&
+                            /^\d{4}-\d{2}-\d{2}$/.test(profile.birthdate)
+                              ? profile.birthdate
+                              : ""
+                          }
                           disabled={!isEditing}
                           onChange={(e) =>
                             setProfile({
@@ -570,33 +739,36 @@ export default function ProfilePage() {
                               birthdate: e.target.value,
                             })
                           }
-                          className="mt-1"
+                          className="mt-1 w-full border rounded px-3 py-2"
+                          pattern="\d{4}-\d{2}-\d{2}"
+                          placeholder="YYYY-MM-DD"
+                          required
                         />
                       </div>
                       <div>
-                        <Label htmlFor="location">Location</Label>
-                        <Input
-                          id="location"
-                          value={profile.location}
-                          onChange={(e) =>
-                            setProfile({ ...profile, location: e.target.value })
-                          }
+                        <Label htmlFor="language_preference">
+                          Language Preference
+                        </Label>
+                        <select
+                          id="language_preference"
+                          value={profile.preferences.language}
                           disabled={!isEditing}
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="bio">Bio</Label>
-                        <Textarea
-                          id="bio"
-                          value={profile.bio}
-                          onChange={(e) =>
-                            setProfile({ ...profile, bio: e.target.value })
-                          }
-                          disabled={!isEditing}
-                          className="mt-1"
-                          rows={4}
-                        />
+                          onChange={(e) => {
+                            setProfile({
+                              ...profile,
+                              preferences: {
+                                ...profile.preferences,
+                                language: e.target.value as
+                                  | "english"
+                                  | "amharic",
+                              },
+                            });
+                          }}
+                          className="mt-1 w-full border rounded px-3 py-2"
+                        >
+                          <option value="en">English</option>
+                          <option value="amharic">Amharic</option>
+                        </select>
                       </div>
                     </div>
                     <div className="space-y-4">

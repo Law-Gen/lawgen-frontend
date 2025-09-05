@@ -19,7 +19,6 @@ interface GeneralSettingsData {
   timezone: string;
   language: string;
   dateFormat: string;
-  isDarkMode: boolean;
 }
 
 interface GeneralSettingsProps {
@@ -33,7 +32,6 @@ export default function GeneralSetting({ data, onSave }: GeneralSettingsProps) {
     timezone: data?.timezone || "eastern",
     language: data?.language || "english",
     dateFormat: data?.dateFormat || "mmddyyyy",
-    isDarkMode: data?.isDarkMode || false,
   });
 
   const handleSave = () => {
@@ -130,13 +128,6 @@ export default function GeneralSetting({ data, onSave }: GeneralSettingsProps) {
               Switch between light and dark themes
             </p>
           </div>
-          <Switch
-            id="darkMode"
-            checked={settings.isDarkMode}
-            onCheckedChange={(checked) =>
-              setSettings((prev) => ({ ...prev, isDarkMode: checked }))
-            }
-          />
         </div>
       </div>
 
