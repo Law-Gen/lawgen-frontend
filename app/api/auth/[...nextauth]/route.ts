@@ -1,4 +1,5 @@
 import NextAuth from "next-auth";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 import CredentialsProvider from "next-auth/providers/credentials";
 import type { NextAuthOptions, User } from "next-auth";
 
@@ -49,17 +50,14 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
         try {
-          const res = await fetch(
-            "https://lawgen-backend.onrender.com/auth/login",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                email: credentials.email,
-                password: credentials.password,
-              }),
-            }
-          );
+          const res = await fetch(`${API_BASE_URL}/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: credentials.email,
+              password: credentials.password,
+            }),
+          });
           let data;
           try {
             data = await res.json();
@@ -126,15 +124,12 @@ export const authOptions: NextAuthOptions = {
       // If token is expired, try to refresh
       if (token.refreshToken) {
         try {
-          const res = await fetch(
-            "https://lawgen-backend.onrender.com/auth/refresh",
-            {
-              method: "POST",
-              headers: {
-                "X-Refresh-Token": token.refreshToken,
-              },
-            }
-          );
+          const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
+            method: "POST",
+            headers: {
+              "X-Refresh-Token": token.refreshToken,
+            },
+          });
           const data = await res.json();
           if (res.ok && data.access_token) {
             token.accessToken = data.access_token;

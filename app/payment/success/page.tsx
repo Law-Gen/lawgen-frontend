@@ -23,8 +23,8 @@ export default function SuccessPage() {
   useEffect(() => {
     const planId = localStorage.getItem("selected_plan");
     console.log("selected_plan", planId);
-    const tx_ref = searchParams.get("tx_ref");
-    const chapaStatus = searchParams.get("status");
+    const tx_ref = searchParams?.get("tx_ref");
+    const chapaStatus = searchParams?.get("status");
 
     if (!planId) {
       setError("Could not find the selected plan. Please try again.");

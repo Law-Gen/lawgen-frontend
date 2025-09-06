@@ -74,4 +74,14 @@ export const api = {
     });
     return handle(res);
   },
+  refreshToken: async (refreshToken: string) => {
+    const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
+      method: "POST",
+      headers: {
+        "X-Refresh-Token": refreshToken,
+      },
+      credentials: "include",
+    });
+    return res;
+  },
 };

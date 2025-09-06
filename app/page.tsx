@@ -154,13 +154,6 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(139,92,246,0.1),transparent_50%)]"></div>
 
         <div className="container mx-auto px-4 text-center relative z-10">
-          <MotionWrapper animation="fadeInUp">
-            <div className="inline-flex items-center gap-2 bg-accent/20 text-accent-foreground px-6 py-3 rounded-full text-sm font-medium mb-8 hover:scale-105 transition-transform">
-              <span className="w-2 h-2 bg-accent rounded-full animate-pulse"></span>
-              Trusted by 10,000+ users across Ethiopia
-            </div>
-          </MotionWrapper>
-
           <MotionWrapper animation="fadeInUp" delay={200}>
             <h2 className="text-5xl md:text-7xl lg:text-8xl font-bold text-primary mb-8 text-balance leading-tight">
               Legal Information &

@@ -153,11 +153,21 @@ const difficultyColors = {
 };
 
 export default function CategoriesPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  // Require sign-in for categories
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      window.location.href = "/auth/signin";
+    }
+  }, [status]);
+  if (status === "loading") {
+    return <div className="flex justify-center items-center h-64 text-lg">Loading...</div>;
+  }
   const [selectedCategory, setSelectedCategory] =
     useState<LegalCategory | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { theme, setTheme } = useTheme();
+  // Legal categories are public, no signin required
 
   if (selectedCategory) {
     return (

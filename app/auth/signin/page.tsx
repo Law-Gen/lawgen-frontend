@@ -46,12 +46,16 @@ export default function SignInPage() {
     // Fetch session to get user role and access token
     const res = await fetch("/api/auth/session");
     const session = await res.json();
-    console.log('session',session)
-    
+    console.log("session", session);
+
     const role = session?.user?.role;
     const accessToken = session?.accessToken;
+    const userId = session?.user?.id;
     if (accessToken) {
       localStorage.setItem("access_token", accessToken);
+    }
+    if (userId) {
+      localStorage.setItem("user_id", userId);
     }
     if (role === "admin") {
       router.push("/admin");

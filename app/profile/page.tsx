@@ -1,6 +1,9 @@
 "use client";
 
+import type React from "react";
+
 import { useState, useEffect } from "react";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 import { api } from "@/src/lib/api";
 import { MotionWrapper } from "@/components/ui/motion-wrapper";
 import { Button } from "@/components/ui/button";
@@ -8,13 +11,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BottomNavigation } from "@/components/ui/bottom-navigation";
+import { LanguageToggle } from "@/components/ui/language-toggle";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { MainNavigation } from "@/components/ui/main-navigation";
+import FeedbackForm from "@/components/feedback-form";
 import { useTheme } from "next-themes";
 import ChapaPayment from "@/components/payment/ChapaPayment";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -23,11 +31,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { LanguageToggle } from "@/components/ui/language-toggle";
-import { BottomNavigation } from "@/components/ui/bottom-navigation";
+// import { LanguageToggle } from "@/components/ui/language-toggle";
+// import { BottomNavigation } from "@/components/ui/bottom-navigation";
 import { toast } from "@/hooks/use-toast";
 
-// Interfaces
 interface UserProfile {
   name: string;
   email: string;
@@ -101,15 +108,67 @@ const staticPlanFeatures: Record<
 };
 
 export default function ProfilePage() {
-  const { data: session } = useSession();
-  //if session set the access token on local storage
-  useEffect(() => {
-    if (session) {
-      localStorage.setItem("access_token", session?.accessToken ?? "");
-      localStorage.setItem("refresh_token", session?.refreshToken ?? "");
+  // Change Password form state (must be inside the component)
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError("");
+    setPasswordSuccess("");
+    setPasswordLoading(true);
+    try {
+      let token = "";
+      if (typeof window !== "undefined") {
+        token = localStorage.getItem("access_token") || "";
+      }
+      const res = await fetch(`${API_BASE_URL}/users/me/change-password`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          old_password: oldPassword,
+          new_password: newPassword,
+        }),
+      });
+      if (res.ok) {
+        setPasswordSuccess("Password changed successfully");
+        setOldPassword("");
+        setNewPassword("");
+        setShowPasswordForm(false);
+        window.confirm("Your password has been changed successfully.");
+      } else {
+        let errMsg = "Failed to change password.";
+        try {
+          const data = await res.json();
+          console.error("Change password backend error:", data);
+          errMsg = data?.message || JSON.stringify(data) || errMsg;
+        } catch (e) {
+          errMsg += " (no JSON error body)";
+        }
+        setPasswordError(errMsg);
+        alert("Backend error: " + errMsg);
+      }
+    } catch (err: any) {
+      setPasswordError(err?.message || "Failed to change password.");
+      alert("Request error: " + (err?.message || "Failed to change password."));
+    } finally {
+      setPasswordLoading(false);
     }
-  }, [session]);
+  };
+  const { data: session, status } = useSession();
   const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/signin");
+    }
+  }, [status, router]);
 
   // State management
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -131,16 +190,25 @@ export default function ProfilePage() {
 
   // Fetching data
   useEffect(() => {
+    let didRefresh = false;
     async function fetchProfile() {
-      if (!session) return;
-      console.log("Fetching profile with session:", session);
+      // If there's no session yet (still loading auth), stop the loading spinner
+      if (!session) {
+        setProfileLoading(false);
+        return;
+      }
+      // console.log("Fetching profile with session:", session);
       setProfileLoading(true);
       try {
-        const res = await api.get("/users/me", {
+        const res: any = await api.get("/users/me", {
           headers: {
-            Authorization: `Bearer ${session?.accessToken}`,
+            Authorization: `Bearer ${
+              session?.accessToken || localStorage.getItem("access_token") || ""
+            }`,
           },
         });
+        // Our lightweight api.get already returns parsed JSON, not { data: ... }
+        // console.log("Fetched profile on profile page:", res.data);
         const d = res.data;
         const mappedProfile: UserProfile = {
           name: d.full_name || "",
@@ -161,6 +229,28 @@ export default function ProfilePage() {
         };
         setProfile(mappedProfile);
       } catch (err: any) {
+        // If unauthorized, try refresh token ONCE
+        if (
+          !didRefresh &&
+          (err.message?.includes("401") ||
+            err.message?.toLowerCase().includes("unauthorized"))
+        ) {
+          didRefresh = true;
+          try {
+            const refreshToken = localStorage.getItem("refresh_token");
+            if (refreshToken) {
+              const refreshRes = await api.refreshToken(refreshToken);
+              if (refreshRes.ok) {
+                const data = await refreshRes.json();
+                if (data.access_token) {
+                  localStorage.setItem("access_token", data.access_token);
+                  // Retry fetchProfile ONCE with new token
+                  return fetchProfile();
+                }
+              }
+            }
+          } catch {}
+        }
         setProfileError(err.message || "Failed to load profile");
       } finally {
         setProfileLoading(false);
@@ -171,26 +261,34 @@ export default function ProfilePage() {
 
   useEffect(() => {
     async function fetchPlans() {
+      if (!session) {
+        setPlansLoading(false);
+        return;
+      }
       setPlansLoading(true);
       try {
-        const res = await api.get("/subscriptions/plans", {
+        const res: any = await api.get("/subscriptions/plans", {
           headers: {
-            Authorization: `Bearer ${session?.accessToken}`,
+            Authorization: `Bearer ${
+              session?.accessToken || localStorage.getItem("access_token") || ""
+            }`,
           },
         });
         console.log("Fetched plans:", res);
 
-        const mergedPlans = res?.map((plan: any) => {
-          const staticFeatures = staticPlanFeatures[
-            plan.name.toLowerCase() as keyof typeof staticPlanFeatures
-          ] || { features: [], limitations: [], popular: false };
-          return {
-            id: plan.id,
-            name: plan.name,
-            price: plan.price,
-            ...staticFeatures,
-          };
-        });
+        const mergedPlans = (Array.isArray(res) ? res : res?.plans || [])?.map(
+          (plan: any) => {
+            const staticFeatures = staticPlanFeatures[
+              plan.name.toLowerCase() as keyof typeof staticPlanFeatures
+            ] || { features: [], limitations: [], popular: false };
+            return {
+              id: plan.id,
+              name: plan.name,
+              price: plan.price,
+              ...staticFeatures,
+            };
+          }
+        );
         setPlans(mergedPlans);
       } catch (err: any) {
         setPlansError(err.message || "Failed to load subscription plans.");
@@ -199,18 +297,10 @@ export default function ProfilePage() {
       }
     }
     fetchPlans();
-  }, []);
+  }, [session]);
 
   // Handlers
-  const handleUpgrade = (plan: Plan) => {
-    if (profile?.subscription.plan === plan.id) return;
-    setSelectedPlan(plan);
-    //set selected plan in local storage
-    localStorage.setItem("selected_plan", JSON.stringify(plan.id));
-    console.log(plan);
-    // console.log("selected_plan", plan.id);
-    setPaymentModalOpen(true);
-  };
+  // Removed duplicate handleUpgrade function
 
   const handleCancelSubscription = () => {
     setIsCancelModalOpen(true);
@@ -223,21 +313,22 @@ export default function ProfilePage() {
       await api.post("/subscriptions/cancel", null, {
         headers: {
           Authorization: `Bearer ${
-            session?.accessToken || localStorage.getItem("access_token")
+            session?.accessToken || localStorage.getItem("access_token") || ""
           }`,
         },
       });
 
       toast({
         title: "Subscription Cancelled",
-        description: "Your subscription has been cancelled successfully. You've been downgraded to the free plan.",
+        description:
+          "Your subscription has been cancelled successfully. You've been downgraded to the free plan.",
       });
       // Refetch profile to update UI
 
       const res = await api.get("/users/me", {
         headers: {
           Authorization: `Bearer ${
-            session?.accessToken || localStorage.getItem("access_token")
+            session?.accessToken || localStorage.getItem("access_token") || ""
           }`,
         },
       });
@@ -256,48 +347,49 @@ export default function ProfilePage() {
     } catch (err: any) {
       toast({
         title: "Cancellation Failed",
-        description: err.message || "Failed to cancel subscription. Please try again.",
+        description:
+          err.message || "Failed to cancel subscription. Please try again.",
         variant: "destructive",
       });
     }
   };
 
-  const handleSaveProfile = async () => {
-    if (!profile) return;
-    try {
-      const payload = {
-        full_name: profile.name,
-        profile: {
-          phone: profile.phone,
-          birth_date: profile.birthdate,
-          gender: profile.gender,
-          language_preference:
-            profile.preferences.language === "amharic" ? "am" : "en",
-        },
-      };
-      await api.put("/users/me", payload);
-      setIsEditing(false);
-      toast({
-        title: "Profile Updated",
-        description: "Your profile has been updated successfully.",
-      });
-    } catch (err: any) {
-      toast({
-        title: "Update Failed",
-        description: err.message || "Failed to update profile. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
+  // const handleSaveProfile = async () => {
+  //   if (!profile) return;
+  //   try {
+  //     const payload = {
+  //       full_name: profile.name,
+  //       profile: {
+  //         phone: profile.phone,
+  //         birth_date: profile.birthdate,
+  //         gender: profile.gender,
+  //         language_preference:
+  //           profile.preferences.language === "amharic" ? "am" : "en",
+  //       },
+  //     };
+  //     await api.put("/users/me", payload);
+  //     setIsEditing(false);
+  //     toast({
+  //       title: "Profile Updated",
+  //       description: "Your profile has been updated successfully.",
+  //     });
+  //   } catch (err: any) {
+  //     toast({
+  //       title: "Update Failed",
+  //       description: err.message || "Failed to update profile. Please try again.",
+  //       variant: "destructive",
+  //     });
+  //   }
+  // };
 
-  // Redirect if not logged in
-  if (!session && !profileLoading) {
-    router.push("/auth/signin");
-    return null;
-  }
+  // Redirect if not logged in - MOVED TO useEffect to prevent render error
+  // if (!session && !profileLoading) {
+  //   router.push("/auth/signin");
+  //   return null;
+  // }
 
   // Loading and error states
-  if (profileLoading) {
+  if (status === "loading" || profileLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         Loading profile...
@@ -319,6 +411,102 @@ export default function ProfilePage() {
     );
   }
 
+  const handleSaveProfile = async () => {
+    if (!profile) return;
+    // Validate gender
+    if (
+      !profile.gender ||
+      !["male", "female", "other"].includes(profile.gender)
+    ) {
+      alert("Please select a gender.");
+      return;
+    }
+    if (
+      !profile.preferences.language ||
+      !["english", "amharic"].includes(profile.preferences.language)
+    ) {
+      alert("Please select a language preference.");
+      return;
+    }
+    // Validate and format birthdate
+    let birth_date = (profile.birthdate || "").trim();
+    // Accept both YYYY-MM-DD and MM/DD/YYYY, convert to YYYY-MM-DD
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(birth_date)) {
+      // MM/DD/YYYY to YYYY-MM-DD
+      const [mm, dd, yyyy] = birth_date.split("/");
+      birth_date = `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(birth_date)) {
+      alert("Please enter a valid birthdate in YYYY-MM-DD format.");
+      return;
+    }
+    let token = "";
+    if (typeof window !== "undefined") {
+      token = localStorage.getItem("access_token") || "";
+    }
+    const formData = new FormData();
+    const gender = profile.gender.trim();
+    // Always send language as 'en' or 'am' for backend
+    let langPref: string = profile.preferences.language;
+    if (langPref === "english") langPref = "en";
+    else if (langPref === "amharic") langPref = "am";
+    formData.append("gender", gender);
+    formData.append("birth_date", birth_date);
+    formData.append("language_preference", langPref);
+    // Only include profile_picture if uploading a new image
+    if (
+      profile.avatar &&
+      typeof profile.avatar !== "string" &&
+      typeof window !== "undefined" &&
+      window.File &&
+      (profile.avatar as any) instanceof window.File
+    ) {
+      formData.append("profile_picture", profile.avatar);
+    }
+    for (const [key, value] of formData.entries()) {
+      console.log("FormData:", key, value);
+    }
+    try {
+      const res = await fetch(`${API_BASE_URL}/users/me`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+      if (!res.ok) {
+        let errMsg = "Failed to update profile";
+        try {
+          const errData = await res.json();
+          console.error("Backend error response:", errData);
+          errMsg = JSON.stringify(errData, null, 2);
+        } catch (e) {
+          errMsg += " (no JSON error body)";
+        }
+        alert("Backend error: " + errMsg);
+        throw new Error(errMsg);
+      }
+      setIsEditing(false);
+    } catch (err: any) {
+      alert(err.message || "Failed to update profile");
+    }
+  };
+
+  const handleUpgrade = (plan: Plan) => {
+    if (profile?.subscription.plan === plan.id) return;
+    setSelectedPlan(plan);
+    //set selected plan in local storage
+    localStorage.setItem("selected_plan", plan.id);
+    console.log(plan);
+    // console.log("selected_plan", plan.id);
+    setPaymentModalOpen(true);
+  };
+
+  const getUsagePercentage = (used: number, limit: number) => {
+    return Math.min((used / limit) * 100, 100);
+  };
+
+  // Plan color helper
   const getPlanColor = (plan: string) => {
     switch (plan) {
       case "free":
@@ -373,22 +561,94 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-16">
-      {isPaymentModalOpen && selectedPlan && profile && (
-        <ChapaPayment
-          plan={{
-            id: selectedPlan.id,
-            name: selectedPlan.name,
-            price: selectedPlan.price,
-          }}
-          user={{
-            name: profile.name,
-            email: profile.email,
-          }}
-          tx_ref={`lawgen-${profile.email.split("@")[0]}-${Date.now()}`}
-          onClose={() => setPaymentModalOpen(false)}
-        />
-      )}
+    // <div>
+    //     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10 pb-16 overflow-x-hidden">
+    //   {/* Mobile Sidebar (RIGHT SIDE) */}
+    //   <div
+    //     className={`fixed inset-0 z-[100] bg-black/40 transition-opacity ${
+    //       sidebarOpen ? "block md:hidden" : "hidden"
+    //     }`}
+    //     onClick={() => setSidebarOpen(false)}
+    //   />
+    //   <aside
+    //     className={`fixed top-0 right-0 z-[101] h-full w-64 bg-card dark:bg-zinc-900 shadow-lg transform transition-transform duration-300 ${
+    //       sidebarOpen ? "translate-x-0" : "translate-x-full"
+    //     } md:hidden`}
+    //   >
+    //     <div className="flex flex-col h-full p-6 gap-6">
+    //       <div className="flex items-center justify-between mb-4">
+    //         <span className="text-lg font-bold text-primary">Menu</span>
+    //         <button
+    //           onClick={() => setSidebarOpen(false)}
+    //           aria-label="Close sidebar"
+    //           className="text-2xl"
+    //         >
+    //           &times;
+    //         </button>
+
+    //   <div className="min-h-screen bg-background pb-16">
+    //     {isPaymentModalOpen && selectedPlan && profile && (
+    //       <ChapaPayment
+    //         plan={{
+    //           id: selectedPlan.id,
+    //         name: selectedPlan.name,
+    //         price: selectedPlan.price,
+    //       }}
+    //       user={{
+    //         name: profile.name,
+    //         email: profile.email,
+    //       }}
+    //       tx_ref={`lawgen-${profile.email.split("@")[0]}-${Date.now()}`}
+    //       onClose={() => setPaymentModalOpen(false)}
+    //     />
+    //   )}
+    //  <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10 pb-16 overflow-x-hidden">
+    <div>
+      {/* Mobile Sidebar (RIGHT SIDE) */}
+      <div
+        className={`fixed inset-0 z-[100] bg-black/40 transition-opacity ${
+          sidebarOpen ? "block md:hidden" : "hidden"
+        }`}
+        onClick={() => setSidebarOpen(false)}
+      />
+      <aside
+        className={`fixed top-0 right-0 z-[101] h-full w-64 bg-card dark:bg-zinc-900 shadow-lg transform transition-transform duration-300 ${
+          sidebarOpen ? "translate-x-0" : "translate-x-full"
+        } md:hidden`}
+      >
+        <div className="flex flex-col h-full p-6 gap-6">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-lg font-bold text-primary">Menu</span>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Close sidebar"
+              className="text-2xl"
+            >
+              &times;
+            </button>
+          </div>
+          {/* You can add mobile nav items here */}
+        </div>
+      </aside>
+
+      {/* <div className="min-h-screen bg-background pb-16"> */}
+      <div>
+        {isPaymentModalOpen && selectedPlan && profile && (
+          <ChapaPayment
+            plan={{
+              id: selectedPlan.id,
+              name: selectedPlan.name,
+              price: selectedPlan.price,
+            }}
+            user={{
+              name: profile.name,
+              email: profile.email,
+            }}
+            tx_ref={`lawgen-${profile.email.split("@")[0]}-${Date.now()}`}
+            onClose={() => setPaymentModalOpen(false)}
+          />
+        )}
+      </div>
 
       {/* Cancel Subscription Modal */}
       <Dialog open={isCancelModalOpen} onOpenChange={setIsCancelModalOpen}>
@@ -490,6 +750,13 @@ export default function ProfilePage() {
             <TabsTrigger value="feedback">Feedback</TabsTrigger>
           </TabsList>
 
+          {/* Feedback Tab */}
+          <TabsContent value="feedback" className="space-y-6 min-h-[100vh]">
+            <MotionWrapper animation="fadeInUp">
+              <FeedbackForm />
+            </MotionWrapper>
+          </TabsContent>
+
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
             <MotionWrapper animation="fadeInUp">
@@ -499,14 +766,16 @@ export default function ProfilePage() {
                     <CardTitle className="text-primary">
                       Profile Information
                     </CardTitle>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsEditing(!isEditing)}
-                      className="bg-transparent hover:scale-105 transition-transform"
-                    >
-                      {isEditing ? "Cancel" : "Edit Profile"}
-                    </Button>
+                    {!isEditing && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsEditing(true)}
+                        className="bg-transparent hover:scale-105 transition-transform"
+                      >
+                        Edit Profile
+                      </Button>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -694,18 +963,6 @@ export default function ProfilePage() {
                 ))
               )}
             </div>
-          </TabsContent>
-
-          {/* Feedback Tab */}
-          <TabsContent value="feedback" className="space-y-6 min-h-[100vh]">
-            <MotionWrapper animation="fadeInUp">
-              <iframe
-                src="/profile/feedback"
-                title="Feedback"
-                className="w-full min-h-[700px] border-none rounded-xl bg-transparent"
-                style={{ background: "transparent" }}
-              />
-            </MotionWrapper>
           </TabsContent>
         </Tabs>
       </div>
