@@ -593,10 +593,11 @@ export default function ProfilePage() {
                             onChange={(e) => {
                               const file = e.target.files?.[0];
                               if (file) {
-                                setProfile((p) => ({
-                                  ...p,
-                                  avatar: file, // store File object directly
-                                }));
+                                setProfile((p) =>
+                                  p
+                                    ? { ...p, avatar: file }
+                                    : null
+                                );
                               }
                             }}
                           />

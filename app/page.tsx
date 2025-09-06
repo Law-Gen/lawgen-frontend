@@ -194,12 +194,12 @@ export default function LandingPage() {
           </MotionWrapper>
 
           <MotionWrapper animation="scaleIn" delay={800}>
-            <div className="relative max-w-6xl mx-auto">
-              <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-3xl p-8 backdrop-blur-sm border border-border/50 shadow-2xl">
+            <div className="relative max-w-7xl mx-auto">
+              <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-3xl p-8 backdrop-blur-sm border border-border/50 shadow-2xl flex justify-center w-[1200px] max-w-full mx-auto">
                 <img
-                  src="/modern-legal-platform-dashboard-interface-with-bro.png"
-                  alt="LegalAid Platform Dashboard Preview"
-                  className="w-full h-auto rounded-2xl shadow-2xl hover:scale-105 transition-transform duration-700"
+                  src="/University Of Law.jpg"
+                  alt="University Of Law"
+                  className="w-full h-auto rounded-2xl shadow-2xl hover:scale-105 transition-transform duration-700 mx-auto"
                 />
               </div>
               <div className="absolute -top-4 -right-4 w-24 h-24 bg-accent/20 rounded-full blur-xl"></div>
