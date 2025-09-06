@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { UserList, UserFilter, UserDetail } from "@/components/admin/user";
 import {
@@ -11,15 +11,23 @@ import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
 
 export default function UserPage() {
   const dispatch = useAppDispatch();
-  const { users, selectedUser } = useAppSelector((state: any) => state.users);
+
+  const { users, selectedUser, error } = useAppSelector(
+    (state: any) => state.users
+  );
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  useEffect(() => {
+    dispatch(fetchUsers());
+  }, [dispatch]);
+
+  // Filter users by search and role
   const filteredUsers = users.filter(
-    (user: { name: string; email: string; role: string }) => {
+    (user: { full_name: string; email: string; role: string }) => {
       const matchesSearch =
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesRole = roleFilter === "all" || user.role === roleFilter;
       return matchesSearch && matchesRole;
@@ -35,6 +43,18 @@ export default function UserPage() {
     setIsSidebarOpen(false);
     dispatch(setSelectedUser(null));
   };
+
+  if (error) {
+    return (
+      <AdminLayout>
+        <div className="p-6 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-red-500">Error: {error}</p>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>

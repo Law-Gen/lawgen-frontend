@@ -19,8 +19,9 @@ export default function UserList({ users, onViewUser }: UserListProps) {
     }
   };
 
-  const getInitials = (name: string) => {
-    return name
+  // Get initials from full name
+  const getInitials = (full_name: string) => {
+    return full_name
       .split(" ")
       .map((n) => n[0])
       .join("")

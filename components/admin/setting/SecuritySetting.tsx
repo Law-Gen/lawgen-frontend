@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useAppDispatch } from "@/src/store/hooks";
+import { changePassword } from "@/src/store/slices/userSlice";
 import {
   Button,
   Label,
+  Input,
   Separator,
   Select,
   SelectContent,
@@ -28,19 +31,61 @@ export default function SecuritySetting({
   onSave,
   onChangePassword,
 }: SecuritySettingsProps) {
+  const dispatch = useAppDispatch();
   const [settings, setSettings] = useState<SecuritySettingsData>({
     sessionTimeout: data?.sessionTimeout || "30",
     passwordExpiry: data?.passwordExpiry || "90",
   });
+
+  // Password change form state
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
 
   const handleSave = () => {
     // await fetch('/api/settings/security', { method: 'PUT', body: JSON.stringify(settings) })
     onSave?.(settings);
   };
 
-  const handleChangePassword = () => {
-    // This could open a modal or redirect to a password change form
-    onChangePassword?.();
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError("");
+    setPasswordSuccess("");
+
+    // Validate passwords
+    if (newPassword !== confirmPassword) {
+      setPasswordError("New passwords do not match");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordError("New password must be at least 6 characters long");
+      return;
+    }
+
+    try {
+      await dispatch(changePassword({
+        old_password: oldPassword,
+        new_password: newPassword,
+      })).unwrap();
+      
+      setPasswordSuccess("Password changed successfully");
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setShowPasswordForm(false);
+    } catch (error: any) {
+      setPasswordError(error.message || "Failed to change password");
+    }
+  };
+
+  const handleOpenPasswordForm = () => {
+    setShowPasswordForm(true);
+    setPasswordError("");
+    setPasswordSuccess("");
   };
 
   return (
@@ -102,7 +147,73 @@ export default function SecuritySetting({
       <Separator />
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Password</h3>
-        <Button onClick={handleChangePassword}>Change Password</Button>
+        
+        {!showPasswordForm ? (
+          <Button onClick={handleOpenPasswordForm}>Change Password</Button>
+        ) : (
+          <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
+            <div className="space-y-2">
+              <Label htmlFor="oldPassword">Current Password</Label>
+              <Input
+                id="oldPassword"
+                type="password"
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">New Password</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                minLength={6}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm New Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={6}
+              />
+            </div>
+            
+            {passwordError && (
+              <div className="text-red-500 text-sm">{passwordError}</div>
+            )}
+            
+            {passwordSuccess && (
+              <div className="text-green-600 text-sm">{passwordSuccess}</div>
+            )}
+            
+            <div className="flex gap-2">
+              <Button type="submit">Update Password</Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  setShowPasswordForm(false);
+                  setPasswordError("");
+                  setPasswordSuccess("");
+                  setOldPassword("");
+                  setNewPassword("");
+                  setConfirmPassword("");
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

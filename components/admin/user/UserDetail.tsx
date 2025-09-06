@@ -6,8 +6,6 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Switch,
-  Input,
   Avatar,
   AvatarFallback,
 } from "@/components/ui";
@@ -64,27 +62,6 @@ export default function UserDetail({ user, isOpen, onClose }: UserDetailProps) {
   };
 
   const handleSave = async () => {
-    // // Determine subscription value based on isPremium and user selection
-    // let subscription: "basic" | "premium" | "enterprise" = "basic";
-    // if (
-    //   user?.subscription === "enterprise" ||
-    //   user?.subscription === "premium" ||
-    //   user?.subscription === "basic"
-    // ) {
-    //   subscription = user.subscription;
-    // }
-    // // If you want to allow changing subscription, you should store the selected value in state
-    // // For example, add: const [subscription, setSubscription] = useState<"basic" | "premium" | "enterprise">(user?.subscription || "basic");
-    // // And update <Select> to use value={subscription} and onValueChange={setSubscription}
-    // onSave(user.id, {
-    //   role: role as "admin" | "user",
-    //   status: status as "active" | "inactive",
-    //   subscription,
-    //   gender: gender as "male" | "female" | "prefer-not-to-say" | undefined,
-    //   birthdate: birthdate || undefined,
-    // });
-    // onClose();
-
     if (role === "admin" && user.role !== "admin") {
       await dispatch(promoteToAdmin(user.email));
     } else if (role === "admin" && user.role != "user") {

@@ -57,41 +57,6 @@ interface UserProfile {
   };
 }
 
-const mockUserProfile: UserProfile = {
-  name: "Almaz Tadesse",
-  email: "almaz.tadesse@email.com",
-  phone: "+251-911-123-456",
-  location: "Addis Ababa, Ethiopia",
-  bio: "Small business owner interested in learning about business law and employment regulations.",
-  joinDate: "2024-01-15",
-  birthdate: "1995-06-15",
-  gender: "female",
-  subscription: {
-    plan: "free",
-    status: "active",
-    features: ["Basic chat support", "Limited quizzes", "Community access"],
-  },
-  usage: {
-    chatMessages: 45,
-    chatLimit: 50,
-    quizzesTaken: 8,
-    quizLimit: 10,
-    documentsGenerated: 2,
-    documentLimit: 3,
-  },
-  preferences: {
-    language: "english",
-    notifications: {
-      email: true,
-      sms: false,
-      push: true,
-    },
-    privacy: {
-      profileVisible: true,
-      shareUsageData: false,
-    },
-  },
-};
 
 const subscriptionPlans = [
   {
@@ -164,17 +129,13 @@ export default function ProfilePage() {
     setPasswordSuccess("");
     setPasswordLoading(true);
     try {
-      let token = "";
-      if (typeof window !== "undefined") {
-        token = localStorage.getItem("access_token") || "";
-      }
       const res = await fetch(
         "https://lawgen-backend.onrender.com/users/me/change-password",
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${session?.accessToken}`,
           },
           body: JSON.stringify({
             old_password: oldPassword,
@@ -218,13 +179,7 @@ export default function ProfilePage() {
       setProfileLoading(true);
       setProfileError(null);
       try {
-        let token = "";
-        if (typeof window !== "undefined") {
-          token = localStorage.getItem("access_token") || "";
-        }
-        const res = await api.get("/users/me", {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
+        const res = await api.get("/users/me");
         // Map backend response to UserProfile shape
         const d = res.data;
         const mappedProfile: UserProfile = {
@@ -332,14 +287,10 @@ export default function ProfilePage() {
       alert("Please enter a valid birthdate in YYYY-MM-DD format.");
       return;
     }
-    let token = "";
-    if (typeof window !== "undefined") {
-      token = localStorage.getItem("access_token") || "";
-    }
     const formData = new FormData();
     const gender = profile.gender.trim();
     // Always send language as 'en' or 'am' for backend
-    let langPref = profile.preferences.language;
+    let langPref: string = profile.preferences.language;
     if (langPref === "english") langPref = "en";
     if (langPref === "amharic") langPref = "am";
     formData.append("gender", gender);
@@ -362,7 +313,7 @@ export default function ProfilePage() {
       const res = await fetch("https://lawgen-backend.onrender.com/users/me", {
         method: "PUT",
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${session?.accessToken}`,
         },
         body: formData,
       });
@@ -612,9 +563,7 @@ export default function ProfilePage() {
                             onChange={(e) => {
                               const file = e.target.files?.[0];
                               if (file) {
-                                setProfile((p) => ({
-                                  ...p,
-                                  avatar: file, // store File object directly
+                                setProfile((p) => ({...p,avatar: file, // store File object directly
                                 }));
                               }
                             }}
