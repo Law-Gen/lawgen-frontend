@@ -1,0 +1,3 @@
+// Centralized hardcoded access token (temporary until real auth token wiring)
+export const HARDCODED_ACCESS_TOKEN =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjhiOWYxNmZjYzk3NTA2NTIwNjIwM2Q1Iiwicm9sZSI6InVzZXIiLCJwbGFuIjoicHJvIiwiYWdlIjoyMSwiZ2VuZGVyIjoiZmVtYWxlIiwiZXhwIjoxNzU3MDg5NDkxLCJpYXQiOjE3NTcwODg1OTF9.aCvy8h7vjS8JsVG1FzwO98uvVvb0GX7r5wHXSYCXRIg"

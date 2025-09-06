@@ -1,9 +1,13 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL 
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+import { getSession } from "next-auth/react";
 
 async function handle(res: Response) {
   if (!res.ok) {
     let msg = "Request failed";
-    try { const data = await res.json(); msg = data.message || JSON.stringify(data); } catch {}
+    try {
+      const data = await res.json();
+      msg = data.message || JSON.stringify(data);
+    } catch {}
     throw new Error(msg);
   }
   return res.json ? res.json() : res.text();
@@ -11,9 +15,16 @@ async function handle(res: Response) {
 
 export const api = {
   post: async (path: string, body?: any, options: RequestInit = {}) => {
+    const session = await getSession();
     const res = await fetch(`${API_BASE_URL}${path}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...(options.headers||{}) },
+      headers: {
+        "Content-Type": "application/json",
+        ...(session?.accessToken
+          ? { Authorization: `Bearer ${session.accessToken}` }
+          : {}),
+        ...(options.headers || {}),
+      },
       body: body ? JSON.stringify(body) : undefined,
       credentials: "include",
       ...options,
@@ -23,10 +34,44 @@ export const api = {
   get: async (path: string, options: RequestInit = {}) => {
     const res = await fetch(`${API_BASE_URL}${path}`, {
       method: "GET",
-      headers: { ...(options.headers||{}) },
+      headers: { ...(options.headers || {}) },
       credentials: "include",
       ...options,
     });
     return handle(res);
-  }
-}
+  },
+  put: async (path: string, body?: any, options: RequestInit = {}) => {
+    const session = await getSession();
+    const res = await fetch(`${API_BASE_URL}${path}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(session?.accessToken
+          ? { Authorization: `Bearer ${session.accessToken}` }
+          : {}),
+        ...(options.headers || {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+      credentials: "include",
+      ...options,
+    });
+    return handle(res);
+  },
+  patch: async (path: string, body?: any, options: RequestInit = {}) => {
+    const session = await getSession();
+    const res = await fetch(`${API_BASE_URL}${path}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        ...(session?.accessToken
+          ? { Authorization: `Bearer ${session.accessToken}` }
+          : {}),
+        ...(options.headers || {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+      credentials: "include",
+      ...options,
+    });
+    return handle(res);
+  },
+};
