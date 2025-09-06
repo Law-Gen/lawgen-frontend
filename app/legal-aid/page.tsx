@@ -14,11 +14,19 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 const FEEDBACK_API_BASE_URL = process.env.NEXT_PUBLIC_FEEDBACK_API_BASE_URL;
 
-// Custom fetch for legal aid using feedback base url
+// Custom fetch for legal aid using feedback base url with Bearer token
 const fetchLegalAid = async (path: string, options: RequestInit = {}) => {
+  let token = "";
+  if (typeof window !== "undefined") {
+    token = localStorage.getItem("access_token") || "";
+  }
   const res = await fetch(`${FEEDBACK_API_BASE_URL}${path}`, {
     method: "GET",
     credentials: "include",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    },
     ...options,
   });
   if (!res.ok) throw new Error("Failed to fetch legal aid data");
@@ -57,10 +65,6 @@ const organizationTypeColors = {
 
 export default function LegalAidPage() {
   const { data: session } = useSession();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedType, setSelectedType] = useState<string>("all");
-  // Sidebar open state for mobile navigation
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Fetched organizations from backend
   const [organizations, setOrganizations] = useState<LegalOrganization[]>([]);
@@ -81,17 +85,7 @@ export default function LegalAidPage() {
       });
   }, []);
 
-  // Search and filter logic
-  const filteredOrganizations = organizations.filter((org) => {
-    const matchesName = org.name
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesSpecialty = org.specialties.some((specialty) =>
-      specialty.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    const matchesType = selectedType === "all" || org.type === selectedType;
-    return (matchesName || matchesSpecialty) && matchesType;
-  });
+  // No search or filter logic; use organizations directly
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10">
       {/* Header */}
@@ -108,117 +102,15 @@ export default function LegalAidPage() {
           </div>
           {/* Hamburger icon for mobile */}
           <div className="md:hidden" style={{ marginLeft: "4px" }}>
-            <button
-              className="p-0 bg-transparent border-none shadow-none outline-none focus:outline-none"
-              style={{ lineHeight: 0 }}
-              onClick={() => setSidebarOpen(true)}
-              aria-label="Open sidebar"
-            >
-              <svg
-                width="20"
-                height="20"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M4 6h12M4 10h12M4 14h12" />
-              </svg>
-            </button>
-          </div>
-          {/* Center: Main navigation (desktop only) */}
-          <div className="hidden md:flex flex-1 justify-center">
-            <MainNavigation />
-          </div>
-          {/* Right: Language toggle, dark mode, and sign in (desktop only) */}
-          <div className="hidden md:flex items-center gap-3 min-w-0 ml-auto">
-            <LanguageToggle />
-            {!session && (
-              <Link href="/auth/signin">
-                <Button size="sm" variant="outline" className="bg-transparent">
-                  Sign In
-                </Button>
-              </Link>
-            )}
+            {/* Hamburger icon and mobile nav logic can be added here if needed */}
           </div>
         </div>
       </header>
 
       {/* Mobile Sidebar (RIGHT SIDE) */}
-      <div
-        className={`fixed inset-0 z-[100] bg-black/40 transition-opacity ${
-          sidebarOpen ? "block md:hidden" : "hidden"
-        }`}
-        onClick={() => setSidebarOpen(false)}
-      />
-      <aside
-        className={`fixed top-0 right-0 z-[101] h-full w-64 bg-card dark:bg-zinc-900 shadow-lg transform transition-transform duration-300 ${
-          sidebarOpen ? "translate-x-0" : "translate-x-full"
-        } md:hidden`}
-      >
-        <div className="flex flex-col h-full p-6 gap-6">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-lg font-bold text-primary">Menu</span>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              aria-label="Close sidebar"
-              className="text-2xl"
-            >
-              &times;
-            </button>
-          </div>
-          <MainNavigation />
-          <LanguageToggle />
-          {!session && (
-            <Link href="/auth/signin" className="w-full">
-              <Button size="lg" variant="outline" className="w-full">
-                Sign In
-              </Button>
-            </Link>
-          )}
-        </div>
-      </aside>
 
       <div className="container mx-auto p-4">
         {/* Search and Filters */}
-        <MotionWrapper animation="fadeInUp">
-          <Card className="mb-6">
-            <CardContent className="p-4">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <Input
-                    placeholder="Search by name, specialty, or location..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full"
-                  />
-                </div>
-                <div className="flex gap-2 flex-wrap">
-                  <Button
-                    variant={selectedType === "all" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedType("all")}
-                    className="hover:scale-105 transition-transform"
-                  >
-                    All
-                  </Button>
-                  {Object.entries(organizationTypeLabels).map(
-                    ([type, label]) => (
-                      <Button
-                        key={type}
-                        variant={selectedType === type ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setSelectedType(type)}
-                        className="hover:scale-105 transition-transform bg-transparent"
-                      >
-                        {label}
-                      </Button>
-                    )
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </MotionWrapper>
 
         {/* Loading and error states (below search) */}
         {loading && (
@@ -238,7 +130,7 @@ export default function LegalAidPage() {
         {!loading && !error && (
           <>
             <div className="grid gap-4">
-              {filteredOrganizations.map((org, index) => (
+              {organizations.map((org, index) => (
                 <MotionWrapper
                   key={org.id}
                   animation="staggerIn"
@@ -384,7 +276,7 @@ export default function LegalAidPage() {
                 </MotionWrapper>
               ))}
             </div>
-            {filteredOrganizations.length === 0 && (
+            {organizations.length === 0 && (
               <MotionWrapper animation="fadeInUp">
                 <Card className="text-center py-12">
                   <CardContent>
@@ -397,10 +289,7 @@ export default function LegalAidPage() {
                       organizations.
                     </p>
                     <Button
-                      onClick={() => {
-                        setSearchQuery("");
-                        setSelectedType("all");
-                      }}
+                      onClick={() => {}}
                       className="hover:scale-105 transition-transform"
                     >
                       Clear Filters

@@ -188,7 +188,11 @@ export default function QuizPage() {
     }
   }, [status]);
   if (status === "loading") {
-    return <div className="flex justify-center items-center h-64 text-lg">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-64 text-lg">
+        Loading...
+      </div>
+    );
   }
   const [selectedCategory, setSelectedCategory] = useState<QuizCategory | null>(
     null
