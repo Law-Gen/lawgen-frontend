@@ -1,5 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import userReducer from "./slices/userSlice";
+import profileReducer from "./slices/profileSlice";
 // import legalContentReducer from "./slices/legalContentSlice";
 // import legalAidReducer from "./slices/legalAidSlice";
 import feedbackReducer from "./slices/feedbackSlice";
@@ -9,6 +10,7 @@ import feedbackReducer from "./slices/feedbackSlice";
 export const store = configureStore({
   reducer: {
     users: userReducer,
+    profile: profileReducer,
     // legalContent: legalContentReducer,
     // legalAid: legalAidReducer,
     feedback: feedbackReducer,

@@ -180,13 +180,22 @@ const difficultyColors = {
 };
 
 export default function QuizPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  // Require sign-in for quiz
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      window.location.href = "/auth/signin";
+    }
+  }, [status]);
+  if (status === "loading") {
+    return <div className="flex justify-center items-center h-64 text-lg">Loading...</div>;
+  }
   const [selectedCategory, setSelectedCategory] = useState<QuizCategory | null>(
     null
   );
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { theme, setTheme } = useTheme();
-
+  // Quiz categories are public, but taking a quiz requires signin
   // Quiz Selection View (Category selected)
   if (selectedCategory) {
     return (
