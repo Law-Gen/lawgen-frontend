@@ -13,9 +13,8 @@ import { api } from "@/src/lib/api";
 
 export default function VerifyResetOTPPage() {
   const router = useRouter();
-  const sp = useSearchParams();
-  const emailParam = sp?.get("email") || "";
-  const email = emailParam;
+  const sp = useParams();
+  const email = sp.email || "";
   const [otp, setOtp] = useState("");
   const [status, setStatus] = useState<null | {
     type: "success" | "error";

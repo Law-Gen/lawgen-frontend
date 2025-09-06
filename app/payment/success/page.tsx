@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +13,7 @@ type Status = "idle" | "subscribing" | "success" | "failed";
 
 export default function SuccessPage() {
   const { data: session } = useSession();
-  const searchParams = useSearchParams();
+  const searchParams = useParams();
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string>("");
@@ -23,8 +23,8 @@ export default function SuccessPage() {
   useEffect(() => {
     const planId = localStorage.getItem("selected_plan");
     console.log("selected_plan", planId);
-    const tx_ref = searchParams?.get("tx_ref");
-    const chapaStatus = searchParams?.get("status");
+    const tx_ref = searchParams?.tx_ref || "";
+    const chapaStatus = searchParams?.status || "";
 
     if (!planId) {
       setError("Could not find the selected plan. Please try again.");
