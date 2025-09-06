@@ -79,8 +79,14 @@ export default function SignInPage() {
           <CardHeader className="text-center">
             <MotionWrapper animation="fadeInUp">
               <Link href="/" className="inline-block">
-                <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4 hover:scale-105 transition-transform">
-                  <span className="text-2xl text-primary-foreground">⚖️</span>
+                <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 hover:scale-105 transition-transform overflow-hidden border border-muted shadow bg-background">
+                  <img
+                    src="/logo (1).svg"
+                    alt="LawGen Logo"
+                    width={56}
+                    height={56}
+                    className="h-14 w-14 object-cover rounded-full"
+                  />
                 </div>
               </Link>
             </MotionWrapper>

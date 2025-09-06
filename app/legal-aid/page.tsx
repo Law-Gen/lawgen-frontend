@@ -81,7 +81,7 @@ const organizationTypeColors = {
 };
 
 export default function LegalAidPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState<string>("all");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -151,13 +151,24 @@ export default function LegalAidPage() {
       {/* Header */}
       <header className="bg-card/80 backdrop-blur-sm border-b border-border p-4 sticky top-0 z-50">
         <div className="w-full flex items-center px-2 gap-4">
-          <div className="flex flex-col items-start min-w-0 flex-1">
-            <h1 className="text-lg font-semibold text-primary truncate">
-              Legal Aid Directory
-            </h1>
-            <p className="text-sm text-muted-foreground truncate">
-              Find legal assistance near you
-            </p>
+          <div className="flex items-center gap-4">
+            <div className="flex-shrink-0">
+              <img
+                src="/logo (1).svg"
+                alt="LawGen Logo"
+                width={56}
+                height={56}
+                className="h-14 w-14 rounded-full object-cover border border-muted shadow"
+              />
+            </div>
+            <div className="flex flex-col items-start min-w-0 flex-1">
+              <h1 className="text-lg font-semibold text-primary truncate">
+                Legal Aid Directory
+              </h1>
+              <p className="text-sm text-muted-foreground truncate">
+                Find legal assistance near you
+              </p>
+            </div>
           </div>
           <div className="md:hidden" style={{ marginLeft: "4px" }}>
             <button

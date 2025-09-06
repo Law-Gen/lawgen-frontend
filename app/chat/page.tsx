@@ -49,7 +49,7 @@ export default function ChatPage() {
   }, [messages]);
 
   const handleSendMessage = async () => {
-  if (!inputMessage.trim()) return;
+    if (!inputMessage.trim()) return;
     const userMessage: Message = {
       id: Date.now().toString(),
       content: inputMessage,
@@ -127,6 +127,15 @@ export default function ChatPage() {
 
       <header className="bg-card/80 backdrop-blur-sm border-b border-border p-4">
         <div className="w-full flex items-center px-2 gap-4">
+          <div className="flex-shrink-0">
+            <img
+              src="/logo (1).svg"
+              alt="LawGen Logo"
+              width={56}
+              height={56}
+              className="h-14 w-14 rounded-full object-cover border border-muted shadow"
+            />
+          </div>
           {/* Left: Title and description */}
           <div className="flex flex-col items-start min-w-0 flex-1">
             <h1 className="text-lg font-semibold text-primary truncate">
@@ -173,7 +182,6 @@ export default function ChatPage() {
           </div>
         </div>
       </header>
-
 
       <div className="flex-1 flex">
         {/* Chat History Sidebar - Only for logged-in users */}

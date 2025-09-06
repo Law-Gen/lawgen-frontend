@@ -25,7 +25,7 @@ interface UserProfile {
   name: string;
   email: string;
   phone: string;
-  avatar?: string;
+  avatar?: string | File;
   birthdate?: string;
   gender?: "male" | "female" | "other";
   joinDate: string;
@@ -114,7 +114,6 @@ const subscriptionPlans = [
   },
 ];
 
-
 export default function ProfilePage() {
   // Change Password form state (must be inside the component)
   const [showPasswordForm, setShowPasswordForm] = useState(false);
@@ -169,7 +168,13 @@ export default function ProfilePage() {
       setPasswordLoading(false);
     }
   };
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  // Redirect to signin if not authenticated
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      window.location.href = "/auth/signin";
+    }
+  }, [status]);
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -324,11 +329,10 @@ export default function ProfilePage() {
     const gender = profile.gender.trim();
     // Always send language as 'en' or 'am' for backend
     let langPref = profile.preferences.language;
-    if (langPref === "english") langPref = "en";
-    if (langPref === "amharic") langPref = "am";
+    let langPrefForBackend = langPref === "english" ? "en" : langPref === "amharic" ? "am" : langPref;
     formData.append("gender", gender);
     formData.append("birth_date", birth_date);
-    formData.append("langauge_preference", langPref);
+    formData.append("langauge_preference", langPrefForBackend);
     // Only include profile_picture if uploading a new image
     if (
       profile.avatar &&
@@ -394,14 +398,26 @@ export default function ProfilePage() {
   const getHeaderContent = () => {
     if (activeTab === "overview") {
       return (
-        <>
-          <h1 className="text-lg font-semibold text-primary truncate">
-            My Profile
-          </h1>
-          <p className="text-sm text-muted-foreground truncate">
-            Manage your account and preferences
-          </p>
-        </>
+        <div className="flex items-center gap-4">
+          <div className="flex-shrink-0">
+            {/* Logo to the left of the text, circular and larger */}
+            <img
+              src="/logo (1).svg"
+              alt="LawGen Logo"
+              width={56}
+              height={56}
+              className="h-14 w-14 rounded-full object-cover border border-muted shadow"
+            />
+          </div>
+          <div>
+            <h1 className="text-lg font-semibold text-primary truncate">
+              My Profile
+            </h1>
+            <p className="text-sm text-muted-foreground truncate">
+              Manage your account and preferences
+            </p>
+          </div>
+        </div>
       );
     }
     if (activeTab === "subscription") {

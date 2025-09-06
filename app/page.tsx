@@ -97,13 +97,24 @@ export default function LandingPage() {
         <div className="w-full flex items-center px-2 gap-4">
           {/* Sidebar menu button for mobile (move to right) */}
           <div className="flex flex-1 items-center min-w-0">
-            <div className="flex flex-col items-start min-w-0">
-              <h1 className="text-lg font-semibold text-primary truncate">
-                LegalAid
-              </h1>
-              <p className="text-sm text-muted-foreground truncate">
-                Your trusted platform for legal clarity and justice
-              </p>
+            <div className="flex items-center gap-4">
+              <div className="flex-shrink-0">
+                <img
+                  src="/logo (1).svg"
+                  alt="LawGen Logo"
+                  width={56}
+                  height={56}
+                  className="h-14 w-14 rounded-full object-cover border border-muted shadow"
+                />
+              </div>
+              <div className="flex flex-col items-start min-w-0">
+                <h1 className="text-lg font-semibold text-primary truncate">
+                  LegalAid
+                </h1>
+                <p className="text-sm text-muted-foreground truncate">
+                  Your trusted platform for legal clarity and justice
+                </p>
+              </div>
             </div>
           </div>
           {/* Hamburger icon only, no box */}
