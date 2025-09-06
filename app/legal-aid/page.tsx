@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { LanguageToggle } from "@/components/ui/language-toggle";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+// ADDED: Import the BottomNavigation component
+import { BottomNavigation } from "@/components/ui/bottom-navigation";
 
 const FEEDBACK_API_BASE_URL = process.env.NEXT_PUBLIC_FEEDBACK_API_BASE_URL;
 
@@ -260,7 +262,6 @@ export default function LegalAidPage() {
         </MotionWrapper>
 
         {/* Loading and error states */}
-        {/* FIX: Replaced loading text with bouncing dots animation */}
         {loading && (
           <div className="flex justify-center items-center h-64 space-x-2">
             <span className="sr-only">Loading...</span>
@@ -285,7 +286,6 @@ export default function LegalAidPage() {
                   animation="staggerIn"
                   delay={index * 100}
                 >
-                  {/* FIX: Removed hover:scale-[1.02] class */}
                   <Card className="hover:shadow-lg transition-all duration-300">
                     <CardContent className="p-6">
                       <div className="flex-1 space-y-3">
@@ -430,6 +430,13 @@ export default function LegalAidPage() {
           </>
         )}
       </div>
+
+      {/* ADDED: Bottom Navigation for logged-in users on mobile */}
+      {session && (
+        <div className="md:hidden">
+          <BottomNavigation />
+        </div>
+      )}
     </div>
   );
 }
