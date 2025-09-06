@@ -7,24 +7,31 @@ import {
   AidCard,
   AidFilter,
   AidHeader,
-  AidTable,
   EditAid,
 } from "@/components/admin/legal_aid";
 import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
-import { fetchLegalEntities, deleteLegalEntity } from "@/src/store/slices/legalAidSlice";
+import {
+  fetchLegalEntities,
+  deleteLegalEntity,
+} from "@/src/store/slices/legalAidSlice";
 import { LegalEntity } from "@/src/store/slices/legalAidSlice";
 
 export default function LegalAidPage() {
   const dispatch = useAppDispatch();
-  const { entities: services, loading, error } = useAppSelector((state) => state.legalAid);
+  const {
+    entities: services,
+    loading,
+    error,
+  } = useAppSelector((state) => state.legalAid);
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [specializationFilter, setSpecializationFilter] = useState("all");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditSidebarOpen, setIsEditSidebarOpen] = useState(false);
-  const [selectedService, setSelectedService] =
-    useState<LegalEntity | null>(null);
+  const [selectedService, setSelectedService] = useState<LegalEntity | null>(
+    null
+  );
 
   // Fetch legal entities on component mount
   useEffect(() => {
@@ -39,7 +46,8 @@ export default function LegalAidPage() {
       ) ||
       service.description.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesType = typeFilter === "all" || service.entity_type === typeFilter;
+    const matchesType =
+      typeFilter === "all" || service.entity_type === typeFilter;
 
     const matchesSpecialization =
       specializationFilter === "all" ||
@@ -68,15 +76,15 @@ export default function LegalAidPage() {
           onTypeFilterChange={setTypeFilter}
           specializationFilter={specializationFilter}
           onSpecializationFilterChange={setSpecializationFilter}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
           resultsCount={filteredServices.length}
         />
 
         {/* Loading state */}
         {loading && (
           <div className="flex justify-center items-center py-12">
-            <div className="text-lg text-gray-500">Loading legal aid services...</div>
+            <div className="text-lg text-gray-500">
+              Loading legal aid services...
+            </div>
           </div>
         )}
 
@@ -90,27 +98,18 @@ export default function LegalAidPage() {
         {/* Content - only show when not loading and no error */}
         {!loading && !error && (
           <>
-            {viewMode === "grid" ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredServices.map((service) => (
-                  <AidCard
-                    key={service.id}
-                    service={service}
-                    onView={handleViewService}
-                    onEdit={handleViewService}
-                    onDelete={(id) => dispatch(deleteLegalEntity(id))}
-                  />
-                ))}
-              </div>
-            ) : (
-              <AidTable
-                services={filteredServices}
-                onView={handleViewService}
-                onEdit={handleViewService}
-                onDelete={(id) => dispatch(deleteLegalEntity(id))}
-              />
-            )}
-
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredServices.map((service) => (
+                <AidCard
+                  key={service.id}
+                  service={service}
+                  onView={handleViewService}
+                  onEdit={handleViewService}
+                  onDelete={(id) => dispatch(deleteLegalEntity(id))}
+                />
+              ))}
+            </div>
+            )
             {filteredServices.length === 0 && (
               <div className="text-center py-12">
                 <p className="text-gray-500 text-lg">

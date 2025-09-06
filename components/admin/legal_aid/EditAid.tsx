@@ -18,7 +18,11 @@ import {
 } from "@/components/ui";
 import { LegalEntity } from "@/src/store/slices/legalAidSlice";
 import { useAppDispatch } from "@/src/store/hooks";
-import { updateLegalEntity, deleteLegalEntity } from "@/src/store/slices/legalAidSlice";
+import {
+  updateLegalEntity,
+  deleteLegalEntity,
+  fetchLegalEntities,
+} from "@/src/store/slices/legalAidSlice";
 
 interface EditAidProps {
   isOpen: boolean;
@@ -82,23 +86,55 @@ export default function EditAid({
     e.preventDefault();
     if (!service) return;
 
+    // Always send all fields, arrays for phone/email/services_offered, empty string for others if blank
     const payload = {
-      ...formData,
+      name: formData.name || "",
+      entity_type: formData.entity_type || "",
+      date_of_establishment: formData.date_of_establishment || "",
+      status: formData.status || "",
       phone: formData.phone
-        .split(",")
-        .map((p) => p.trim())
-        .filter(Boolean),
+        ? formData.phone
+            .split(",")
+            .map((p) => p.trim())
+            .filter(Boolean)
+        : [],
       email: formData.email
-        .split(",")
-        .map((e) => e.trim())
-        .filter(Boolean),
+        ? formData.email
+            .split(",")
+            .map((e) => e.trim())
+            .filter(Boolean)
+        : [],
+      website: formData.website || "",
+      city: formData.city || "",
+      sub_city: formData.sub_city || "",
+      woreda: formData.woreda || "",
+      street_address: formData.street_address || "",
+      description: formData.description || "",
       services_offered: formData.services_offered
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
+        ? formData.services_offered
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [],
+      jurisdiction: formData.jurisdiction || "",
+      working_hours: formData.working_hours || "",
+      contact_person: formData.contact_person || "",
     };
 
-    await dispatch(updateLegalEntity({ id: service.id, updates: payload }));
+    console.log("Update LegalEntity payload:", payload);
+    const resultAction = await dispatch(
+      updateLegalEntity({ id: service.id, updates: payload })
+    );
+    // Optionally, handle error feedback here
+    // if (updateLegalEntity.rejected.match(resultAction)) {
+    //   alert(
+    //     "Failed to update legal entity: " +
+    //       (resultAction.payload || "Unknown error")
+    //   );
+    //   return;
+    // }
+    // Fetch updated list after successful update
+    await dispatch(fetchLegalEntities());
     onClose();
   };
 
@@ -151,8 +187,12 @@ export default function EditAid({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="PRIVATE_LAW_FIRM">Private Law Firm</SelectItem>
-                <SelectItem value="LEGAL_AID_ORGANIZATION">Legal Aid Organization</SelectItem>
+                <SelectItem value="PRIVATE_LAW_FIRM">
+                  Private Law Firm
+                </SelectItem>
+                <SelectItem value="LEGAL_AID_ORGANIZATION">
+                  Legal Aid Organization
+                </SelectItem>
                 <SelectItem value="PRO_BONO_LAWYER">Pro Bono Lawyer</SelectItem>
               </SelectContent>
             </Select>
@@ -227,7 +267,9 @@ export default function EditAid({
             <Textarea
               id="edit-street-address"
               value={formData.street_address}
-              onChange={(e) => handleInputChange("street_address", e.target.value)}
+              onChange={(e) =>
+                handleInputChange("street_address", e.target.value)
+              }
               rows={2}
             />
           </div>
@@ -258,7 +300,9 @@ export default function EditAid({
             <Input
               id="edit-contact-person"
               value={formData.contact_person}
-              onChange={(e) => handleInputChange("contact_person", e.target.value)}
+              onChange={(e) =>
+                handleInputChange("contact_person", e.target.value)
+              }
               required
             />
           </div>
@@ -268,18 +312,24 @@ export default function EditAid({
             <Input
               id="edit-jurisdiction"
               value={formData.jurisdiction}
-              onChange={(e) => handleInputChange("jurisdiction", e.target.value)}
+              onChange={(e) =>
+                handleInputChange("jurisdiction", e.target.value)
+              }
               required
             />
           </div>
 
           <div>
-            <Label htmlFor="edit-date-establishment">Date of Establishment</Label>
+            <Label htmlFor="edit-date-establishment">
+              Date of Establishment
+            </Label>
             <Input
               id="edit-date-establishment"
               type="date"
               value={formData.date_of_establishment}
-              onChange={(e) => handleInputChange("date_of_establishment", e.target.value)}
+              onChange={(e) =>
+                handleInputChange("date_of_establishment", e.target.value)
+              }
               required
             />
           </div>
