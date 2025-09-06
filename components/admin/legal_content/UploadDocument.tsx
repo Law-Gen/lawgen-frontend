@@ -53,23 +53,23 @@ export default function UploadDocument({
       alert("please fill in all requied fields and select a file");
       return;
     }
+    const documentData = {
+      title,
+      category,
+      description,
+      file,
+    };
+  
+    onUpload(documentData);
+  
+    //reset form
+    setTitle("");
+    setCategory("");
+    setDescription("");
+    setFile(null);
+    onClose();
   };
 
-  const documentData = {
-    title,
-    category,
-    description,
-    file,
-  };
-
-  onUpload(documentData);
-
-  //reset form
-  setTitle("");
-  setCategory("");
-  setDescription("");
-  setFile(null);
-  onClose();
 
   if (!isOpen) return null;
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { MotionWrapper } from "@/components/ui/motion-wrapper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,10 +10,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { api } from "@/src/lib/api";
 
+export const dynamic = 'force-dynamic';
+
 export default function ResetPasswordPage() {
   const router = useRouter();
-  const sp = useSearchParams();
-  const token = sp.get("token") || "";
+  const sp = useParams();
+  const token = sp.token || "";
   // Optionally get access token from localStorage for Bearer auth
   const accessToken =
     typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
