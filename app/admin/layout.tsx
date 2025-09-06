@@ -10,16 +10,10 @@ export const metadata: Metadata = {
     "Get instant legal guidance, connect with professionals, and access comprehensive legal resources in English and Amharic.",
 };
 
-export default function RootLayout({
+export default function AdminLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    // <html lang="en">
-    <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-      {children}
-    </body>
-    // </html>
-  );
+  return <>{children}</>;
 }

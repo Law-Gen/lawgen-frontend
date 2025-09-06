@@ -93,9 +93,15 @@ export default function FeedbackTable({
                 <TableCell>
                   <Badge
                     variant="outline"
-                    className={statusColors[feedback.status]}
+                    className={
+                      statusColors[
+                        feedback.status as keyof typeof statusColors
+                      ] ?? ""
+                    }
                   >
-                    {statusLabels[feedback.status]}
+                    {statusLabels[
+                      feedback.status as keyof typeof statusLabels
+                    ] ?? feedback.status}
                   </Badge>
                 </TableCell>
                 <TableCell>

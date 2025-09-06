@@ -16,19 +16,19 @@ interface FeedbackCardProps {
   onViewDetails: (feedback: Feedback) => void;
 }
 
-// const typeIcons = {
-//   bug: AlertTriangle,
-//   feature: Lightbulb,
-//   improvement: Zap,
-//   general: MessageCircle,
-// };
+const typeIcons = {
+  bug: AlertTriangle,
+  feature: Lightbulb,
+  improvement: Zap,
+  general: MessageCircle,
+};
 
-// const typeColors = {
-//   bug: "text-red-600 bg-red-50",
-//   feature: "text-yellow-600 bg-yellow-50",
-//   improvement: "text-blue-600 bg-blue-50",
-//   general: "text-gray-600 bg-gray-50",
-// };
+const typeColors = {
+  bug: "text-red-600 bg-red-50",
+  feature: "text-yellow-600 bg-yellow-50",
+  improvement: "text-blue-600 bg-blue-50",
+  general: "text-gray-600 bg-gray-50",
+};
 
 const severityColors = {
   high: "bg-red-100 text-red-800",
@@ -65,9 +65,18 @@ export default function FeedbackCard({
             <div className="flex gap-2">
               <Badge
                 variant="outline"
-                className={statusColors[feedback.status]}
+                className={
+                  statusColors[feedback.status as keyof typeof statusColors] ??
+                  ""
+                }
               >
-                {statusLabels[feedback.status]}
+                {feedback.status &&
+                statusLabels[feedback.status as keyof typeof statusLabels]
+                  ? statusLabels[feedback.status as keyof typeof statusLabels]
+                  : typeof feedback.status === "string"
+                  ? feedback.status.charAt(0).toUpperCase() +
+                    feedback.status.slice(1)
+                  : ""}
               </Badge>
             </div>
           </div>

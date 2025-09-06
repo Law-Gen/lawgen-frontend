@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import {
   UpdateFeedback,
@@ -7,83 +8,27 @@ import {
   FeedbackCard,
   FeedbackFilter,
 } from "@/components/admin/feedback";
-import { Feedback } from "@/components/admin/feedback/FeedbackCard";
+import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
+import {
+  fetchFeedbacks,
+  setSelectedFeedback,
+  updateFeedbackStatus,
+} from "@/src/store/slices/feedbackSlice";
+import type { Feedback } from "@/src/store/slices/feedbackSlice";
 
-const dummyFeedbacks: Feedback[] = [
-  {
-    id: "1",
-    title: "Quiz submission not working",
-    description:
-      "When I try to submit a quiz, the page freezes and I lose all my progress. This happens consistently on Chrome browser.",
-    type: "bug",
-    severity: "high",
-    status: "open",
-    submittedBy: "John Smith",
-    submittedByEmail: "john.smith@lawfirm.com",
-    date: "2024-01-15",
-    device: "Desktop",
-  },
-  {
-    id: "2",
-    title: "Dark mode support",
-    description:
-      "It would be great to have a dark mode option for better viewing experience during night time study sessions.",
-    type: "feature",
-    severity: "low",
-    status: "under-review",
-    submittedBy: "Sarah Johnson",
-    submittedByEmail: "sarah.johnson@lawfirm.com",
-    date: "2024-01-14",
-  },
-  {
-    id: "3",
-    title: "Document download fails",
-    description:
-      "Legal documents are not downloading properly. Getting a 404 error when clicking download button on PDF files.",
-    type: "bug",
-    severity: "medium",
-    status: "in-progress",
-    submittedBy: "Michael Brown",
-    submittedByEmail: "michael.brown@lawfirm.com",
-    date: "2024-01-13",
-  },
-  {
-    id: "4",
-    title: "Search functionality enhancement",
-    description:
-      "The search feature could be improved with filters and advanced search options for better content discovery.",
-    type: "improvement",
-    severity: "medium",
-    status: "open",
-    submittedBy: "Emily Wilson",
-    submittedByEmail: "emily.wilson@legal.com",
-    date: "2024-01-12",
-  },
-  {
-    id: "5",
-    title: "User profile update error",
-    description:
-      "Cannot update profile information. Form validation shows errors even when all fields are filled correctly.",
-    type: "bug",
-    severity: "high",
-    status: "open",
-    submittedBy: "Alex Rodriguez",
-    submittedByEmail: "alex@example.com",
-    date: "2024-01-11",
-  },
-  {
-    id: "6",
-    title: "Great platform overall",
-    description:
-      "Really enjoying the platform. The quiz system is intuitive and the legal content library is comprehensive.",
-    type: "general",
-    severity: "low",
-    status: "resolved",
-    submittedBy: "Lisa Chen",
-    submittedByEmail: "lisa.chen@lawschool.edu",
-    date: "2024-01-10",
-  },
-];
+function applyLocalStatus(feedbacks: Feedback[]): Feedback[] {
+  // Get local status changes from localStorage
+  let localChanges: Record<string, any> = {};
+  try {
+    localChanges = JSON.parse(
+      localStorage.getItem("feedbackStatusChanges") || "{}"
+    );
+  } catch (e) {}
+  return feedbacks.map((fb) => {
+    const local = localChanges[fb.id];
+    return local ? { ...fb, ...local } : fb;
+  });
+}
 
 export default function FeedbackPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -91,27 +36,71 @@ export default function FeedbackPage() {
   const [severityFilter, setSeverityFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(
-    null
-  );
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const filteredFeedbacks = dummyFeedbacks.filter((feedback) => {
-    const matchesSearch =
-      feedback.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      feedback.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      feedback.submittedBy.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === "all" || feedback.type === typeFilter;
-    const matchesSeverity =
-      severityFilter === "all" || feedback.severity === severityFilter;
-    const matchesStatus =
-      statusFilter === "all" || feedback.status === statusFilter;
+  const dispatch = useAppDispatch();
+  const feedbacks = useAppSelector((state) => state.feedback.feedbacks);
+  const loading = useAppSelector((state) => state.feedback.loading);
+  const error = useAppSelector((state) => state.feedback.error);
+  const selectedFeedback = useAppSelector(
+    (state) => state.feedback.selectedFeedback
+  );
 
-    return matchesSearch && matchesType && matchesSeverity && matchesStatus;
-  });
+  useEffect(() => {
+    dispatch(fetchFeedbacks());
+  }, [dispatch]);
+
+  // Normalize and filter feedbacks
+  const normalizeSeverity = (sev: string): "high" | "medium" | "low" => {
+    if (!sev) return "low";
+    const s = sev.toLowerCase();
+    if (s === "high") return "high";
+    if (s === "medium") return "medium";
+    return "low";
+  };
+  const normalizeStatus = (
+    status: string | undefined
+  ): "in-progress" | "under-review" | "resolved" => {
+    if (!status) return "in-progress";
+    if (["in-progress", "under-review", "resolved"].includes(status))
+      return status as any;
+    return "in-progress";
+  };
+
+  // Merge local status before mapping/filtering
+  const feedbacksWithStatus = applyLocalStatus(feedbacks);
+  const filteredFeedbacks = feedbacksWithStatus
+    .map((feedback) => ({
+      ...feedback,
+      severity: normalizeSeverity(feedback.severity),
+      status: normalizeStatus((feedback as any).status),
+      type: feedback.type && feedback.type.trim() ? feedback.type : "General",
+      description:
+        feedback.description && feedback.description.trim()
+          ? feedback.description
+          : "No description provided.",
+      submitter_user_id:
+        feedback.submitter_user_id && feedback.submitter_user_id.trim()
+          ? feedback.submitter_user_id
+          : "Anonymous",
+    }))
+    .filter((feedback) => {
+      const matchesSearch =
+        feedback.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        feedback.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        feedback.submitter_user_id
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase());
+      const matchesType = typeFilter === "all" || feedback.type === typeFilter;
+      const matchesSeverity =
+        severityFilter === "all" || feedback.severity === severityFilter;
+      const matchesStatus =
+        statusFilter === "all" || feedback.status === statusFilter;
+      return matchesSearch && matchesType && matchesSeverity && matchesStatus;
+    });
 
   const handleViewDetails = (feedback: Feedback) => {
-    setSelectedFeedback(feedback);
+    dispatch(setSelectedFeedback(feedback));
     setSidebarOpen(true);
   };
 
@@ -119,8 +108,8 @@ export default function FeedbackPage() {
     feedbackId: string,
     updates: Partial<Feedback>
   ) => {
-    // TODO: Implement API call to update feedback
-    console.log("[v0] Updating feedback:", feedbackId, updates);
+    dispatch(updateFeedbackStatus({ id: feedbackId, updates }));
+    console.log("[v0] Updated feedback:", feedbackId, updates);
   };
 
   return (
@@ -145,7 +134,42 @@ export default function FeedbackPage() {
             feedbackCount={filteredFeedbacks.length}
           />
 
-          {viewMode === "grid" ? (
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+              <p className="mt-2 text-muted-foreground">Loading feedbacks...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-12">
+              <div className="text-red-500 mb-2">
+                <p className="font-medium">Error loading feedbacks</p>
+                <p className="text-sm">{error}</p>
+              </div>
+              <button 
+                onClick={() => dispatch(fetchFeedbacks())}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Retry
+              </button>
+            </div>
+          ) : filteredFeedbacks.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">
+                {feedbacks.length === 0 
+                  ? "No feedbacks available. Check your API connection or try refreshing the page."
+                  : "No feedback found matching your criteria."
+                }
+              </p>
+              {feedbacks.length === 0 && (
+                <button 
+                  onClick={() => dispatch(fetchFeedbacks())}
+                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  Refresh
+                </button>
+              )}
+            </div>
+          ) : viewMode === "grid" ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredFeedbacks.map((feedback) => (
                 <FeedbackCard
@@ -160,13 +184,6 @@ export default function FeedbackPage() {
               feedbacks={filteredFeedbacks}
               onViewDetails={handleViewDetails}
             />
-          )}
-          {filteredFeedbacks.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">
-                No feedback found matching your criteria.
-              </p>
-            </div>
           )}
         </div>
         <UpdateFeedback

@@ -53,7 +53,7 @@ const menuItems = [
   {
     title: "Feedback",
     icon: MessageSquare,
-    href: "admin/feedback",
+    href: "/admin/feedback",
     description: "Manage feedbacks sent from users",
   },
 ];

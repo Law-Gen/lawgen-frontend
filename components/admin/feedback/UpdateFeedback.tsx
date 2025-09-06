@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   X,
   User,
@@ -59,10 +60,20 @@ export default function UpdateFeedback({
   onClose,
   onUpdateStatus,
 }: UpdateFeedbackProps) {
+  const [selectedStatus, setSelectedStatus] = useState<string>(
+    feedback?.status || "in-progress"
+  );
+  const [internalNotes, setInternalNotes] = useState<string>("");
+
   if (!feedback) return null;
 
   const handleSave = () => {
-    console.log("[v0] Saving feedback updates for:", feedback.id);
+    const updates: Partial<Feedback> = {
+      status: selectedStatus as "in-progress" | "under-review" | "resolved",
+    };
+
+    onUpdateStatus(feedback.id, updates);
+    console.log("[v0] Saving feedback updates for:", feedback.id, updates);
     onClose();
   };
 
@@ -100,9 +111,12 @@ export default function UpdateFeedback({
                   <label className="text-sm font-medium text-foreground">
                     Status
                   </label>
-                  <Select defaultValue="">
+                  <Select
+                    value={selectedStatus}
+                    onValueChange={setSelectedStatus}
+                  >
                     <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select Timeline" />
+                      <SelectValue placeholder="Select Status" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="in-progress">In Progress</SelectItem>
@@ -112,7 +126,7 @@ export default function UpdateFeedback({
                   </Select>
                 </div>
 
-                <div>
+                {/* <div>
                   <label className="text-sm font-medium text-foreground">
                     Internal Notes
                   </label>
@@ -120,7 +134,7 @@ export default function UpdateFeedback({
                     placeholder="Add internal notes about this feedback..."
                     className="mt-1 min-h-[100px]"
                   />
-                </div>
+                </div> */}
               </div>
 
               <div className="space-y-4">

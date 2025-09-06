@@ -15,6 +15,9 @@ interface FeedbackFilterProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
 
+  typeFilter: string;
+  onTypeChange: (value: string) => void;
+
   severityFilter: string;
   onSeverityChange: (value: string) => void;
 
@@ -30,6 +33,8 @@ interface FeedbackFilterProps {
 export default function FeedbackFiler({
   searchTerm,
   onSearchChange,
+  typeFilter,
+  onTypeChange,
   severityFilter,
   onSeverityChange,
   statusFilter,
@@ -70,7 +75,6 @@ export default function FeedbackFiler({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="open">Open</SelectItem>
               <SelectItem value="in-progress">In Progress</SelectItem>
               <SelectItem value="under-review">Under Review</SelectItem>
               <SelectItem value="resolved">Resolved</SelectItem>
