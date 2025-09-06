@@ -1,21 +1,16 @@
 "use client";
 
-import { Building2, User, MoreVertical } from "lucide-react";
+import { Building2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import type { LegalAidService } from "./AidCard";
+import { Trash } from "lucide-react";
+import { LegalEntity } from "@/src/store/slices/legalAidSlice";
 
-interface LegalAidTableProps {
-  services: LegalAidService[];
-  onView: (service: LegalAidService) => void;
-  onEdit: (service: LegalAidService) => void;
+type LegalAidTableProps = {
+  services: LegalEntity[];
+  onView: (service: LegalEntity) => void;
+  onEdit: (service: LegalEntity) => void;
   onDelete: (serviceId: string) => void;
-}
+};
 
 export default function AidTable({
   services,
@@ -23,24 +18,24 @@ export default function AidTable({
   onEdit,
   onDelete,
 }: LegalAidTableProps) {
-  const getTypeIcon = (type: string) => {
-    return type === "organization" ? (
+  const getTypeIcon = (entity_type: string) => {
+    return entity_type === "PRIVATE_LAW_FIRM" ||
+      entity_type === "LEGAL_AID_ORGANIZATION" ? (
       <Building2 className="h-4 w-4 text-amber-600" />
     ) : (
       <User className="h-4 w-4 text-amber-600" />
     );
   };
 
-  const getTypeBadge = (type: string) => {
+  const getTypeBadge = (entity_type: string) => {
+    let label = "";
+    if (entity_type === "PRIVATE_LAW_FIRM") label = "Private Law Firm";
+    else if (entity_type === "LEGAL_AID_ORGANIZATION") label = "Legal Aid Org.";
+    else if (entity_type === "PRO_BONO_LAWYER") label = "Pro Bono Lawyer";
+    else label = entity_type;
     return (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          type === "organization"
-            ? "bg-amber-100 text-amber-800"
-            : "bg-amber-100 text-amber-800"
-        }`}
-      >
-        {type === "organization" ? "Organization" : "Lawyer"}
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+        {label}
       </span>
     );
   };
@@ -77,7 +72,7 @@ export default function AidTable({
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-8 w-8 bg-amber-50 rounded-lg flex items-center justify-center mr-3">
-                      {getTypeIcon(service.type)}
+                      {getTypeIcon(service.entity_type)}
                     </div>
                     <div>
                       <div className="text-sm font-medium text-gray-900">
@@ -87,20 +82,24 @@ export default function AidTable({
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  {getTypeBadge(service.type)}
+                  {getTypeBadge(service.entity_type)}
                 </td>
                 <td className="px-6 py-4">
                   <div className="text-sm text-gray-900">
-                    {service.specialization.join(", ")}
+                    {service.services_offered?.join(", ")}
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="text-sm text-gray-900">{service.email}</div>
-                  <div className="text-sm text-gray-500">{service.phone}</div>
+                  <div className="text-sm text-gray-900">
+                    {service.email?.join(", ")}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {service.phone?.join(", ")}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
-                    {service.availability}
+                    {service.working_hours}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -112,24 +111,10 @@ export default function AidTable({
                     >
                       View
                     </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => onEdit(service)}>
-                          Edit Service
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => onDelete(service.id)}
-                          className="text-red-600"
-                        >
-                          Delete Service
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Trash
+                      onClick={() => onDelete(service.id)}
+                      className="text-red-600"
+                    ></Trash>
                   </div>
                 </td>
               </tr>
