@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import { Menu, Bell, Settings, LogOut, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -15,6 +16,7 @@ interface HeaderProps {
 export default function Header({ userName, role, onMenuClick }: HeaderProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
 
   const initials = userName
     .split(" ")
@@ -61,8 +63,48 @@ export default function Header({ userName, role, onMenuClick }: HeaderProps) {
         </div>
       </div> */}
 
-      {/* Right side - Notifications, settings, profile */}
+      {/* Right side - Notifications, dark mode toggle, settings, profile */}
       <div className="flex items-center gap-4">
+        {/* Dark mode toggle */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="p-2 hover:bg-accent"
+          aria-label="Toggle dark mode"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+        >
+          {theme === "dark" ? (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-6 h-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 3v1.5m0 15V21m8.485-8.485h-1.5m-15 0H3m15.364-6.364l-1.06 1.06m-12.728 0l-1.06-1.06m12.728 12.728l-1.06-1.06m-12.728 0l-1.06 1.06M16.24 7.76A6 6 0 1112 18a6 6 0 014.24-10.24z"
+              />
+            </svg>
+          ) : (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-6 h-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M21.752 15.002A9.718 9.718 0 0112 21.75c-5.385 0-9.75-4.365-9.75-9.75 0-4.136 2.652-7.626 6.398-9.093a.75.75 0 01.908.325.75.75 0 01-.062.954A7.501 7.501 0 0012 19.5a7.48 7.48 0 006.064-3.188.75.75 0 01.954-.062.75.75 0 01.325.908z"
+              />
+            </svg>
+          )}
+        </Button>
         <Button
           variant="ghost"
           size="sm"

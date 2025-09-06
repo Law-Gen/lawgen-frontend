@@ -1,87 +1,57 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import { useTheme } from "next-themes";
-import { api } from "@/src/lib/api";
 
-declare global {
-  interface Window {
-    google: any;
-  }
+function base64URLEncode(buffer: ArrayBuffer | Uint8Array) {
+  const uint8Array =
+    buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+  return btoa(String.fromCharCode(...uint8Array))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
 }
 
-export default function GoogleSignIn({
-  onSuccess,
-}: {
-  onSuccess?: (user: any) => void;
-}) {
-  const divRef = useRef<HTMLDivElement>(null);
-  const fallbackRef = useRef<HTMLDivElement>(null);
+async function generatePKCE() {
+  const code_verifier = base64URLEncode(
+    crypto.getRandomValues(new Uint8Array(32))
+  );
+  const encoder = new TextEncoder();
+  const data = encoder.encode(code_verifier);
+  const digest = await window.crypto.subtle.digest("SHA-256", data);
+  const code_challenge = base64URLEncode(digest);
+  return { code_verifier, code_challenge };
+}
+
+export default function GoogleSignIn() {
   const { theme } = useTheme();
 
-  useEffect(() => {
-    // Inject the Google script
-    const s = document.createElement("script");
-    s.src = "https://accounts.google.com/gsi/client";
-    s.async = true;
-    s.defer = true;
-    document.body.appendChild(s);
+  async function handleGoogleSignIn() {
+    const { code_verifier, code_challenge } = await generatePKCE();
+    localStorage.setItem("pkce_verifier", code_verifier);
 
-    s.onload = () => {
-      const client_id = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID as string;
-      if (!window.google || !client_id) {
-        if (fallbackRef.current) fallbackRef.current.style.display = "block";
-        return;
-      }
-      window.google.accounts.id.initialize({
-        client_id,
-        callback: async (resp: any) => {
-          try {
-            const data = await api.post("/auth/google-idtoken", {
-              id_token: resp.credential,
-            });
-            localStorage.setItem("access_token", data.access_token);
-            localStorage.setItem("refresh_token", data.refresh_token);
-            onSuccess?.(data.user);
-            window.location.href = "/";
-          } catch (e) {
-            console.error("Google sign-in failed", e);
-            alert("Google sign-in failed");
-          }
-        },
-      });
-      if (divRef.current) {
-        window.google.accounts.id.renderButton(divRef.current, {
-          type: "standard",
-          size: "large",
-          shape: "pill",
-          theme: theme === "dark" ? "filled_black" : "outline", // dark mode support
-          text: "continue_with",
-        });
-      }
-    };
+    const client_id = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    const redirect_uri = window.location.origin + "/auth/google/callback";
+    const scope = "openid email profile";
+    const state = Math.random().toString(36).substring(2);
 
-    return () => {
-      document.body.removeChild(s);
-    };
-  }, [theme]);
+    const url = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${client_id}&redirect_uri=${encodeURIComponent(
+      redirect_uri
+    )}&scope=${encodeURIComponent(
+      scope
+    )}&state=${state}&code_challenge=${code_challenge}&code_challenge_method=S256`;
+
+    window.location.href = url;
+  }
 
   return (
-    <>
-      <div
-        ref={divRef}
-        className={`w-full flex justify-center items-center min-h-[44px] py-2 rounded-lg shadow-sm ${
-          theme === "dark" ? "bg-zinc-800" : "bg-[#f5ede6]"
-        }`}
-      ></div>
-      <div
-        ref={fallbackRef}
-        style={{ display: "none" }}
-        className="text-center text-xs text-red-500 mt-2"
-      >
-        Google Sign-In button could not be loaded. Check your Google Client ID
-        and internet connection.
-      </div>
-    </>
+    <button
+      type="button"
+      onClick={handleGoogleSignIn}
+      className={`w-full flex justify-center items-center min-h-[44px] py-2 rounded-lg shadow-sm font-semibold text-base ${
+        theme === "dark" ? "bg-zinc-800 text-white" : "bg-[#f5ede6] text-black"
+      }`}
+    >
+      Continue with Google
+    </button>
   );
 }

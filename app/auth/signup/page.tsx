@@ -43,6 +43,21 @@ export default function SignUpPage() {
     setIsLoading(true);
     setError("");
 
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError("Please enter a valid email address.");
+      setIsLoading(false);
+      return;
+    }
+
+    // Password length validation
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters long.");
+      setIsLoading(false);
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
       setIsLoading(false);
@@ -56,10 +71,17 @@ export default function SignUpPage() {
     }
 
     try {
-      // After signup, redirect directly to verify email page
+      await api.post("/auth/register", {
+        full_name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      });
+      // On success, redirect to verify email page
       router.push("/auth/verify-email");
-    } catch (error) {
-      setError("An error occurred. Please try again.");
+    } catch (error: any) {
+      console.error("Signup error:", error);
+      setError(error.message || "An error occurred. Please try again.");
+    } finally {
       setIsLoading(false);
     }
   };
