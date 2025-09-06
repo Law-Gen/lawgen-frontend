@@ -114,6 +114,7 @@ const subscriptionPlans = [
   },
 ];
 
+
 export default function ProfilePage() {
   // Change Password form state (must be inside the component)
   const [showPasswordForm, setShowPasswordForm] = useState(false);
@@ -594,9 +595,7 @@ export default function ProfilePage() {
                               const file = e.target.files?.[0];
                               if (file) {
                                 setProfile((p) =>
-                                  p
-                                    ? { ...p, avatar: file }
-                                    : null
+                                  p ? { ...p, avatar: file } : null
                                 );
                               }
                             }}
@@ -722,6 +721,7 @@ export default function ProfilePage() {
                                 2,
                                 "0"
                               );
+
                               const dd = String(d.getDate()).padStart(2, "0");
                               return `${yyyy}-${mm}-${dd}`;
                             }
