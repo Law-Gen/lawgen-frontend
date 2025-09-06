@@ -1,6 +1,9 @@
 "use client";
 
+import type React from "react";
+
 import { useState, useEffect } from "react";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 import { api } from "@/src/lib/api";
 import { MotionWrapper } from "@/components/ui/motion-wrapper";
 import { Button } from "@/components/ui/button";
@@ -8,18 +11,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BottomNavigation } from "@/components/ui/bottom-navigation";
 import { LanguageToggle } from "@/components/ui/language-toggle";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { MainNavigation } from "@/components/ui/main-navigation";
 import { useTheme } from "next-themes";
+import FeedbackForm from "./feedback/page";
 
 interface UserProfile {
   name: string;
@@ -56,42 +56,6 @@ interface UserProfile {
     };
   };
 }
-
-const mockUserProfile: UserProfile = {
-  name: "Almaz Tadesse",
-  email: "almaz.tadesse@email.com",
-  phone: "+251-911-123-456",
-  location: "Addis Ababa, Ethiopia",
-  bio: "Small business owner interested in learning about business law and employment regulations.",
-  joinDate: "2024-01-15",
-  birthdate: "1995-06-15",
-  gender: "female",
-  subscription: {
-    plan: "free",
-    status: "active",
-    features: ["Basic chat support", "Limited quizzes", "Community access"],
-  },
-  usage: {
-    chatMessages: 45,
-    chatLimit: 50,
-    quizzesTaken: 8,
-    quizLimit: 10,
-    documentsGenerated: 2,
-    documentLimit: 3,
-  },
-  preferences: {
-    language: "english",
-    notifications: {
-      email: true,
-      sms: false,
-      push: true,
-    },
-    privacy: {
-      profileVisible: true,
-      shareUsageData: false,
-    },
-  },
-};
 
 const subscriptionPlans = [
   {
@@ -168,20 +132,17 @@ export default function ProfilePage() {
       if (typeof window !== "undefined") {
         token = localStorage.getItem("access_token") || "";
       }
-      const res = await fetch(
-        "https://lawgen-backend.onrender.com/users/me/change-password",
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            old_password: oldPassword,
-            new_password: newPassword,
-          }),
-        }
-      );
+      const res = await fetch(`${API_BASE_URL}/users/me/change-password`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          old_password: oldPassword,
+          new_password: newPassword,
+        }),
+      });
       if (res.ok) {
         setPasswordSuccess("Password changed successfully");
         setOldPassword("");
@@ -214,6 +175,7 @@ export default function ProfilePage() {
   const [profileError, setProfileError] = useState<string | null>(null);
 
   useEffect(() => {
+    let didRefresh = false;
     async function fetchProfile() {
       setProfileLoading(true);
       setProfileError(null);
@@ -249,7 +211,6 @@ export default function ProfilePage() {
             documentLimit: 0,
           },
           preferences: {
-            // Map backend value ('en'|'am'|'english'|'amharic') to frontend value
             language:
               d.profile?.language_preference === "amharic" ||
               d.profile?.language_preference === "am"
@@ -264,6 +225,28 @@ export default function ProfilePage() {
         };
         setProfile(mappedProfile);
       } catch (err: any) {
+        // If unauthorized, try refresh token ONCE
+        if (
+          !didRefresh &&
+          (err.message?.includes("401") ||
+            err.message?.toLowerCase().includes("unauthorized"))
+        ) {
+          didRefresh = true;
+          try {
+            const refreshToken = localStorage.getItem("refresh_token");
+            if (refreshToken) {
+              const refreshRes = await api.refreshToken(refreshToken);
+              if (refreshRes.ok) {
+                const data = await refreshRes.json();
+                if (data.access_token) {
+                  localStorage.setItem("access_token", data.access_token);
+                  // Retry fetchProfile ONCE with new token
+                  return fetchProfile();
+                }
+              }
+            }
+          } catch {}
+        }
         setProfileError(err.message || "Failed to load profile");
       } finally {
         setProfileLoading(false);
@@ -359,7 +342,7 @@ export default function ProfilePage() {
       console.log("FormData:", key, value);
     }
     try {
-      const res = await fetch("https://lawgen-backend.onrender.com/users/me", {
+      const res = await fetch(`${API_BASE_URL}/users/me`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -485,7 +468,7 @@ export default function ProfilePage() {
           <Button
             variant="outline"
             size="sm"
-            className="w-full text-primary dark:text-white border-primary hover:bg-primary hover:!text-white transition-colors"
+            className="w-full text-primary dark:text-white border-primary hover:bg-primary hover:!text-white transition-colors bg-transparent"
             onClick={() => signOut({ callbackUrl: "/" })}
           >
             Sign Out
@@ -557,20 +540,16 @@ export default function ProfilePage() {
             <TabsTrigger value="subscription">Subscription</TabsTrigger>
             <TabsTrigger value="feedback">Feedback</TabsTrigger>
           </TabsList>
+
           {/* Feedback Tab */}
-          <TabsContent value="feedback" className="space-y-6 min-h-[100vh]">
+          <TabsContent value="feedback" className="space-y-6">
             <MotionWrapper animation="fadeInUp">
-              <iframe
-                src="/profile/feedback"
-                title="Feedback"
-                className="w-full min-h-[700px] border-none rounded-xl bg-transparent"
-                style={{ background: "transparent" }}
-              />
+              <FeedbackForm />
             </MotionWrapper>
           </TabsContent>
 
           {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6 min-h-[100vh]">
+          <TabsContent value="overview" className="space-y-6">
             <MotionWrapper animation="fadeInUp">
               <Card>
                 <CardHeader>
@@ -578,14 +557,16 @@ export default function ProfilePage() {
                     <CardTitle className="text-primary">
                       Profile Information
                     </CardTitle>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsEditing(!isEditing)}
-                      className="bg-transparent hover:scale-105 transition-transform"
-                    >
-                      {isEditing ? "Cancel" : "Edit Profile"}
-                    </Button>
+                    {!isEditing && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsEditing(true)}
+                        className="bg-transparent hover:scale-105 transition-transform"
+                      >
+                        Edit Profile
+                      </Button>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -726,12 +707,26 @@ export default function ProfilePage() {
                         <input
                           id="birthdate"
                           type="date"
-                          value={
-                            profile.birthdate &&
-                            /^\d{4}-\d{2}-\d{2}$/.test(profile.birthdate)
-                              ? profile.birthdate
-                              : ""
-                          }
+                          value={(() => {
+                            if (!profile.birthdate) return "";
+                            // Accepts 'yyyy-MM-dd', 'yyyy-MM-ddTHH:mm:ssZ', 'MM/DD/YYYY', etc.
+                            const isoMatch =
+                              profile.birthdate.match(/^\d{4}-\d{2}-\d{2}$/);
+                            if (isoMatch) return profile.birthdate;
+                            // Try to parse as Date and format as yyyy-MM-dd
+                            const d = new Date(profile.birthdate);
+                            if (!isNaN(d.getTime())) {
+                              const yyyy = d.getFullYear();
+                              const mm = String(d.getMonth() + 1).padStart(
+                                2,
+                                "0"
+                              );
+                              const dd = String(d.getDate()).padStart(2, "0");
+                              return `${yyyy}-${mm}-${dd}`;
+                            }
+                            // fallback
+                            return "";
+                          })()}
                           disabled={!isEditing}
                           onChange={(e) =>
                             setProfile({
@@ -907,7 +902,7 @@ export default function ProfilePage() {
               </Card>
             </MotionWrapper>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 min-h-[100vh]">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
               {subscriptionPlans.map((plan, index) => (
                 <MotionWrapper
                   key={plan.id}

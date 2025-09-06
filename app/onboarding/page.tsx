@@ -53,7 +53,7 @@ export default function OnboardingPage() {
 
             <MotionWrapper animation="fadeInUp" delay={400}>
               <div className="space-y-3">
-                <Link href="/chat">
+                <Link href="/auth/signin">
                   <Button className="w-full hover:scale-105 transition-transform">Continue to Chat</Button>
                 </Link>
                 <Link href="/auth/signup">
