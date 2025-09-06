@@ -3,7 +3,6 @@
 import type React from "react";
 
 import { useState, useRef, useEffect } from "react";
-import { useSession } from "next-auth/react";
 import { MotionWrapper } from "@/components/ui/motion-wrapper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +24,7 @@ interface Message {
 }
 
 export default function ChatPage() {
-  const { data: session } = useSession();
+  // Chat is now public, no session required
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -50,20 +49,17 @@ export default function ChatPage() {
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return;
-
+  if (!inputMessage.trim()) return;
     const userMessage: Message = {
       id: Date.now().toString(),
       content: inputMessage,
       sender: "user",
       timestamp: new Date(),
     };
-
     setMessages((prev) => [...prev, userMessage]);
     const currentInput = inputMessage;
     setInputMessage("");
     setIsLoading(true);
-
     // Simulate AI response with more realistic legal guidance
     setTimeout(() => {
       const responses = [
@@ -72,10 +68,8 @@ export default function ChatPage() {
         "I understand your concern about this legal issue. Let me provide some general guidance that might help you understand the basic concepts involved. For personalized advice, please consider speaking with a lawyer who specializes in this area.",
         "This is a common legal question that many people have. Here's some general information that might be helpful... Remember, every situation is unique, so professional legal consultation is always recommended for specific cases.",
       ];
-
       const randomResponse =
         responses[Math.floor(Math.random() * responses.length)];
-
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: randomResponse,
@@ -128,13 +122,6 @@ export default function ChatPage() {
             {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
           </button>
           <LanguageToggle />
-          {!session && (
-            <Link href="/auth/signin" className="w-full">
-              <Button size="lg" variant="outline" className="w-full">
-                Sign In
-              </Button>
-            </Link>
-          )}
         </div>
       </aside>
 
@@ -183,43 +170,13 @@ export default function ChatPage() {
               {theme === "dark" ? "🌙" : "☀️"}
             </button>
             <LanguageToggle />
-            {!session && (
-              <Link href="/auth/signin">
-                <Button size="sm" variant="outline" className="bg-transparent">
-                  Sign In
-                </Button>
-              </Link>
-            )}
           </div>
         </div>
       </header>
 
-      {!session && (
-        <MotionWrapper animation="fadeInUp">
-          <Alert className="mx-4 mt-4 border-accent bg-gradient-to-r from-accent/10 to-primary/10 backdrop-blur-sm">
-            <AlertDescription className="text-center py-2">
-              <strong className="text-primary">Guest Mode:</strong> This chat
-              provides general legal information only and does not constitute
-              legal advice.
-              <Link
-                href="/auth/signup"
-                className="text-primary hover:underline ml-2 font-semibold"
-              >
-                Sign up for free
-              </Link>{" "}
-              to unlock personalized features and save your chat history.
-            </AlertDescription>
-          </Alert>
-        </MotionWrapper>
-      )}
 
       <div className="flex-1 flex">
         {/* Chat History Sidebar - Only for logged-in users */}
-        {session && (
-          <div className="hidden lg:block w-80 border-r border-border bg-card/50 backdrop-blur-sm">
-            <ChatHistory />
-          </div>
-        )}
 
         <div className="flex-1 flex flex-col">
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -269,7 +226,7 @@ export default function ChatPage() {
                   {message.sender === "user" && (
                     <Avatar className="w-10 h-10 bg-gradient-to-r from-accent to-secondary shadow-lg">
                       <AvatarFallback className="text-accent-foreground font-semibold">
-                        {session?.user?.name?.[0] || "U"}
+                        {"U"}
                       </AvatarFallback>
                     </Avatar>
                   )}
@@ -312,7 +269,7 @@ export default function ChatPage() {
                 <div className="flex-1 min-w-0">
                   <Input
                     placeholder={
-                      session
+                      true
                         ? "Ask a legal question..."
                         : "Ask a legal question (guest mode)..."
                     }
@@ -340,45 +297,12 @@ export default function ChatPage() {
                   🎤
                 </Button>
               </div>
-              {!session && (
-                <div className="mt-4 text-center">
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Enjoying the chat? Sign up to save your conversations and
-                    unlock premium features!
-                  </p>
-                  <div className="flex gap-3 justify-center">
-                    <Link href="/auth/signup">
-                      <Button
-                        variant="default"
-                        size="sm"
-                        className="hover:scale-105 transition-transform"
-                      >
-                        Sign Up Free
-                      </Button>
-                    </Link>
-                    <Link href="/auth/signin">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="bg-transparent hover:scale-105 transition-transform"
-                      >
-                        Sign In
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
       </div>
 
       {/* Bottom Navigation - Only for logged-in users */}
-      {session && (
-        <div className="md:hidden">
-          <BottomNavigation />
-        </div>
-      )}
     </div>
   );
 }

@@ -51,22 +51,19 @@ export default function FeedbackForm() {
         token = localStorage.getItem("access_token") || "";
       }
 
-      const res = await fetch(
-        `${FEEDBACK_API_BASE_URL}/api/v1/feedback`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({
-            submitter_user_id,
-            type,
-            description,
-            severity,
-          }),
-        }
-      );
+      const res = await fetch(`${FEEDBACK_API_BASE_URL}/api/v1/feedback`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          submitter_user_id,
+          type,
+          description,
+          severity,
+        }),
+      });
 
       if (!res.ok) {
         let msg = "Failed to submit feedback";
