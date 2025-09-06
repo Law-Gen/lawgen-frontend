@@ -5,6 +5,7 @@ import { GeistMono } from "geist/font/mono";
 import { SessionProvider } from "./providers/session-provider";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
+import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: "LegalAid - Legal Information & Assistance Platform",
@@ -22,6 +23,7 @@ export default function RootLayout({
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <SessionProvider>{children}</SessionProvider>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

@@ -199,16 +199,16 @@ export default function ProfilePage() {
       }
       // console.log("Fetching profile with session:", session);
       setProfileLoading(true);
-      setProfileError(null);
       try {
-        let token = "";
-        if (typeof window !== "undefined") {
-          token = localStorage.getItem("access_token") || "";
-        }
-        const res = await api.get("/users/me", {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        const res: any = await api.get("/users/me", {
+          headers: {
+            Authorization: `Bearer ${
+              session?.accessToken || localStorage.getItem("access_token") || ""
+            }`,
+          },
         });
-        // Map backend response to UserProfile shape
+        // Our lightweight api.get already returns parsed JSON, not { data: ... }
+        // console.log("Fetched profile on profile page:", res.data);
         const d = res.data;
         const mappedProfile: UserProfile = {
           name: d.full_name || "",
@@ -789,45 +789,6 @@ export default function ProfilePage() {
                             .join("")}
                         </AvatarFallback>
                       </Avatar>
-                      {isEditing && (
-                        <label className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-1 cursor-pointer shadow-md flex items-center justify-center w-7 h-7">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                setProfile((p) => ({
-                                  ...p,
-                                  avatar: file, // store File object directly
-                                }));
-                              }
-                            }}
-                          />
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <circle
-                              cx="8"
-                              cy="8"
-                              r="8"
-                              fill="currentColor"
-                              fillOpacity="0.2"
-                            />
-                            <path
-                              d="M8 4v8M4 8h8"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                            />
-                          </svg>
-                        </label>
-                      )}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
