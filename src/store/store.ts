@@ -1,5 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
-// import userReducer from "./slices/userSlice";
+import userReducer from "./slices/userSlice";
 // import legalContentReducer from "./slices/legalContentSlice";
 // import legalAidReducer from "./slices/legalAidSlice";
 import feedbackReducer from "./slices/feedbackSlice";
@@ -9,11 +9,11 @@ import feedbackReducer from "./slices/feedbackSlice";
 export const store = configureStore({
   reducer: {
     users: userReducer,
-    legalContent: legalContentReducer,
-    legalAid: legalAidReducer,
+    // legalContent: legalContentReducer,
+    // legalAid: legalAidReducer,
     feedback: feedbackReducer,
-    quizzes: quizReducer,
-    quizCategories: quizCategoryReducer,
+    // quizzes: quizReducer,
+    // quizCategories: quizCategoryReducer,
   },
 });
 
