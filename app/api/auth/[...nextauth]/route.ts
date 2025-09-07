@@ -1,5 +1,5 @@
 import NextAuth from "next-auth";
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 import CredentialsProvider from "next-auth/providers/credentials";
 import type { NextAuthOptions, User } from "next-auth";
 
@@ -70,6 +70,8 @@ export const authOptions: NextAuthOptions = {
             data,
           });
           if (res.ok && data.access_token) {
+           
+            // You can also store user info if returned by your backend
             // Return user object and tokens
             return {
               id: data.user?.id || data.user_id || data.id || credentials.email,
@@ -79,6 +81,7 @@ export const authOptions: NextAuthOptions = {
               accessToken: data.access_token,
               refreshToken: data.refresh_token,
             };
+
           }
           return null;
         } catch (e) {
