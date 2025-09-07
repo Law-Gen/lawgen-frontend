@@ -1,6 +1,6 @@
 import { getSession } from "next-auth/react";
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL 
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 async function handle(res: Response) {
   if (!res.ok) {
@@ -8,10 +8,22 @@ async function handle(res: Response) {
     try {
       const data = await res.json();
       msg = data.message || JSON.stringify(data);
-    } catch { }
+    } catch {}
     throw new Error(msg);
   }
   return res.json ? res.json() : res.text();
+}
+
+function getAuthHeader(sessionAccessToken?: string | null) {
+  const tokenFromSession = sessionAccessToken || null;
+  let tokenFromStorage: string | null = null;
+  if (typeof window !== "undefined") {
+    try {
+      tokenFromStorage = localStorage.getItem("access_token");
+    } catch {}
+  }
+  const token = tokenFromSession || tokenFromStorage;
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 export const api = {
@@ -24,9 +36,7 @@ export const api = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(session?.accessToken
-          ? { Authorization: `Bearer ${session.accessToken}` }
-          : {}),
+        ...getAuthHeader(session?.accessToken as string | undefined),
         ...(options.headers || {}),
       },
       body: body ? JSON.stringify(body) : undefined,
@@ -43,9 +53,7 @@ export const api = {
     const res = await fetch(`${API_BASE_URL}${path}`, {
       method: "GET",
       headers: {
-        ...(session?.accessToken
-          ? { Authorization: `Bearer ${session.accessToken}` }
-          : {}),
+        ...getAuthHeader(session?.accessToken as string | undefined),
         ...(options.headers || {}),
       },
       credentials: "include",
@@ -62,9 +70,7 @@ export const api = {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        ...(session?.accessToken
-          ? { Authorization: `Bearer ${session.accessToken}` }
-          : {}),
+        ...getAuthHeader(session?.accessToken as string | undefined),
         ...(options.headers || {}),
       },
       body: body ? JSON.stringify(body) : undefined,
@@ -82,9 +88,7 @@ export const api = {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        ...(session?.accessToken
-          ? { Authorization: `Bearer ${session.accessToken}` }
-          : {}),
+        ...getAuthHeader(session?.accessToken as string | undefined),
         ...(options.headers || {}),
       },
       body: body ? JSON.stringify(body) : undefined,
