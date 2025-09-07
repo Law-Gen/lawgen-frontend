@@ -16,7 +16,9 @@ import { ChatHistory } from "@/components/chat/chat-history";
 import { MainNavigation } from "@/components/ui/main-navigation";
 import Link from "next/link";
 import { useTheme } from "next-themes";
+import { Moon, Sun } from "lucide-react";
 import { CustomAudioPlayer } from "@/components/chat/custom-audio-player";
+import { useLanguage } from "@/hooks/use-language";
 
 
 // --- Helper function to convert browser audio to WAV format ---
@@ -108,7 +110,8 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [language, setLanguage] = useState<'en' | 'am'>('en');
+  const { language, setLanguage, t } = useLanguage();
+  const { theme, setTheme } = useTheme();
 
   
   // Voice-specific state
@@ -342,8 +345,41 @@ export default function ChatPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10 flex flex-col overflow-x-hidden">
-      {/* Sidebar and Header from your file (no logic changes needed) */}
-      <header className="bg-card/80 backdrop-blur-sm border-b border-border p-4">
+      {/* Sidebar and Header */}
+      {/* Mobile overlay */}
+      <div
+        className={`fixed inset-0 z-[100] bg-black/40 transition-opacity ${sidebarOpen ? "block md:hidden" : "hidden"}`}
+        onClick={() => setSidebarOpen(false)}
+      />
+      <aside
+        className={`fixed top-0 right-0 z-[101] h-full w-64 bg-card dark:bg-zinc-900 shadow-lg transform transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "translate-x-full"} md:hidden`}
+      >
+        <div className="flex flex-col h-full p-6 gap-6">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-lg font-bold text-primary">{t("menu")}</span>
+            <button onClick={() => setSidebarOpen(false)} aria-label="Close sidebar" className="text-2xl">&times;</button>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setLanguage(language === 'am' ? 'en' : 'am')}
+              className="bg-transparent"
+            >
+              {language.toUpperCase()}
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="bg-transparent"
+            >
+              {theme === "dark" ? <Moon className="w-4 h-4"/> : <Sun className="w-4 h-4"/>}
+            </Button>
+          </div>
+        </div>
+      </aside>
+      <header className="bg-card/80 backdrop-blur-sm border-b border-border p-4 sticky top-0 z-50">
         <div className="w-full flex items-center px-2 gap-4">
           <div className="flex-shrink-0">
             <img
@@ -360,7 +396,22 @@ export default function ChatPage() {
             <p className="text-sm text-muted-foreground truncate">AI-powered legal guidance and conversation</p>
           </div>
           <div className="hidden md:flex flex-1 justify-center"><MainNavigation /></div>
-          <div className="hidden md:flex items-center gap-3 min-w-0 ml-auto"><LanguageToggle /></div>
+          <div className="hidden md:flex items-center gap-3 min-w-0 ml-auto">
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="px-2 py-1 rounded border"
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
+              {theme === "dark" ? <Moon className="w-4 h-4"/> : <Sun className="w-4 h-4"/>}
+            </button>
+            <LanguageToggle />
+          </div>
+          <div className="md:hidden ml-auto">
+            <button className="p-0 bg-transparent border-none shadow-none outline-none focus:outline-none" style={{ lineHeight: 0 }} onClick={() => setSidebarOpen(true)} aria-label="Open sidebar">
+              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h12M4 10h12M4 14h12" /></svg>
+            </button>
+          </div>
         </div>
       </header>
             <div className="flex-1 flex flex-col">
@@ -427,7 +478,7 @@ export default function ChatPage() {
             <div className="flex gap-2 md:gap-4 items-end">
               <div className="flex-1 min-w-0">
                 <Input
-                  placeholder="Ask a legal question..."
+                  placeholder={t("ask_legal_question")}
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
@@ -436,7 +487,7 @@ export default function ChatPage() {
                 />
               </div>
               <Button onClick={handleSendMessage} disabled={!inputMessage.trim() || isLoading} className="hover:scale-105 transition-transform px-4 md:px-6 py-3 shadow-lg">
-                Send
+                {t("send")}
               </Button>
               <Button
                 variant="outline"
@@ -455,6 +506,11 @@ export default function ChatPage() {
           </div>
         </div>
       </div>
+      {(
+        <div className="md:hidden">
+          <BottomNavigation />
+        </div>
+      )}
     </div>
   );
 }

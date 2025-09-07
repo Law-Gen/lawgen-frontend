@@ -11,6 +11,8 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { MainNavigation } from "@/components/ui/main-navigation";
 import { useTheme } from "next-themes";
+import { Moon, Sun } from "lucide-react";
+import { useLanguage } from "@/hooks/use-language";
 import { Progress } from "@/components/ui/progress";
 
 // --- Interfaces for the component's state and props ---
@@ -96,6 +98,7 @@ const BouncingDotsLoader = () => (
 // --- Main Component ---
 export default function QuizPage() {
   const { data: session, status } = useSession();
+  const { t } = useLanguage();
   // Redirect to signin if not authenticated
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -284,7 +287,8 @@ export default function QuizPage() {
             aria-label="Toggle dark mode"
             title="Toggle dark mode"
           >
-            {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
+            {theme === "dark" ? <Moon className="w-4 h-4"/> : <Sun className="w-4 h-4"/>}
+            {theme === "dark" ? "Dark" : "Light"}
           </button>
           <LanguageToggle />
           {!session && (
@@ -342,8 +346,7 @@ export default function QuizPage() {
               aria-label="Toggle dark mode"
               title="Toggle dark mode"
             >
-              {" "}
-              {theme === "dark" ? "🌙" : "☀️"}
+              {theme === "dark" ? <Moon className="w-4 h-4"/> : <Sun className="w-4 h-4"/>}
             </button>
             <LanguageToggle />
             {!session && (
@@ -545,7 +548,7 @@ export default function QuizPage() {
                 delay={index * 100}
               >
                 <Card
-                  className="hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer h-full"
+                  className="relative overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer h-full bg-gradient-to-br from-primary/5 to-accent/10 border-border/50"
                   onClick={() => handleSelectCategory(category)}
                 >
                   <CardHeader className="text-center">
@@ -559,8 +562,8 @@ export default function QuizPage() {
                       {category.description}
                     </p>
                     <div className="flex justify-center gap-2">
-                      <Badge variant="secondary">
-                        {category.quizCount} quizzes
+                      <Badge variant="secondary" className="shadow-sm">
+                        {category.quizCount} {t("quizzes_label")}
                       </Badge>
                       <Badge
                         className={difficultyColors[category.difficulty]}

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { useTheme } from "next-themes";
+import { Moon, Sun } from "lucide-react";
 
 export default function LandingPage() {
   const heroRef = useRef<HTMLElement>(null);
@@ -70,15 +71,17 @@ export default function LandingPage() {
               &times;
             </button>
           </div>
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="px-2 py-1 rounded border w-full flex items-center gap-2"
-            aria-label="Toggle dark mode"
-            title="Toggle dark mode"
-          >
-            {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
-          </button>
-          <LanguageToggle />
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="px-2 py-1 rounded border"
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
+              {theme === "dark" ? <Moon className="w-4 h-4"/> : <Sun className="w-4 h-4"/>}
+            </button>
+            <LanguageToggle />
+          </div>
           <Link href="/chat" className="w-full">
             <Button size="lg" className="w-full mb-2">
               Try Chat
@@ -144,7 +147,7 @@ export default function LandingPage() {
               aria-label="Toggle dark mode"
               title="Toggle dark mode"
             >
-              {theme === "dark" ? "🌙" : "☀️"}
+              {theme === "dark" ? <Moon className="w-4 h-4"/> : <Sun className="w-4 h-4"/>}
             </button>
             <LanguageToggle />
             <Link href="/auth/signin">
@@ -152,6 +155,18 @@ export default function LandingPage() {
                 Sign In
               </Button>
             </Link>
+          </div>
+          {/* Mobile toggles on the right */}
+          <div className="md:hidden ml-auto flex items-center gap-2">
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="px-2 py-1 rounded border"
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
+              {theme === "dark" ? <Moon className="w-4 h-4"/> : <Sun className="w-4 h-4"/>}
+            </button>
+            <LanguageToggle />
           </div>
         </div>
       </header>

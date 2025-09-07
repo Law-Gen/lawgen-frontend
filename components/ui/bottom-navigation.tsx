@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { MessageCircle, BookOpen, FileText, User } from "lucide-react";
+import { useLanguage } from "@/hooks/use-language";
 
 const navigationItems = [
   { href: "/chat", label: "Chat", icon: MessageCircle },
@@ -14,6 +15,7 @@ const navigationItems = [
 
 export function BottomNavigation() {
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   return (
   <nav className="bg-card/90 backdrop-blur-sm border-t border-border p-2 fixed bottom-0 left-0 w-full z-50 md:static">
@@ -34,7 +36,12 @@ export function BottomNavigation() {
                 )}
               >
                 <Icon className="w-6 h-6" />
-                <span className="text-xs font-medium">{item.label}</span>
+                <span className="text-xs font-medium">{
+                  item.href === "/chat" ? t("nav_chat") :
+                  item.href === "/categories" ? t("nav_categories") :
+                  item.href === "/quiz" ? t("nav_quiz") :
+                  t("nav_profile")
+                }</span>
               </Link>
             );
           })}

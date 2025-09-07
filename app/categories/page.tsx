@@ -11,6 +11,8 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { MainNavigation } from "@/components/ui/main-navigation";
 import { useTheme } from "next-themes";
+import { Moon, Sun } from "lucide-react";
+import { useLanguage } from "@/hooks/use-language";
 
 // Define interfaces for the data fetched from the API
 interface ApiGroup {
@@ -50,6 +52,7 @@ const BouncingLoader = () => {
 
 export default function CategoriesPage() {
   const { data: session, status } = useSession();
+  const { t } = useLanguage();
   // Redirect to signin if not authenticated
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -146,14 +149,18 @@ export default function CategoriesPage() {
                 &times;
               </button>
             </div>
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="px-2 py-1 rounded border w-full flex items-center gap-2"
-              aria-label="Toggle dark mode"
-              title="Toggle dark mode"
-            >
-              {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
-            </button>
+               <button
+                          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                          className="px-2 py-1 rounded border"
+                          aria-label="Toggle dark mode"
+                          title="Toggle dark mode"
+                        >
+                          {theme === "dark" ? (
+                            <Moon className="w-4 h-4" />
+                          ) : (
+                            <Sun className="w-4 h-4" />
+                          )}
+                        </button>
             <LanguageToggle />
             {!session && (
               <Link href="/auth/signin" className="w-full">
@@ -202,14 +209,18 @@ export default function CategoriesPage() {
             </div>
             {/* Right: Language toggle, dark mode, and sign in (desktop only) */}
             <div className="hidden md:flex items-center gap-3 min-w-0 ml-auto">
-              <button
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="px-2 py-1 rounded border"
-                aria-label="Toggle dark mode"
-                title="Toggle dark mode"
-              >
-                {theme === "dark" ? "🌙" : "☀️"}
-              </button>
+                 <button
+                            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                            className="px-2 py-1 rounded border"
+                            aria-label="Toggle dark mode"
+                            title="Toggle dark mode"
+                          >
+                            {theme === "dark" ? (
+                              <Moon className="w-4 h-4" />
+                            ) : (
+                              <Sun className="w-4 h-4" />
+                            )}
+                          </button>
               <LanguageToggle />
               {!session && (
                 <Link href="/auth/signin">
@@ -304,13 +315,17 @@ export default function CategoriesPage() {
             </button>
           </div>
           <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="px-2 py-1 rounded border w-full flex items-center gap-2"
-            aria-label="Toggle dark mode"
-            title="Toggle dark mode"
-          >
-            {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
-          </button>
+                     onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                     className="px-2 py-1 rounded border"
+                     aria-label="Toggle dark mode"
+                     title="Toggle dark mode"
+                   >
+                     {theme === "dark" ? (
+                       <Moon className="w-4 h-4" />
+                     ) : (
+                       <Sun className="w-4 h-4" />
+                     )}
+                   </button>
           <LanguageToggle />
           {!session && (
             <Link href="/auth/signin" className="w-full">
@@ -369,13 +384,17 @@ export default function CategoriesPage() {
           {/* Right: Language toggle, dark mode, and sign in (desktop only) */}
           <div className="hidden md:flex items-center gap-3 min-w-0 ml-auto">
             <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="px-2 py-1 rounded border"
-              aria-label="Toggle dark mode"
-              title="Toggle dark mode"
-            >
-              {theme === "dark" ? "🌙" : "☀️"}
-            </button>
+                       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                       className="px-2 py-1 rounded border"
+                       aria-label="Toggle dark mode"
+                       title="Toggle dark mode"
+                     >
+                       {theme === "dark" ? (
+                         <Moon className="w-4 h-4" />
+                       ) : (
+                         <Sun className="w-4 h-4" />
+                       )}
+                     </button>
             <LanguageToggle />
             {!session && (
               <Link href="/auth/signin">
@@ -408,7 +427,7 @@ export default function CategoriesPage() {
               delay={index * 100}
             >
               <Card
-                className="hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer h-full"
+                className="relative overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer h-full bg-gradient-to-br from-primary/5 to-accent/10 border-border/50"
                 onClick={() => setSelectedCategory(category)}
               >
                 <CardHeader className="text-center">
@@ -417,8 +436,8 @@ export default function CategoriesPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="text-center space-y-2 md:space-y-4">
-                  <Button className="w-full hover:scale-105 transition-transform mt-2">
-                    Explore Topics
+                  <Button className="w-full hover:scale-105 transition-transform mt-2 shadow-md">
+                    {t("explore_topics")}
                   </Button>
                 </CardContent>
               </Card>
