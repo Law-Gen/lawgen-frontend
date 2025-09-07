@@ -18,8 +18,22 @@ import { LanguageToggle } from "@/components/ui/language-toggle";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { MainNavigation } from "@/components/ui/main-navigation";
+import FeedbackForm from "@/components/feedback-form";
 import { useTheme } from "next-themes";
-import FeedbackForm from "./feedback/page";
+import ChapaPayment from "@/components/payment/ChapaPayment";
+// import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+// import { LanguageToggle } from "@/components/ui/language-toggle";
+// import { BottomNavigation } from "@/components/ui/bottom-navigation";
+import { toast } from "@/hooks/use-toast";
 
 interface UserProfile {
   name: string;
@@ -30,39 +44,29 @@ interface UserProfile {
   gender?: "male" | "female" | "other";
   joinDate: string;
   subscription: {
-    plan: "free" | "premium" | "professional";
+    plan: string; // 'free', 'pro', 'enterprise'
     status: "active" | "expired" | "cancelled";
-    expiryDate?: string;
-    features: string[];
-  };
-  usage: {
-    chatMessages: number;
-    chatLimit: number;
-    quizzesTaken: number;
-    quizLimit: number;
-    documentsGenerated: number;
-    documentLimit: number;
   };
   preferences: {
     language: "english" | "amharic";
-    notifications: {
-      email: boolean;
-      sms: boolean;
-      push: boolean;
-    };
-    privacy: {
-      profileVisible: boolean;
-      shareUsageData: boolean;
-    };
   };
 }
 
-const subscriptionPlans = [
-  {
-    id: "free",
-    name: "Free",
-    price: "ETB 0",
-    period: "forever",
+interface Plan {
+  id: string;
+  name: string;
+  price: number;
+  features: string[];
+  limitations?: string[];
+  popular?: boolean;
+}
+
+// Static data for features, to be merged with fetched plans
+const staticPlanFeatures: Record<
+  string,
+  { features: string[]; limitations: string[]; popular: boolean }
+> = {
+  free: {
     features: [
       "50 chat messages per month",
       "10 quizzes per month",
@@ -77,11 +81,7 @@ const subscriptionPlans = [
     ],
     popular: false,
   },
-  {
-    id: "premium",
-    name: "Premium",
-    price: "ETB 299",
-    period: "per month",
+  pro: {
     features: [
       "Unlimited chat messages",
       "Unlimited quizzes",
@@ -89,30 +89,23 @@ const subscriptionPlans = [
       "Advanced legal resources",
       "Priority support",
       "Legal document templates",
-      "Expert consultations (2/month)",
     ],
     limitations: [],
     popular: true,
   },
-  {
-    id: "professional",
-    name: "Professional",
-    price: "ETB 599",
-    period: "per month",
+  enterprise: {
     features: [
-      "Everything in Premium",
+      "Everything in Pro",
       "Unlimited document generations",
       "Custom legal templates",
       "24/7 priority support",
-      "Expert consultations (5/month)",
       "Legal case tracking",
       "Advanced analytics",
-      "API access",
     ],
     limitations: [],
     popular: false,
   },
-];
+};
 
 export default function ProfilePage() {
   // Change Password form state (must be inside the component)
@@ -176,24 +169,52 @@ export default function ProfilePage() {
     }
   }, [status]);
   const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/signin");
+    }
+  }, [status, router]);
+
+  // State management
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState<string | null>(null);
 
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [plansLoading, setPlansLoading] = useState(true);
+  const [plansError, setPlansError] = useState<string | null>(null);
+
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+  const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
+
+  // Fetching data
   useEffect(() => {
     let didRefresh = false;
     async function fetchProfile() {
+      // If there's no session yet (still loading auth), stop the loading spinner
+      if (!session) {
+        setProfileLoading(false);
+        return;
+      }
+      // console.log("Fetching profile with session:", session);
       setProfileLoading(true);
-      setProfileError(null);
       try {
-        let token = "";
-        if (typeof window !== "undefined") {
-          token = localStorage.getItem("access_token") || "";
-        }
-        const res = await api.get("/users/me", {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        const res: any = await api.get("/users/me", {
+          headers: {
+            Authorization: `Bearer ${
+              session?.accessToken || localStorage.getItem("access_token") || ""
+            }`,
+          },
         });
-        // Map backend response to UserProfile shape
+        // Our lightweight api.get already returns parsed JSON, not { data: ... }
+        // console.log("Fetched profile on profile page:", res.data);
         const d = res.data;
         const mappedProfile: UserProfile = {
           name: d.full_name || "",
@@ -201,32 +222,15 @@ export default function ProfilePage() {
           phone: d.profile?.phone || "",
           avatar: d.profile?.profile_picture_url || "",
           birthdate: d.profile?.birth_date || "",
-          gender: d.profile?.gender || "",
+          gender: d.profile?.gender || "other",
           joinDate: d.created_at || "",
           subscription: {
-            plan: (d.subscription_status || "free") as any,
+            plan: (d.subscription_status || "free").toLowerCase(),
             status: "active",
-            features: [],
-          },
-          usage: {
-            chatMessages: 0,
-            chatLimit: 0,
-            quizzesTaken: 0,
-            quizLimit: 0,
-            documentsGenerated: 0,
-            documentLimit: 0,
           },
           preferences: {
             language:
-              d.profile?.language_preference === "amharic" ||
-              d.profile?.language_preference === "am"
-                ? "amharic"
-                : d.profile?.language_preference === "english" ||
-                  d.profile?.language_preference === "en"
-                ? "english"
-                : "english",
-            notifications: { email: true, sms: false, push: false },
-            privacy: { profileVisible: true, shareUsageData: false },
+              d.profile?.language_preference === "am" ? "amharic" : "english",
           },
         };
         setProfile(mappedProfile);
@@ -260,17 +264,138 @@ export default function ProfilePage() {
     }
     fetchProfile();
   }, [session]);
-  const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState("overview");
-  // Mobile sidebar state
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { theme, setTheme } = useTheme();
 
-  if (!session) {
-    router.push("/auth/signin");
-    return null;
-  }
-  if (profileLoading) {
+  useEffect(() => {
+    async function fetchPlans() {
+      if (!session) {
+        setPlansLoading(false);
+        return;
+      }
+      setPlansLoading(true);
+      try {
+        const res: any = await api.get("/subscriptions/plans", {
+          headers: {
+            Authorization: `Bearer ${
+              session?.accessToken || localStorage.getItem("access_token") || ""
+            }`,
+          },
+        });
+        console.log("Fetched plans:", res);
+
+        const mergedPlans = (Array.isArray(res) ? res : res?.plans || [])?.map(
+          (plan: any) => {
+            const staticFeatures = staticPlanFeatures[
+              plan.name.toLowerCase() as keyof typeof staticPlanFeatures
+            ] || { features: [], limitations: [], popular: false };
+            return {
+              id: plan.id,
+              name: plan.name,
+              price: plan.price,
+              ...staticFeatures,
+            };
+          }
+        );
+        setPlans(mergedPlans);
+      } catch (err: any) {
+        setPlansError(err.message || "Failed to load subscription plans.");
+      } finally {
+        setPlansLoading(false);
+      }
+    }
+    fetchPlans();
+  }, [session]);
+
+  // Handlers
+  // Removed duplicate handleUpgrade function
+
+  const handleCancelSubscription = () => {
+    setIsCancelModalOpen(true);
+  };
+
+  const confirmCancelSubscription = async () => {
+    setIsCancelModalOpen(false);
+
+    try {
+      await api.post("/subscriptions/cancel", null, {
+        headers: {
+          Authorization: `Bearer ${
+            session?.accessToken || localStorage.getItem("access_token") || ""
+          }`,
+        },
+      });
+
+      toast({
+        title: "Subscription Cancelled",
+        description:
+          "Your subscription has been cancelled successfully. You've been downgraded to the free plan.",
+      });
+      // Refetch profile to update UI
+
+      const res = await api.get("/users/me", {
+        headers: {
+          Authorization: `Bearer ${
+            session?.accessToken || localStorage.getItem("access_token") || ""
+          }`,
+        },
+      });
+      const d = res.data;
+      setProfile((p) =>
+        p
+          ? {
+              ...p,
+              subscription: {
+                ...p.subscription,
+                plan: (d.subscription_status || "free").toLowerCase(),
+              },
+            }
+          : null
+      );
+    } catch (err: any) {
+      toast({
+        title: "Cancellation Failed",
+        description:
+          err.message || "Failed to cancel subscription. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // const handleSaveProfile = async () => {
+  //   if (!profile) return;
+  //   try {
+  //     const payload = {
+  //       full_name: profile.name,
+  //       profile: {
+  //         phone: profile.phone,
+  //         birth_date: profile.birthdate,
+  //         gender: profile.gender,
+  //         language_preference:
+  //           profile.preferences.language === "amharic" ? "am" : "en",
+  //       },
+  //     };
+  //     await api.put("/users/me", payload);
+  //     setIsEditing(false);
+  //     toast({
+  //       title: "Profile Updated",
+  //       description: "Your profile has been updated successfully.",
+  //     });
+  //   } catch (err: any) {
+  //     toast({
+  //       title: "Update Failed",
+  //       description: err.message || "Failed to update profile. Please try again.",
+  //       variant: "destructive",
+  //     });
+  //   }
+  // };
+
+  // Redirect if not logged in - MOVED TO useEffect to prevent render error
+  // if (!session && !profileLoading) {
+  //   router.push("/auth/signin");
+  //   return null;
+  // }
+
+  // Loading and error states
+  if (status === "loading" || profileLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         Loading profile...
@@ -321,18 +446,15 @@ export default function ProfilePage() {
       alert("Please enter a valid birthdate in YYYY-MM-DD format.");
       return;
     }
-    let token = "";
-    if (typeof window !== "undefined") {
-      token = localStorage.getItem("access_token") || "";
-    }
     const formData = new FormData();
     const gender = profile.gender.trim();
     // Always send language as 'en' or 'am' for backend
-    let langPref = profile.preferences.language;
-    let langPrefForBackend = langPref === "english" ? "en" : langPref === "amharic" ? "am" : langPref;
+    let langPref: string = profile.preferences.language;
+    if (langPref === "english") langPref = "en";
+    else if (langPref === "amharic") langPref = "am";
     formData.append("gender", gender);
     formData.append("birth_date", birth_date);
-    formData.append("langauge_preference", langPrefForBackend);
+    formData.append("language_preference", langPref);
     // Only include profile_picture if uploading a new image
     if (
       profile.avatar &&
@@ -350,7 +472,7 @@ export default function ProfilePage() {
       const res = await fetch(`${API_BASE_URL}/users/me`, {
         method: "PUT",
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${session?.accessToken}`,
         },
         body: formData,
       });
@@ -372,29 +494,34 @@ export default function ProfilePage() {
     }
   };
 
-  const handleUpgrade = (planId: string) => {
-    // Here you would handle the subscription upgrade
-    console.log("Upgrading to:", planId);
+  const handleUpgrade = (plan: Plan) => {
+    if (profile?.subscription.plan === plan.id) return;
+    setSelectedPlan(plan);
+    //set selected plan in local storage
+    localStorage.setItem("selected_plan", plan.id);
+    console.log(plan);
+    // console.log("selected_plan", plan.id);
+    setPaymentModalOpen(true);
   };
 
   const getUsagePercentage = (used: number, limit: number) => {
     return Math.min((used / limit) * 100, 100);
   };
 
+  // Plan color helper
   const getPlanColor = (plan: string) => {
     switch (plan) {
       case "free":
         return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200";
-      case "premium":
+      case "pro":
         return "bg-primary text-primary-foreground";
-      case "professional":
+      case "enterprise":
         return "bg-accent text-accent-foreground";
       default:
         return "bg-secondary text-secondary-foreground";
     }
   };
 
-  // --- Header content for each tab ---
   const getHeaderContent = () => {
     if (activeTab === "overview") {
       return (
@@ -448,7 +575,49 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10 pb-16 overflow-x-hidden">
+    // <div>
+    //     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10 pb-16 overflow-x-hidden">
+    //   {/* Mobile Sidebar (RIGHT SIDE) */}
+    //   <div
+    //     className={`fixed inset-0 z-[100] bg-black/40 transition-opacity ${
+    //       sidebarOpen ? "block md:hidden" : "hidden"
+    //     }`}
+    //     onClick={() => setSidebarOpen(false)}
+    //   />
+    //   <aside
+    //     className={`fixed top-0 right-0 z-[101] h-full w-64 bg-card dark:bg-zinc-900 shadow-lg transform transition-transform duration-300 ${
+    //       sidebarOpen ? "translate-x-0" : "translate-x-full"
+    //     } md:hidden`}
+    //   >
+    //     <div className="flex flex-col h-full p-6 gap-6">
+    //       <div className="flex items-center justify-between mb-4">
+    //         <span className="text-lg font-bold text-primary">Menu</span>
+    //         <button
+    //           onClick={() => setSidebarOpen(false)}
+    //           aria-label="Close sidebar"
+    //           className="text-2xl"
+    //         >
+    //           &times;
+    //         </button>
+
+    //   <div className="min-h-screen bg-background pb-16">
+    //     {isPaymentModalOpen && selectedPlan && profile && (
+    //       <ChapaPayment
+    //         plan={{
+    //           id: selectedPlan.id,
+    //         name: selectedPlan.name,
+    //         price: selectedPlan.price,
+    //       }}
+    //       user={{
+    //         name: profile.name,
+    //         email: profile.email,
+    //       }}
+    //       tx_ref={`lawgen-${profile.email.split("@")[0]}-${Date.now()}`}
+    //       onClose={() => setPaymentModalOpen(false)}
+    //     />
+    //   )}
+    //  <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10 pb-16 overflow-x-hidden">
+    <div>
       {/* Mobile Sidebar (RIGHT SIDE) */}
       <div
         className={`fixed inset-0 z-[100] bg-black/40 transition-opacity ${
@@ -472,35 +641,74 @@ export default function ProfilePage() {
               &times;
             </button>
           </div>
-          {/* Dark mode toggle for mobile sidebar */}
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="px-2 py-1 rounded border w-full flex items-center gap-2"
-            aria-label="Toggle dark mode"
-            title="Toggle dark mode"
-          >
-            {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
-          </button>
-          <LanguageToggle />
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full text-primary dark:text-white border-primary hover:bg-primary hover:!text-white transition-colors bg-transparent"
-            onClick={() => signOut({ callbackUrl: "/" })}
-          >
-            Sign Out
-          </Button>
+          {/* You can add mobile nav items here */}
         </div>
       </aside>
+
+      {/* <div className="min-h-screen bg-background pb-16"> */}
+      <div>
+        {isPaymentModalOpen && selectedPlan && profile && (
+          <ChapaPayment
+            plan={{
+              id: selectedPlan.id,
+              name: selectedPlan.name,
+              price: selectedPlan.price,
+            }}
+            user={{
+              name: profile.name,
+              email: profile.email,
+            }}
+            tx_ref={`lawgen-${profile.email.split("@")[0]}-${Date.now()}`}
+            onClose={() => setPaymentModalOpen(false)}
+          />
+        )}
+      </div>
+
+      {/* Cancel Subscription Modal */}
+      <Dialog open={isCancelModalOpen} onOpenChange={setIsCancelModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">
+              Cancel Subscription
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to cancel your subscription? This action
+              cannot be undone and will revert you to the free plan immediately.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+              <h4 className="font-medium text-destructive mb-2">
+                What happens when you cancel:
+              </h4>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• Your subscription will end immediately</li>
+                <li>• You'll be downgraded to the free plan</li>
+                <li>• Access to premium features will be lost</li>
+                <li>• You can resubscribe at any time</li>
+              </ul>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsCancelModalOpen(false)}
+            >
+              Keep Subscription
+            </Button>
+            <Button variant="destructive" onClick={confirmCancelSubscription}>
+              Cancel Subscription
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Header */}
       <header className="bg-card/80 backdrop-blur-sm border-b border-border p-4 sticky top-0 z-50">
         <div className="w-full flex items-center px-2 gap-4">
-          {/* Left: Title and description */}
           <div className="flex flex-1 flex-col items-start min-w-0">
             {getHeaderContent()}
           </div>
-          {/* Hamburger icon for mobile, right side */}
           <div className="md:hidden" style={{ marginLeft: "4px" }}>
             <button
               className="p-0 bg-transparent border-none shadow-none outline-none focus:outline-none"
@@ -519,11 +727,9 @@ export default function ProfilePage() {
               </svg>
             </button>
           </div>
-          {/* Center: Main navigation (desktop only) */}
           <div className="hidden md:flex flex-1 justify-center">
             <MainNavigation />
           </div>
-          {/* Right: Language toggle, dark mode, and sign out (desktop only) */}
           <div className="hidden md:flex items-center gap-3 min-w-0 ml-auto">
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -559,7 +765,7 @@ export default function ProfilePage() {
           </TabsList>
 
           {/* Feedback Tab */}
-          <TabsContent value="feedback" className="space-y-6">
+          <TabsContent value="feedback" className="space-y-6 min-h-[100vh]">
             <MotionWrapper animation="fadeInUp">
               <FeedbackForm />
             </MotionWrapper>
@@ -591,11 +797,11 @@ export default function ProfilePage() {
                     <div className="relative w-20 h-20">
                       <Avatar className="w-20 h-20">
                         <AvatarImage
-                          src={profile.avatar || "/placeholder.svg"}
-                          alt={profile.name}
+                          src={profile?.avatar || "/placeholder.svg"}
+                          alt={profile?.name}
                         />
                         <AvatarFallback className="bg-primary text-primary-foreground text-xl">
-                          {profile.name
+                          {profile?.name
                             .split(" ")
                             .map((n) => n[0])
                             .join("")}
@@ -655,22 +861,8 @@ export default function ProfilePage() {
                         Member since{" "}
                         {new Date(profile.joinDate).toLocaleDateString()}
                       </p>
-                      <div className="text-sm text-muted-foreground mt-1">
-                        <span className="font-medium">Gender:</span>{" "}
-                        {profile.gender
-                          ? profile.gender.charAt(0).toUpperCase() +
-                            profile.gender.slice(1)
-                          : "-"}
-                      </div>
-                      <div className="text-sm text-muted-foreground mt-1">
-                        <span className="font-medium">Birthdate:</span>{" "}
-                        {profile.birthdate
-                          ? new Date(profile.birthdate).toLocaleDateString()
-                          : "-"}
-                      </div>
                     </div>
-                  </div>{" "}
-                  {/* closes flex items-center gap-6 */}
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                     <div className="space-y-4">
                       <div>
@@ -899,91 +1091,88 @@ export default function ProfilePage() {
                       {profile.subscription.plan.toUpperCase()}
                     </Badge>
                   </div>
-                  <div className="mt-4">
-                    <h4 className="font-medium text-primary mb-2">
-                      Current Features:
-                    </h4>
-                    <ul className="space-y-1">
-                      {profile.subscription.features.map((feature, index) => (
-                        <li
-                          key={index}
-                          className="text-sm text-muted-foreground flex items-center gap-2"
-                        >
-                          <span className="text-green-500">✓</span>
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
                 </CardContent>
               </Card>
             </MotionWrapper>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-              {subscriptionPlans.map((plan, index) => (
-                <MotionWrapper
-                  key={plan.id}
-                  animation="staggerIn"
-                  delay={index * 100}
-                >
-                  <Card
-                    className={`relative ${
-                      plan.popular ? "border-primary shadow-lg" : ""
-                    }`}
+              {plansLoading ? (
+                <p>Loading plans...</p>
+              ) : plansError ? (
+                <p className="text-red-500">{plansError}</p>
+              ) : (
+                plans?.map((plan, index) => (
+                  <MotionWrapper
+                    key={plan.id}
+                    animation="staggerIn"
+                    delay={index * 100}
                   >
-                    {plan.popular && (
-                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                        <Badge className="bg-primary text-primary-foreground">
-                          Most Popular
-                        </Badge>
-                      </div>
-                    )}
-                    <CardHeader className="text-center">
-                      <CardTitle className="text-primary">
-                        {plan.name}
-                      </CardTitle>
-                      <div className="text-2xl font-bold text-primary">
-                        {plan.price}
-                        <span className="text-sm font-normal text-muted-foreground">
-                          /{plan.period}
-                        </span>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <h4 className="font-medium text-primary mb-2">
-                          Features:
-                        </h4>
-                        <ul className="space-y-1">
-                          {plan.features.map((feature, index) => (
-                            <li
-                              key={index}
-                              className="text-sm text-muted-foreground flex items-center gap-2"
-                            >
-                              <span className="text-green-500">✓</span>
-                              {feature}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      <Button
-                        className="w-full hover:scale-105 transition-transform"
-                        variant={
-                          profile.subscription.plan === plan.id
-                            ? "outline"
-                            : "default"
-                        }
-                        onClick={() => handleUpgrade(plan.id)}
-                        disabled={profile.subscription.plan === plan.id}
-                      >
-                        {profile.subscription.plan === plan.id
-                          ? "Current Plan"
-                          : "Upgrade"}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </MotionWrapper>
-              ))}
+                    <Card
+                      className={`relative ${
+                        plan.popular ? "border-primary shadow-lg" : ""
+                      }`}
+                    >
+                      {plan.popular && (
+                        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                          <Badge className="bg-primary text-primary-foreground">
+                            Most Popular
+                          </Badge>
+                        </div>
+                      )}
+                      <CardHeader className="text-center">
+                        <CardTitle className="text-primary">
+                          {plan.name}
+                        </CardTitle>
+                        <div className="text-2xl font-bold text-primary">
+                          ETB {plan.price}
+                          <span className="text-sm font-normal text-muted-foreground">
+                            /month
+                          </span>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div>
+                          <h4 className="font-medium text-primary mb-2">
+                            Features:
+                          </h4>
+                          <ul className="space-y-1">
+                            {plan?.features.map((feature, i) => (
+                              <li
+                                key={i}
+                                className="text-sm text-muted-foreground flex items-center gap-2"
+                              >
+                                <span className="text-green-500">✓</span>{" "}
+                                {feature}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        {plan.name === "free" ? (
+                          <Button disabled className="w-full">
+                            Current Plan
+                          </Button>
+                        ) : profile.subscription.plan === plan.name ? (
+                          <Button
+                            onClick={handleCancelSubscription}
+                            variant="destructive"
+                            className="w-full"
+                          >
+                            Cancel
+                          </Button>
+                        ) : (
+                          <Button
+                            onClick={() => handleUpgrade(plan)}
+                            className="w-full"
+                          >
+                            Upgrade
+                          </Button>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </MotionWrapper>
+                ))
+              )}
             </div>
           </TabsContent>
         </Tabs>

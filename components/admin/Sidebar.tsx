@@ -53,7 +53,7 @@ const menuItems = [
   {
     title: "Feedback",
     icon: MessageSquare,
-    href: "admin/feedback",
+    href: "/admin/feedback",
     description: "Manage feedbacks sent from users",
   },
 ];
@@ -133,10 +133,21 @@ export default function Sidebar({ isExpanded }: SidebarProps) {
       <div className="overflow-y-auto max-h-screen">
         <div className="p-6 border-sidebar-border">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-sidebar-primary rounded-lg flex items-center justify-center flex-shrink-0">
+            {/* <div className="w-10 h-10 bg-sidebar-primary rounded-lg flex items-center justify-center flex-shrink-0">
               <span className="text-sidebar-primary-foreground font-bold text-xl">
-                ⚖️
+                
               </span>
+            </div> */}
+            {/* <div className="flex items-center gap-4"> */}
+            <div className="flex-shrink-0">
+              {/* Logo to the left of the text, circular and larger */}
+              <img
+                src="/logo.svg"
+                alt="LawG Logo"
+                width={56}
+                height={56}
+                className="h-10 w-10 rounded-full object-cover border border-muted shadow"
+              />
             </div>
             <AnimatePresence mode="wait">
               {isExpanded && (
