@@ -3,23 +3,27 @@
 import { useState } from "react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
-import { Menu, Bell, Settings, LogOut, Search } from "lucide-react";
+import { Menu, Bell, Settings, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { useAppSelector } from "@/src/store/hooks";
 
-interface HeaderProps {
-  userName: string;
-  role: string;
-  onMenuClick?: () => void;
-}
-
-export default function Header({ userName, role, onMenuClick }: HeaderProps) {
+export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const router = useRouter();
   const { theme, setTheme } = useTheme();
 
-  const initials = userName
+  // Get profile from Redux
+  const profile = useAppSelector((state) => state.profile.profile);
+  const loading = useAppSelector((state) => state.profile.loading);
+
+  // Fallbacks if profile is not loaded
+  const fullName = profile?.full_name || "User";
+  const role = profile?.role || "User";
+  const profilePic = profile?.profile?.profile_picture_url || "";
+  const initials = fullName
     .split(" ")
+    .filter(Boolean)
     .map((n) => n[0])
     .join("")
     .toUpperCase();
@@ -44,11 +48,8 @@ export default function Header({ userName, role, onMenuClick }: HeaderProps) {
         </button>
         <div>
           <h2 className="text-lg font-semibold text-card-foreground">
-            Welcome back, {userName.split(" ")[0]}!
+            Welcome back, {fullName.split(" ")[0]}!
           </h2>
-          {/* <p className="text-sm text-muted-foreground">
-  
-          </p> */}
         </div>
       </div>
 
@@ -138,13 +139,21 @@ export default function Header({ userName, role, onMenuClick }: HeaderProps) {
           >
             <div className="text-right hidden sm:block">
               <p className="text-sm font-medium text-card-foreground">
-                {userName}
+                {fullName}
               </p>
               <p className="text-xs text-muted-foreground">{role}</p>
             </div>
-            <div className="w-9 h-9 flex items-center justify-center rounded-md bg-brown-600 text-white font-semibold">
-              {initials}
-            </div>
+            {profilePic ? (
+              <img
+                src={profilePic}
+                alt={fullName}
+                className="w-9 h-9 rounded-md object-cover border border-border"
+              />
+            ) : (
+              <div className="w-9 h-9 flex items-center justify-center rounded-md bg-brown-600 text-white font-semibold">
+                {initials}
+              </div>
+            )}
             <svg
               className="ml-2 w-4 h-4 text-muted-foreground"
               fill="none"

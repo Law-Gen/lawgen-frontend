@@ -17,26 +17,12 @@ import {
   MessageCircle,
   ExternalLink,
 } from "lucide-react";
-import type { Feedback } from "./FeedbackCard";
+import type { Feedback } from "@/src/store/slices/feedbackSlice";
 
 interface FeedbackTableProps {
   feedbacks: Feedback[];
   onViewDetails: (feedback: Feedback) => void;
 }
-
-const typeIcons = {
-  bug: AlertTriangle,
-  feature: Lightbulb,
-  improvement: Zap,
-  general: MessageCircle,
-};
-
-const typeColors = {
-  bug: "text-red-600",
-  feature: "text-yellow-600",
-  improvement: "text-blue-600",
-  general: "text-gray-600",
-};
 
 const severityColors = {
   high: "bg-red-100 text-red-800",
@@ -52,7 +38,6 @@ const statusColors = {
 };
 
 const statusLabels = {
-  open: "Open",
   "in-progress": "In Progress",
   "under-review": "Under Review",
   resolved: "Resolved",
@@ -78,21 +63,13 @@ export default function FeedbackTable({
         </TableHeader>
         <TableBody>
           {feedbacks.map((feedback) => {
-            const TypeIcon = typeIcons[feedback.type];
             return (
               <TableRow key={feedback.id} className="hover:bg-muted/30">
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <div
-                      className={`p-2 rounded-lg bg-muted ${
-                        typeColors[feedback.type]
-                      }`}
-                    >
-                      <TypeIcon className="h-4 w-4" />
-                    </div>
                     <div>
                       <div className="font-medium text-foreground line-clamp-1">
-                        {feedback.title}
+                        {feedback.type}
                       </div>
                       <div className="text-sm text-muted-foreground line-clamp-1 max-w-md">
                         {feedback.description}
@@ -116,21 +93,26 @@ export default function FeedbackTable({
                 <TableCell>
                   <Badge
                     variant="outline"
-                    className={statusColors[feedback.status]}
+                    className={
+                      statusColors[
+                        feedback.status as keyof typeof statusColors
+                      ] ?? ""
+                    }
                   >
-                    {statusLabels[feedback.status]}
+                    {statusLabels[
+                      feedback.status as keyof typeof statusLabels
+                    ] ?? feedback.status}
                   </Badge>
                 </TableCell>
                 <TableCell>
                   <div>
-                    <div className="font-medium">{feedback.submittedBy}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {feedback.submittedByEmail}
+                    <div className="font-medium">
+                      {feedback.submitter_user_id}
                     </div>
                   </div>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
-                  {feedback.date}
+                  {feedback.timestamp}
                 </TableCell>
                 <TableCell>
                   <Button

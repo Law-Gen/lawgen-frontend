@@ -9,19 +9,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { motion } from "framer-motion";
-
-export interface Feedback {
-  id: string;
-  title: string;
-  description: string;
-  type: "bug" | "feature" | "improvement" | "general";
-  severity: "high" | "medium" | "low";
-  status: "open" | "in-progress" | "under-review" | "resolved";
-  submittedBy: string;
-  submittedByEmail: string;
-  date: string;
-  device?: string;
-}
+import type { Feedback } from "@/src/store/slices/feedbackSlice";
 
 interface FeedbackCardProps {
   feedback: Feedback;
@@ -56,7 +44,6 @@ const statusColors = {
 };
 
 const statusLabels = {
-  open: "Open",
   "in-progress": "In Progress",
   "under-review": "Under Review",
   resolved: "Resolved",
@@ -66,8 +53,6 @@ export default function FeedbackCard({
   feedback,
   onViewDetails,
 }: FeedbackCardProps) {
-  const TypeIcon = typeIcons[feedback.type];
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -77,15 +62,21 @@ export default function FeedbackCard({
       <Card className="h-full hover:shadow-md transition-shadow duration-200">
         <CardContent className="p-6">
           <div className="flex items-start justify-between mb-4">
-            <div className={`p-2 rounded-lg ${typeColors[feedback.type]}`}>
-              <TypeIcon className="h-5 w-5" />
-            </div>
             <div className="flex gap-2">
               <Badge
                 variant="outline"
-                className={statusColors[feedback.status]}
+                className={
+                  statusColors[feedback.status as keyof typeof statusColors] ??
+                  ""
+                }
               >
-                {statusLabels[feedback.status]}
+                {feedback.status &&
+                statusLabels[feedback.status as keyof typeof statusLabels]
+                  ? statusLabels[feedback.status as keyof typeof statusLabels]
+                  : typeof feedback.status === "string"
+                  ? feedback.status.charAt(0).toUpperCase() +
+                    feedback.status.slice(1)
+                  : ""}
               </Badge>
             </div>
           </div>
@@ -93,7 +84,7 @@ export default function FeedbackCard({
           <div className="space-y-3">
             <div>
               <h3 className="font-semibold text-lg text-foreground line-clamp-2">
-                {feedback.title}
+                {feedback.type}
               </h3>
               <p className="text-sm text-muted-foreground mt-1 line-clamp-3">
                 {feedback.description}
@@ -115,15 +106,11 @@ export default function FeedbackCard({
             <div className="space-y-2 text-sm text-muted-foreground">
               <div>
                 <span className="font-medium">Submitted by:</span>{" "}
-                {feedback.submittedBy}
+                {feedback.submitter_user_id}
               </div>
               <div>
-                <span className="font-medium">Date:</span> {feedback.date}
+                <span className="font-medium">Date:</span> {feedback.timestamp}
               </div>
-              {/* <div>
-                <span className="font-medium">Category:</span>{" "}
-                {feedback.category}
-              </div> */}
             </div>
 
             <Button

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { useTheme } from "next-themes";
+import { Moon, Sun } from "lucide-react";
 
 export default function LandingPage() {
   const heroRef = useRef<HTMLElement>(null);

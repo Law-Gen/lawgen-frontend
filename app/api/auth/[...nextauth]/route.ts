@@ -1,5 +1,13 @@
 import NextAuth from "next-auth";
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+// Debug logging to help identify the issue
+console.log("NextAuth API_BASE_URL:", API_BASE_URL);
+console.log("All env vars:", Object.keys(process.env).filter(key => key.includes('API')));
+
+if (!API_BASE_URL) {
+  console.error("NEXT_PUBLIC_API_URL is not defined! Please check your .env file.");
+}
 import CredentialsProvider from "next-auth/providers/credentials";
 import type { NextAuthOptions, User } from "next-auth";
 
@@ -49,8 +57,17 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
+
+        if (!API_BASE_URL) {
+          console.error("API_BASE_URL is undefined. Cannot authenticate user.");
+          return null;
+        }
+
         try {
-          const res = await fetch(`${API_BASE_URL}/auth/login`, {
+          const loginUrl = `${API_BASE_URL}/auth/login`;
+          console.log("Attempting login to:", loginUrl);
+
+          const res = await fetch(loginUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -70,7 +87,7 @@ export const authOptions: NextAuthOptions = {
             data,
           });
           if (res.ok && data.access_token) {
-           
+
             // You can also store user info if returned by your backend
             // Return user object and tokens
             return {

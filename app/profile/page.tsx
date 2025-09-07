@@ -3,7 +3,7 @@
 import type React from "react";
 
 import { useState, useEffect } from "react";
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 import { api } from "@/src/lib/api";
 import { MotionWrapper } from "@/components/ui/motion-wrapper";
 import { Button } from "@/components/ui/button";
@@ -440,10 +440,6 @@ export default function ProfilePage() {
       alert("Please enter a valid birthdate in YYYY-MM-DD format.");
       return;
     }
-    let token = "";
-    if (typeof window !== "undefined") {
-      token = localStorage.getItem("access_token") || "";
-    }
     const formData = new FormData();
     const gender = profile.gender.trim();
     // Always send language as 'en' or 'am' for backend
@@ -470,7 +466,7 @@ export default function ProfilePage() {
       const res = await fetch(`${API_BASE_URL}/users/me`, {
         method: "PUT",
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${session?.accessToken}`,
         },
         body: formData,
       });

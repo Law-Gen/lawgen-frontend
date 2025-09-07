@@ -6,36 +6,50 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Switch,
-  Input,
   Avatar,
   AvatarFallback,
 } from "@/components/ui";
 import { X } from "lucide-react";
 
-import { useState } from "react";
-import { User } from "./UserList";
+import { useState, useEffect } from "react";
+import { useAppDispatch } from "@/src/store/hooks";
+import {
+  User,
+  promoteToAdmin,
+  activateUser,
+  demoteToUser,
+  deactivateUser,
+} from "@/src/store/slices/userSlice";
 
 interface UserDetailProps {
   user: User | null;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (userId: string, updates: Partial<User>) => void;
 }
 
-export default function UserDetail({
-  user,
-  isOpen,
-  onClose,
-  onSave,
-}: UserDetailProps) {
+export default function UserDetail({ user, isOpen, onClose }: UserDetailProps) {
+  const dispatch = useAppDispatch();
   const [role, setRole] = useState<"admin" | "user">("user");
-  const [status, setStatus] = useState(user?.status || "active");
+  // const [status, setStatus] = useState(user?.status || "active");
   const [subscription, setSubscription] = useState<
-    "basic" | "premium" | "enterprise"
-  >("basic");
-  const [gender, setGender] = useState(user?.gender || "");
-  const [birthdate, setBirthdate] = useState(user?.birthdate || "");
+    "free" | "premium" | "enterprise"
+  >("free");
+  const [gender, setGender] = useState("");
+  const [birthdate, setBirthdate] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      setRole(user.role);
+      setSubscription(user.subscription_status);
+      setGender(user.profile.gender || "");
+      setBirthdate(
+        user.profile.birth_date &&
+          user.profile.birth_date !== "0001-01-01T00:00:00Z"
+          ? user.profile.birth_date.split("T")[0]
+          : ""
+      );
+    }
+  }, [user]);
 
   if (!user) return null;
 
@@ -47,28 +61,24 @@ export default function UserDetail({
       .toUpperCase();
   };
 
-  const handleSave = () => {
-    // Determine subscription value based on isPremium and user selection
-    let subscription: "basic" | "premium" | "enterprise" = "basic";
-    if (
-      user?.subscription === "enterprise" ||
-      user?.subscription === "premium" ||
-      user?.subscription === "basic"
-    ) {
-      subscription = user.subscription;
+  const handleSave = async () => {
+    if (role === "admin" && user.role !== "admin") {
+      await dispatch(promoteToAdmin(user.email));
+    } else if (role === "admin" && user.role != "user") {
+      await dispatch(demoteToUser(user.email));
     }
-    // If you want to allow changing subscription, you should store the selected value in state
-    // For example, add: const [subscription, setSubscription] = useState<"basic" | "premium" | "enterprise">(user?.subscription || "basic");
-    // And update <Select> to use value={subscription} and onValueChange={setSubscription}
-    onSave(user.id, {
-      role: role as "admin" | "user",
-      status: status as "active" | "inactive",
-      subscription,
-      gender: gender as "male" | "female" | "prefer-not-to-say" | undefined,
-      birthdate: birthdate || undefined,
-    });
     onClose();
   };
+  const handleActivate = async () => {
+    await dispatch(activateUser(user.email));
+    onClose();
+  };
+
+  const handleDeactivate = async () => {
+    await dispatch(deactivateUser(user.email));
+    onClose();
+  };
+
   return (
     <>
       {/* Backdrop */}
@@ -96,12 +106,23 @@ export default function UserDetail({
           {/* User Profile */}
           <div className="text-center space-y-4">
             <Avatar className="w-20 h-20 mx-auto bg-primary text-primary-foreground">
-              <AvatarFallback className="bg-primary text-primary-foreground text-xl font-medium">
-                {getInitials(user.name)}
-              </AvatarFallback>
+              {user.profile.profile_picture_url ? (
+                <img
+                  src={user.profile.profile_picture_url || "/placeholder.svg"}
+                  alt={user.full_name}
+                  className="w-full h-full object-cover rounded-full"
+                />
+              ) : (
+                <AvatarFallback className="bg-primary text-primary-foreground text-xl font-medium">
+                  {getInitials(user.full_name)}
+                </AvatarFallback>
+              )}
             </Avatar>
+
             <div>
-              <h3 className="font-semibold text-foreground">{user.name}</h3>
+              <h3 className="font-semibold text-foreground">
+                {user.full_name}
+              </h3>
               <p className="text-sm text-muted-foreground">{user.email}</p>
             </div>
           </div>
@@ -123,102 +144,72 @@ export default function UserDetail({
             </Select>
           </div>
 
-          {/* Status Selection */}
-          <div className="space-y-3">
-            <label className="text-sm font-medium text-foreground">
-              Status
-            </label>
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  id="active"
-                  name="status"
-                  value="active"
-                  checked={status === "active"}
-                  onChange={(e) =>
-                    setStatus(e.target.value as "active" | "inactive")
-                  }
-                  className="w-4 h-4 text-primary"
-                />
-                <label htmlFor="active" className="text-sm text-foreground">
-                  Active
-                </label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  id="inactive"
-                  name="status"
-                  value="inactive"
-                  checked={status === "inactive"}
-                  onChange={(e) =>
-                    setStatus(e.target.value as "active" | "inactive")
-                  }
-                  className="w-4 h-4 text-primary"
-                />
-                <label htmlFor="inactive" className="text-sm text-foreground">
-                  Inactive
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {/* Subscription */}
-          <div className="space-y-3">
+          {/* Subscription Display */}
+          <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">
               Subscription
             </label>
-            {/* <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-            </div> */}
-            <Select
-              value={subscription}
-              onValueChange={(value) =>
-                setSubscription(value as "basic" | "premium" | "enterprise")
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="basic">Basic</SelectItem>
-                <SelectItem value="premium">Premium</SelectItem>
-                <SelectItem value="enterprise">Enterprise</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <span className="text-sm capitalize">
+                {user.subscription_status}
+              </span>
+            </div>
           </div>
 
-          {/* Gender Selection */}
+          {/* Gender Display */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">
-              Gender (Optional)
+              Gender
             </label>
-            <Select value={gender} onValueChange={setGender}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select gender" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="male">Male</SelectItem>
-                <SelectItem value="female">Female</SelectItem>
-                <SelectItem value="prefer-not-to-say">
-                  Prefer not to say
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <span className="text-sm">
+                {user.profile.gender || "Not specified"}
+              </span>
+            </div>
           </div>
 
-          {/* Birthdate Input */}
+          {/* Birthdate Display */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">
-              Birthdate (Optional)
+              Birthdate
             </label>
-            <Input
-              type="date"
-              value={birthdate}
-              onChange={(e) => setBirthdate(e.target.value)}
-              className="w-full"
-            />
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <span className="text-sm">
+                {user.profile.birth_date &&
+                user.profile.birth_date !== "0001-01-01T00:00:00Z"
+                  ? new Date(user.profile.birth_date).toLocaleDateString()
+                  : "Not specified"}
+              </span>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="space-y-3 pt-4">
+            {role === "admin" && user.role !== "admin" && (
+              <Button
+                onClick={handleSave}
+                className="w-full bg-primary hover:bg-primary/90"
+              >
+                Promote to Admin
+              </Button>
+            )}
+
+            <div className="flex gap-3">
+              <Button
+                onClick={handleActivate}
+                variant="outline"
+                className="flex-1 bg-transparent"
+              >
+                Activate User
+              </Button>
+              <Button
+                onClick={handleDeactivate}
+                variant="outline"
+                className="flex-1 bg-transparent"
+              >
+                Deactivate User
+              </Button>
+            </div>
           </div>
 
           {/* Action Buttons */}

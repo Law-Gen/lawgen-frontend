@@ -1,5 +1,15 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
 import { getSession } from "next-auth/react";
+
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+// Debug logging to help identify the issue
+console.log("API.ts API_BASE_URL:", API_BASE_URL);
+console.log("API.ts env vars:", Object.keys(process.env).filter(key => key.includes('API')));
+
+if (!API_BASE_URL) {
+  console.error("NEXT_PUBLIC_API_URL is not defined in api.ts! Please check your .env file.");
+}
 
 async function handle(res: Response) {
   if (!res.ok) {
@@ -7,7 +17,7 @@ async function handle(res: Response) {
     try {
       const data = await res.json();
       msg = data.message || JSON.stringify(data);
-    } catch {}
+    } catch { }
     throw new Error(msg);
   }
   return res.json ? res.json() : res.text();
@@ -15,6 +25,9 @@ async function handle(res: Response) {
 
 export const api = {
   post: async (path: string, body?: any, options: RequestInit = {}) => {
+    if (!API_BASE_URL) {
+      throw new Error("API_BASE_URL is not defined. Please check your environment variables.");
+    }
     const session = await getSession();
     const res = await fetch(`${API_BASE_URL}${path}`, {
       method: "POST",
@@ -32,15 +45,27 @@ export const api = {
     return handle(res);
   },
   get: async (path: string, options: RequestInit = {}) => {
+    if (!API_BASE_URL) {
+      throw new Error("API_BASE_URL is not defined. Please check your environment variables.");
+    }
+    const session = await getSession();
     const res = await fetch(`${API_BASE_URL}${path}`, {
       method: "GET",
-      headers: { ...(options.headers || {}) },
+      headers: {
+        ...(session?.accessToken
+          ? { Authorization: `Bearer ${session.accessToken}` }
+          : {}),
+        ...(options.headers || {}),
+      },
       credentials: "include",
       ...options,
     });
     return handle(res);
   },
   put: async (path: string, body?: any, options: RequestInit = {}) => {
+    if (!API_BASE_URL) {
+      throw new Error("API_BASE_URL is not defined. Please check your environment variables.");
+    }
     const session = await getSession();
     const res = await fetch(`${API_BASE_URL}${path}`, {
       method: "PUT",
@@ -58,6 +83,9 @@ export const api = {
     return handle(res);
   },
   patch: async (path: string, body?: any, options: RequestInit = {}) => {
+    if (!API_BASE_URL) {
+      throw new Error("API_BASE_URL is not defined. Please check your environment variables.");
+    }
     const session = await getSession();
     const res = await fetch(`${API_BASE_URL}${path}`, {
       method: "PATCH",
@@ -75,6 +103,9 @@ export const api = {
     return handle(res);
   },
   refreshToken: async (refreshToken: string) => {
+    if (!API_BASE_URL) {
+      throw new Error("API_BASE_URL is not defined. Please check your environment variables.");
+    }
     const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
       method: "POST",
       headers: {
