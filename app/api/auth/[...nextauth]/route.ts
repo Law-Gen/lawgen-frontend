@@ -3,16 +3,22 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // Debug logging to help identify the issue
 console.log("NextAuth API_BASE_URL:", API_BASE_URL);
-console.log("All env vars:", Object.keys(process.env).filter(key => key.includes('API')));
+console.log(
+  "All env vars:",
+  Object.keys(process.env).filter((key) => key.includes("API"))
+);
 
 if (!API_BASE_URL) {
-  console.error("NEXT_PUBLIC_API_URL is not defined! Please check your .env file.");
+  console.error(
+    "NEXT_PUBLIC_API_URL is not defined! Please check your .env file."
+  );
 }
 import CredentialsProvider from "next-auth/providers/credentials";
 import type { NextAuthOptions, User } from "next-auth";
 
 // Extend the User, Session, and JWT types to include custom fields
 import type { JWT } from "next-auth/jwt";
+
 declare module "next-auth" {
   interface User {
     role?: string;
@@ -33,6 +39,7 @@ declare module "next-auth" {
     refreshToken?: string;
   }
 }
+
 declare module "next-auth/jwt" {
   interface JWT {
     role?: string;
@@ -45,7 +52,9 @@ declare module "next-auth/jwt" {
   }
 }
 
-export const authOptions: NextAuthOptions = {
+// *** REMOVE 'export' from here ***
+const authOptions: NextAuthOptions = {
+  // Change 'export const' to 'const'
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -87,7 +96,6 @@ export const authOptions: NextAuthOptions = {
             data,
           });
           if (res.ok && data.access_token) {
-
             // You can also store user info if returned by your backend
             // Return user object and tokens
             return {
@@ -98,7 +106,6 @@ export const authOptions: NextAuthOptions = {
               accessToken: data.access_token,
               refreshToken: data.refresh_token,
             };
-
           }
           return null;
         } catch (e) {
@@ -116,7 +123,6 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user }) {
-      // On initial sign in
       if (user) {
         token.role = user.role;
         token.accessToken = user.accessToken;
@@ -124,12 +130,10 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.email = user.email;
         token.name = user.name;
-        // Set expiry to 15 minutes from now (or your backend's expiry time)
         token.accessTokenExpires = Date.now() + 15 * 60 * 1000;
         return token;
       }
 
-      // If token is not expired, return it
       if (
         token.accessToken &&
         token.accessTokenExpires &&
@@ -138,7 +142,6 @@ export const authOptions: NextAuthOptions = {
         return token;
       }
 
-      // If token is expired, try to refresh
       if (token.refreshToken) {
         try {
           const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
@@ -151,13 +154,11 @@ export const authOptions: NextAuthOptions = {
           if (res.ok && data.access_token) {
             token.accessToken = data.access_token;
             token.accessTokenExpires = Date.now() + 15 * 60 * 1000;
-            // Optionally update refreshToken if backend returns a new one
             if (data.refresh_token) {
               token.refreshToken = data.refresh_token;
             }
             return token;
           } else {
-            // Refresh failed, force sign out
             return {
               ...token,
               accessToken: undefined,
@@ -165,11 +166,9 @@ export const authOptions: NextAuthOptions = {
             };
           }
         } catch (e) {
-          // Refresh failed, force sign out
           return { ...token, accessToken: undefined, refreshToken: undefined };
         }
       }
-      // No refresh token, force sign out
       return { ...token, accessToken: undefined, refreshToken: undefined };
     },
     async session({ session, token }) {
@@ -194,6 +193,7 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 };
 
+// This part remains the same, as you correctly export the handler for GET and POST
 const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };

@@ -1,15 +1,6 @@
-
 import { getSession } from "next-auth/react";
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-// Debug logging to help identify the issue
-console.log("API.ts API_BASE_URL:", API_BASE_URL);
-console.log("API.ts env vars:", Object.keys(process.env).filter(key => key.includes('API')));
-
-if (!API_BASE_URL) {
-  console.error("NEXT_PUBLIC_API_URL is not defined in api.ts! Please check your .env file.");
-}
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL 
 
 async function handle(res: Response) {
   if (!res.ok) {

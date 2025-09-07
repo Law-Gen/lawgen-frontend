@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit";
 import { getSession } from "next-auth/react";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_FEEDBACK_API_BASE_URL;
 
 export interface LegalEntity {
   id: string;
@@ -45,7 +45,7 @@ export const fetchLegalEntities = createAsyncThunk(
         throw new Error("No access token found in session");
       }
       const response = await fetch(
-        `${API_BASE_URL}/legal-entities`,
+        `${API_BASE_URL}/api/v1/legal-entities`,
         {
           headers: {
             Authorization: `Bearer ${session.accessToken}`,

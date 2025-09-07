@@ -345,6 +345,16 @@ export default function ChatPage() {
       {/* Sidebar and Header from your file (no logic changes needed) */}
       <header className="bg-card/80 backdrop-blur-sm border-b border-border p-4">
         <div className="w-full flex items-center px-2 gap-4">
+          <div className="flex-shrink-0">
+            <img
+              src="/logo (1).svg"
+              alt="LawGen Logo"
+              width={56}
+              height={56}
+              className="h-14 w-14 rounded-full object-cover border border-muted shadow"
+            />
+          </div>
+          {/* Left: Title and description */}
           <div className="flex flex-col items-start min-w-0 flex-1">
             <h1 className="text-lg font-semibold text-primary truncate">Legal Assistant Chat</h1>
             <p className="text-sm text-muted-foreground truncate">AI-powered legal guidance and conversation</p>
@@ -353,8 +363,7 @@ export default function ChatPage() {
           <div className="hidden md:flex items-center gap-3 min-w-0 ml-auto"><LanguageToggle /></div>
         </div>
       </header>
-      
-      <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col">
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {messages.map((message, index) => (
             <MotionWrapper key={message.id}>
