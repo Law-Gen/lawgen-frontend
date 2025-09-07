@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit";
 import { getSession } from "next-auth/react";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_FEEDBACK_API_BASE_URL;
+
 export interface Feedback {
     id: string;
     submitter_user_id: string;
@@ -35,7 +37,7 @@ export const fetchFeedbacks = createAsyncThunk("feedback/fetchFeedbacks", async 
             throw new Error("No access token found in session");
         }
 
-        const response = await fetch("https://lawgen-backend-1.onrender.com/api/v1/feedback", {
+        const response = await fetch(`${API_BASE_URL}/feedback`, {
             headers: {
                 Authorization: `Bearer ${session.accessToken}`,
                 "Content-Type": "application/json"

@@ -3,7 +3,7 @@
 import type React from "react";
 
 import { useState, useEffect } from "react";
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 import { api } from "@/src/lib/api";
 import { MotionWrapper } from "@/components/ui/motion-wrapper";
 import { Button } from "@/components/ui/button";

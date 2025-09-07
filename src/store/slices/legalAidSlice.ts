@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit";
 import { getSession } from "next-auth/react";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
 export interface LegalEntity {
   id: string;
   name: string;
@@ -43,7 +45,7 @@ export const fetchLegalEntities = createAsyncThunk(
         throw new Error("No access token found in session");
       }
       const response = await fetch(
-        "https://lawgen-backend-1.onrender.com/api/v1/legal-entities",
+        `${API_BASE_URL}/legal-entities`,
         {
           headers: {
             Authorization: `Bearer ${session.accessToken}`,
@@ -74,7 +76,7 @@ export const deleteLegalEntity = createAsyncThunk(
         throw new Error("No access token found in session");
       }
       const response = await fetch(
-        `https://lawgen-backend-1.onrender.com/api/v1/legal-entities/${id}`,
+        `${API_BASE_URL}/legal-entities/${id}`,
         {
           method: "DELETE",
           headers: {
@@ -105,7 +107,7 @@ export const createLegalEntity = createAsyncThunk(
         throw new Error("No access token found in session");
       }
       const response = await fetch(
-        "https://lawgen-backend-1.onrender.com/api/v1/legal-entities",
+        `${API_BASE_URL}/legal-entities`,
         {
           method: "POST",
           headers: {
@@ -141,7 +143,7 @@ export const updateLegalEntity = createAsyncThunk(
         throw new Error("No access token found in session");
       }
       const response = await fetch(
-        `https://lawgen-backend-1.onrender.com/api/v1/legal-entities/${id}`,
+        `${API_BASE_URL}/legal-entities/${id}`,
         {
           method: "PUT",
           headers: {
