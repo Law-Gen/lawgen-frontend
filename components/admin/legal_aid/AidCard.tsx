@@ -6,20 +6,12 @@ import {
   Mail,
   Phone,
   Clock,
-  MoreVertical,
   Globe,
   MapPin,
   User2,
   Trash,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
 import { LegalEntity } from "@/src/store/slices/legalAidSlice";
 
 interface AidCardProps {

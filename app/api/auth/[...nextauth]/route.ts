@@ -13,6 +13,7 @@ import type { NextAuthOptions, User } from "next-auth";
 
 // Extend the User, Session, and JWT types to include custom fields
 import type { JWT } from "next-auth/jwt";
+
 declare module "next-auth" {
   interface User {
     role?: string;

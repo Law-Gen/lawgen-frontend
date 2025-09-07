@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Grid3X3, List } from "lucide-react";
+import { Search } from "lucide-react";
 import {
   Button,
   Input,

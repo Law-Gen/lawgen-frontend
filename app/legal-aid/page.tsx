@@ -13,7 +13,7 @@ import Link from "next/link";
 // ADDED: Import the BottomNavigation component
 import { BottomNavigation } from "@/components/ui/bottom-navigation";
 
-const FEEDBACK_API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const FEEDBACK_API_BASE_URL = process.env.NEXT_PUBLIC_FEEDBACK_API_BASE_URL;
 
 // Custom fetch for legal aid using feedback base url
 const fetchLegalAid = async (path: string, options: RequestInit = {}) => {

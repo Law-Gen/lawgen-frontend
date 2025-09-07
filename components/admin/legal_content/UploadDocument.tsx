@@ -1,8 +1,9 @@
 "use client";
 
 import type React from "react";
-
 import { useState } from "react";
+import { useAppDispatch } from "@/src/store/hooks";
+import { postContent } from "@/src/store/slices/legalContentSlice";
 import {
   Button,
   Input,
@@ -18,7 +19,7 @@ import { X, Upload, Cloud } from "lucide-react";
 interface UploadDocumentProps {
   isOpen: boolean;
   onClose: () => void;
-  onUpload: (documentData: any) => void;
+  onUpload?: (documentData: any) => void;
 }
 
 export default function UploadDocument({
@@ -26,6 +27,7 @@ export default function UploadDocument({
   onClose,
   onUpload,
 }: UploadDocumentProps) {
+  const dispatch = useAppDispatch();
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
@@ -47,25 +49,32 @@ export default function UploadDocument({
     e.preventDefault();
     setIsDragOver(false);
     const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile) {
+      setFile(droppedFile);
+    }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!title || !category || !file || !description || !language) {
-      alert("please fill in all requied fields and select a file");
+      alert("please fill in all required fields and select a file");
       return;
     }
 
-    const documentData = {
-      title,
-      category,
-      description,
-      file,
-      language,
-    };
+    // Dispatch postContent thunk
+    await dispatch(
+      postContent({
+        file,
+        group_name: category,
+        name: title,
+        description,
+        language,
+      })
+    );
 
-    onUpload(documentData);
+    // Optionally call onUpload callback
+    if (onUpload) onUpload({ title, category, description, file, language });
 
-    //reset form
+    // Reset form
     setTitle("");
     setCategory("");
     setDescription("");
@@ -126,10 +135,9 @@ export default function UploadDocument({
                     <SelectItem value="Employment Law">
                       Employment Law
                     </SelectItem>
-                    <SelectItem value="Real Estate Law">
-                      Real Estate Law
-                    </SelectItem>
+                    <SelectItem value="Real Estate Law">Family Law</SelectItem>
                     <SelectItem value="Criminal Law">Criminal Law</SelectItem>
+                    <SelectItem value="Criminal Law">Crivil Law</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -151,11 +159,11 @@ export default function UploadDocument({
             {/* languague */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">
-                Languague <span className="text-red-500">*</span>
+                Language <span className="text-red-500">*</span>
               </label>
-              <Select value={category} onValueChange={setCategory}>
+              <Select value={language} onValueChange={setLanguage}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select languague" />
+                  <SelectValue placeholder="Select language" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="eng">English</SelectItem>
@@ -197,12 +205,12 @@ export default function UploadDocument({
                       input.accept = ".pdf,.docx,.doc";
                       input.onchange = (e) => {
                         const file = (e.target as HTMLInputElement).files?.[0];
+                        if (file) setFile(file);
                       };
                       input.click();
                     }}
                   >
-                    {" "}
-                    Browse Files{" "}
+                    Browse Files
                   </Button>
                 </div>
               </div>

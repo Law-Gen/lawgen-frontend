@@ -1,33 +1,16 @@
 "use client";
 
 import { Search, Grid3X3, List } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Input,
-  Button,
-} from "@/components/ui";
+import { Input, Button } from "@/components/ui";
 
 interface DocumentFiltersProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  selectedCategory: string;
-  onCategoryChange: (category: string) => void;
-
-  viewMode: "grid" | "list";
-  onViewModeChange: (mode: "grid" | "list") => void;
 }
 
 export default function DocumentFilter({
   searchQuery,
   onSearchChange,
-  selectedCategory,
-  onCategoryChange,
-  viewMode,
-  onViewModeChange,
 }: DocumentFiltersProps) {
   return (
     <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
@@ -41,44 +24,6 @@ export default function DocumentFilter({
             className="pl-10 border-primary-200 focus:border-primary-500 focus:ring-primary-500"
           />
         </div>
-
-        <div className="flex gap-3 w-full sm:w-auto">
-          <Select value={selectedCategory} onValueChange={onCategoryChange}>
-            <SelectTrigger className="w-full sm:w-44 border-primary-200 focus:border-primary-500">
-              <SelectValue placeholder="All Categories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              <SelectItem value="contract-law">Contract Law</SelectItem>
-              <SelectItem value="corporate-law">Corporate Law</SelectItem>
-              <SelectItem value="intellectual-property">
-                Intellectual Property
-              </SelectItem>
-              <SelectItem value="employment-law">Employment Law</SelectItem>
-              <SelectItem value="real-estate-law">Real Estate Law</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="flex border border-primary-200 rounded-lg overflow-hidden bg-white">
-        {viewMode == "grid" ? (
-          <Button
-            size="sm"
-            onClick={() => onViewModeChange("list")}
-            className="text-primary-500"
-          >
-            <List className="w-4 h-4" />
-          </Button>
-        ) : (
-          <Button
-            size="sm"
-            onClick={() => onViewModeChange("grid")}
-            className="text-primary-500"
-          >
-            <Grid3X3 className="w-4 h-4" />
-          </Button>
-        )}
       </div>
     </div>
   );
