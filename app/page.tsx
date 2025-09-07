@@ -159,15 +159,26 @@ export default function LandingPage() {
       <section
         ref={heroRef}
         className="relative min-h-screen flex items-center justify-center pt-20 pb-32 overflow-hidden"
+        style={{
+          backgroundImage: "url('/University Of Law.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
       >
+        {/* Overlay to fade the image and make text readable */}
+        <div className="absolute inset-0 bg-black/60" />
+
+        {/* Optional: keep your gradient overlays for extra effect */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-secondary/10"></div>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(120,119,198,0.1),transparent_50%)]"></div>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(139,92,246,0.1),transparent_50%)]"></div>
 
+        {/* Content */}
         <div className="container mx-auto px-4 text-center relative z-10">
           <MotionWrapper animation="fadeInUp" delay={200}>
-            <h2 className="text-5xl md:text-7xl lg:text-8xl font-bold text-primary mb-8 text-balance leading-tight">
-              Legal Information &
+            <h2 className="text-5xl md:text-7xl lg:text-8xl font-bold text-primary-foreground mb-8 text-balance leading-tight drop-shadow-lg">
+              Legal Information &amp;
               <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 {" "}
                 Assistance
@@ -176,7 +187,7 @@ export default function LandingPage() {
           </MotionWrapper>
 
           <MotionWrapper animation="fadeInUp" delay={400}>
-            <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-4xl mx-auto text-pretty leading-relaxed">
+            <p className="text-xl md:text-2xl text-primary-foreground mb-12 max-w-4xl mx-auto text-pretty leading-relaxed drop-shadow">
               Get instant legal guidance, connect with professionals, and access
               comprehensive legal resources in English and Amharic. Your trusted
               companion for legal clarity and justice.
@@ -201,20 +212,6 @@ export default function LandingPage() {
                   Get Started Free
                 </Button>
               </Link>
-            </div>
-          </MotionWrapper>
-
-          <MotionWrapper animation="scaleIn" delay={800}>
-            <div className="relative max-w-7xl mx-auto">
-              <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-3xl p-8 backdrop-blur-sm border border-border/50 shadow-2xl flex justify-center w-[1200px] max-w-full mx-auto">
-                <img
-                  src="/University Of Law.jpg"
-                  alt="University Of Law"
-                  className="w-full h-auto rounded-2xl shadow-2xl hover:scale-105 transition-transform duration-700 mx-auto"
-                />
-              </div>
-              <div className="absolute -top-4 -right-4 w-24 h-24 bg-accent/20 rounded-full blur-xl"></div>
-              <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-primary/20 rounded-full blur-xl"></div>
             </div>
           </MotionWrapper>
         </div>

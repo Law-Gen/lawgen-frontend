@@ -1,13 +1,17 @@
-
 import NextAuth from "next-auth";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // Debug logging to help identify the issue
 console.log("NextAuth API_BASE_URL:", API_BASE_URL);
-console.log("All env vars:", Object.keys(process.env).filter(key => key.includes('API')));
+console.log(
+  "All env vars:",
+  Object.keys(process.env).filter((key) => key.includes("API"))
+);
 
 if (!API_BASE_URL) {
-  console.error("NEXT_PUBLIC_API_URL is not defined! Please check your .env file.");
+  console.error(
+    "NEXT_PUBLIC_API_URL is not defined! Please check your .env file."
+  );
 }
 import CredentialsProvider from "next-auth/providers/credentials";
 import type { NextAuthOptions, User } from "next-auth";
@@ -92,7 +96,6 @@ const authOptions: NextAuthOptions = {
             data,
           });
           if (res.ok && data.access_token) {
-
             // You can also store user info if returned by your backend
             // Return user object and tokens
             return {
@@ -103,7 +106,6 @@ const authOptions: NextAuthOptions = {
               accessToken: data.access_token,
               refreshToken: data.refresh_token,
             };
-
           }
           return null;
         } catch (e) {

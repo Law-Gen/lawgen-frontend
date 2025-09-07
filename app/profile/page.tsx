@@ -3,7 +3,7 @@
 import type React from "react";
 
 import { useState, useEffect } from "react";
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL; // <-- Fix the env var name
 import { api } from "@/src/lib/api";
 import { MotionWrapper } from "@/components/ui/motion-wrapper";
 import { Button } from "@/components/ui/button";
@@ -360,33 +360,74 @@ export default function ProfilePage() {
     }
   };
 
-  // const handleSaveProfile = async () => {
-  //   if (!profile) return;
-  //   try {
-  //     const payload = {
-  //       full_name: profile.name,
-  //       profile: {
-  //         phone: profile.phone,
-  //         birth_date: profile.birthdate,
-  //         gender: profile.gender,
-  //         language_preference:
-  //           profile.preferences.language === "amharic" ? "am" : "en",
-  //       },
-  //     };
-  //     await api.put("/users/me", payload);
-  //     setIsEditing(false);
-  //     toast({
-  //       title: "Profile Updated",
-  //       description: "Your profile has been updated successfully.",
-  //     });
-  //   } catch (err: any) {
-  //     toast({
-  //       title: "Update Failed",
-  //       description: err.message || "Failed to update profile. Please try again.",
-  //       variant: "destructive",
-  //     });
-  //   }
-  // };
+  // Replace your handleSaveProfile with this version:
+  const handleSaveProfile = async () => {
+    if (!profile) return;
+
+    // Only allow editing gender, birthdate, language, and avatar
+    // Do not allow editing name or email
+    const formData = new FormData();
+
+    // Only append fields if they are changed and not empty
+    if (profile.gender && ["male", "female", "other"].includes(profile.gender)) {
+      formData.append("gender", profile.gender);
+    }
+    if (profile.birthdate && /^\d{4}-\d{2}-\d{2}$/.test(profile.birthdate)) {
+      formData.append("birth_date", profile.birthdate);
+    }
+    if (
+      profile.preferences.language &&
+      ["english", "amharic"].includes(profile.preferences.language)
+    ) {
+      formData.append(
+        "language_preference",
+        profile.preferences.language === "amharic" ? "am" : "en"
+      );
+    }
+    if (
+      profile.avatar &&
+      typeof profile.avatar !== "string" &&
+      typeof window !== "undefined" &&
+      window.File &&
+      (profile.avatar as any) instanceof window.File
+    ) {
+      formData.append("profile_picture", profile.avatar);
+    }
+
+    // If nothing to update, show a message and return
+    if (formData.keys().next().done) {
+      alert("No changes to update.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/users/me`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${session?.accessToken}`,
+        },
+        body: formData,
+      });
+      if (!res.ok) {
+        let errMsg = "Failed to update profile";
+        try {
+          const errData = await res.json();
+          errMsg = errData?.message || JSON.stringify(errData, null, 2);
+        } catch (e) {
+          errMsg += " (no JSON error body)";
+        }
+        alert("Backend error: " + errMsg);
+        throw new Error(errMsg);
+      }
+      setIsEditing(false);
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been updated successfully.",
+      });
+    } catch (err: any) {
+      alert(err.message || "Failed to update profile");
+    }
+  };
 
   // Redirect if not logged in - MOVED TO useEffect to prevent render error
   // if (!session && !profileLoading) {
@@ -416,83 +457,6 @@ export default function ProfilePage() {
       </div>
     );
   }
-
-  const handleSaveProfile = async () => {
-    if (!profile) return;
-    // Validate gender
-    if (
-      !profile.gender ||
-      !["male", "female", "other"].includes(profile.gender)
-    ) {
-      alert("Please select a gender.");
-      return;
-    }
-    if (
-      !profile.preferences.language ||
-      !["english", "amharic"].includes(profile.preferences.language)
-    ) {
-      alert("Please select a language preference.");
-      return;
-    }
-    // Validate and format birthdate
-    let birth_date = (profile.birthdate || "").trim();
-    // Accept both YYYY-MM-DD and MM/DD/YYYY, convert to YYYY-MM-DD
-    if (/^\d{2}\/\d{2}\/\d{4}$/.test(birth_date)) {
-      // MM/DD/YYYY to YYYY-MM-DD
-      const [mm, dd, yyyy] = birth_date.split("/");
-      birth_date = `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
-    }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(birth_date)) {
-      alert("Please enter a valid birthdate in YYYY-MM-DD format.");
-      return;
-    }
-    const formData = new FormData();
-    const gender = profile.gender.trim();
-    // Always send language as 'en' or 'am' for backend
-    let langPref: string = profile.preferences.language;
-    if (langPref === "english") langPref = "en";
-    else if (langPref === "amharic") langPref = "am";
-    formData.append("gender", gender);
-    formData.append("birth_date", birth_date);
-    formData.append("language_preference", langPref);
-    // Only include profile_picture if uploading a new image
-    if (
-      profile.avatar &&
-      typeof profile.avatar !== "string" &&
-      typeof window !== "undefined" &&
-      window.File &&
-      (profile.avatar as any) instanceof window.File
-    ) {
-      formData.append("profile_picture", profile.avatar);
-    }
-    for (const [key, value] of formData.entries()) {
-      console.log("FormData:", key, value);
-    }
-    try {
-      const res = await fetch(`${API_BASE_URL}/users/me`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${session?.accessToken}`,
-        },
-        body: formData,
-      });
-      if (!res.ok) {
-        let errMsg = "Failed to update profile";
-        try {
-          const errData = await res.json();
-          console.error("Backend error response:", errData);
-          errMsg = JSON.stringify(errData, null, 2);
-        } catch (e) {
-          errMsg += " (no JSON error body)";
-        }
-        alert("Backend error: " + errMsg);
-        throw new Error(errMsg);
-      }
-      setIsEditing(false);
-    } catch (err: any) {
-      alert(err.message || "Failed to update profile");
-    }
-  };
 
   const handleUpgrade = (plan: Plan) => {
     if (profile?.subscription.plan === plan.id) return;
@@ -870,10 +834,7 @@ export default function ProfilePage() {
                         <Input
                           id="name"
                           value={profile.name}
-                          onChange={(e) =>
-                            setProfile({ ...profile, name: e.target.value })
-                          }
-                          disabled={!isEditing}
+                          disabled
                           className="mt-1"
                         />
                       </div>

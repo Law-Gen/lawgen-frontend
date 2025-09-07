@@ -1,6 +1,6 @@
 import { getSession } from "next-auth/react";
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL 
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL 
 
 async function handle(res: Response) {
   if (!res.ok) {
