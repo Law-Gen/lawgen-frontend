@@ -37,7 +37,7 @@ export const fetchFeedbacks = createAsyncThunk("feedback/fetchFeedbacks", async 
             throw new Error("No access token found in session");
         }
 
-        const response = await fetch(`${API_BASE_URL}/feedback`, {
+        const response = await fetch(`${API_BASE_URL}/api/v1/feedback`, {
             headers: {
                 Authorization: `Bearer ${session.accessToken}`,
                 "Content-Type": "application/json"

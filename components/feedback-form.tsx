@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-const FEEDBACK_API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const FEEDBACK_API_BASE_URL = process.env.NEXT_PUBLIC_FEEDBACK_API_BASE_URL;
 
 export default function FeedbackForm() {
   const [type, setType] = useState("");
