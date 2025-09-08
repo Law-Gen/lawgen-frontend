@@ -18,8 +18,6 @@ interface LegalAidFiltersProps {
   onTypeFilterChange: (value: string) => void;
   specializationFilter: string;
   onSpecializationFilterChange: (value: string) => void;
-  viewMode: "grid" | "list";
-  onViewModeChange: (mode: "grid" | "list") => void;
   resultsCount: number;
 }
 
@@ -30,8 +28,7 @@ export default function AidFilter({
   onTypeFilterChange,
   specializationFilter,
   onSpecializationFilterChange,
-  viewMode,
-  onViewModeChange,
+
   resultsCount,
 }: LegalAidFiltersProps) {
   return (
@@ -78,24 +75,6 @@ export default function AidFilter({
           </Select>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex bg-gray-100 rounded-lg p-1">
-            <Button
-              variant={viewMode === "grid" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => onViewModeChange("grid")}
-              className={viewMode === "grid" ? "bg-white shadow-sm" : ""}
-            >
-              <Grid3X3 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => onViewModeChange("list")}
-              className={viewMode === "list" ? "bg-white shadow-sm" : ""}
-            >
-              <List className="h-4 w-4" />
-            </Button>
-          </div>
           <span className="text-sm text-gray-500 ml-2">
             {resultsCount} services found
           </span>

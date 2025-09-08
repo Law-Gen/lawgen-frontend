@@ -12,138 +12,21 @@ import Link from "next/link";
 import { MainNavigation } from "@/components/ui/main-navigation";
 import { useTheme } from "next-themes";
 
-interface LegalCategory {
+// Define interfaces for the data fetched from the API
+interface ApiGroup {
+  group_id: string;
+  group_name: string;
+}
+
+interface ApiContent {
   id: string;
+  GroupID: string;
+  group_name: string;
   name: string;
   description: string;
-  icon: string;
-  topicCount: number;
-  difficulty: "beginner" | "intermediate" | "advanced";
-  topics: LegalTopic[];
+  url: string;
+  language: string;
 }
-
-interface LegalTopic {
-  id: string;
-  title: string;
-  description: string;
-  readTime: string;
-  difficulty: "beginner" | "intermediate" | "advanced";
-}
-
-const mockCategories: LegalCategory[] = [
-  {
-    id: "1",
-    name: "Employment Law",
-    description: "Rights and responsibilities in the workplace",
-    icon: "💼",
-    topicCount: 12,
-    difficulty: "beginner",
-    topics: [
-      {
-        id: "1-1",
-        title: "Understanding Your Employment Contract",
-        description:
-          "Learn about key terms and conditions in employment agreements",
-        readTime: "5 min",
-        difficulty: "beginner",
-      },
-      {
-        id: "1-2",
-        title: "Overtime Pay and Working Hours",
-        description: "Know your rights regarding working time and compensation",
-        readTime: "7 min",
-        difficulty: "beginner",
-      },
-      {
-        id: "1-3",
-        title: "Workplace Discrimination and Harassment",
-        description:
-          "Understanding protection against unfair treatment at work",
-        readTime: "10 min",
-        difficulty: "intermediate",
-      },
-    ],
-  },
-  {
-    id: "2",
-    name: "Family Law",
-    description: "Marriage, divorce, child custody, and family matters",
-    icon: "👨‍👩‍👧‍👦",
-    topicCount: 15,
-    difficulty: "intermediate",
-    topics: [
-      {
-        id: "2-1",
-        title: "Marriage Laws in Ethiopia",
-        description: "Legal requirements and procedures for marriage",
-        readTime: "8 min",
-        difficulty: "beginner",
-      },
-      {
-        id: "2-2",
-        title: "Divorce Procedures and Rights",
-        description: "Understanding the divorce process and your rights",
-        readTime: "12 min",
-        difficulty: "intermediate",
-      },
-      {
-        id: "2-3",
-        title: "Child Custody and Support",
-        description: "Legal aspects of child custody arrangements",
-        readTime: "15 min",
-        difficulty: "advanced",
-      },
-    ],
-  },
-  {
-    id: "3",
-    name: "Property Law",
-    description: "Real estate, rental agreements, and property rights",
-    icon: "🏠",
-    topicCount: 10,
-    difficulty: "intermediate",
-    topics: [
-      {
-        id: "3-1",
-        title: "Rental Agreements and Tenant Rights",
-        description: "Understanding your rights and obligations as a tenant",
-        readTime: "6 min",
-        difficulty: "beginner",
-      },
-      {
-        id: "3-2",
-        title: "Property Ownership and Registration",
-        description: "Legal procedures for property ownership in Ethiopia",
-        readTime: "10 min",
-        difficulty: "intermediate",
-      },
-    ],
-  },
-  {
-    id: "4",
-    name: "Business Law",
-    description: "Starting and running a business legally",
-    icon: "🏢",
-    topicCount: 8,
-    difficulty: "advanced",
-    topics: [
-      {
-        id: "4-1",
-        title: "Business Registration Process",
-        description: "Step-by-step guide to registering your business",
-        readTime: "12 min",
-        difficulty: "intermediate",
-      },
-      {
-        id: "4-2",
-        title: "Contract Law for Businesses",
-        description: "Essential contract principles for business owners",
-        readTime: "15 min",
-        difficulty: "advanced",
-      },
-    ],
-  },
-];
 
 const difficultyColors = {
   beginner: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
@@ -152,22 +35,90 @@ const difficultyColors = {
   advanced: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
 };
 
+// NEW: Bouncing dots loader component
+const BouncingLoader = () => {
+  return (
+    <div className="flex justify-center items-center h-64">
+      <div className="flex space-x-2">
+        <div className="w-3 h-3 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+        <div className="w-3 h-3 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+        <div className="w-3 h-3 bg-primary rounded-full animate-bounce"></div>
+      </div>
+    </div>
+  );
+};
+
 export default function CategoriesPage() {
   const { data: session, status } = useSession();
-  // Require sign-in for categories
+  // Redirect to signin if not authenticated
   useEffect(() => {
     if (status === "unauthenticated") {
       window.location.href = "/auth/signin";
     }
   }, [status]);
-  if (status === "loading") {
-    return <div className="flex justify-center items-center h-64 text-lg">Loading...</div>;
-  }
-  const [selectedCategory, setSelectedCategory] =
-    useState<LegalCategory | null>(null);
+  const [categories, setCategories] = useState<ApiGroup[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<ApiGroup | null>(
+    null
+  );
+  const [selectedCategoryContent, setSelectedCategoryContent] = useState<
+    ApiContent[]
+  >([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { theme, setTheme } = useTheme();
-  // Legal categories are public, no signin required
+
+  // Fetch categories when the component mounts
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        // Use the environment variable for the API endpoint
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_FEEDBACK_API_BASE_URL}/api/v1/contents`
+        );
+        const data = await response.json();
+        setCategories(data.group);
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  // Fetch content for the selected category
+  useEffect(() => {
+    if (selectedCategory) {
+      const fetchCategoryContent = async () => {
+        setIsLoading(true);
+        try {
+          // Use the environment variable for the API endpoint
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_FEEDBACK_API_BASE_URL}/api/v1/contents/group/${selectedCategory.group_id}`
+          );
+          const data = await response.json();
+          setSelectedCategoryContent(data.contents);
+        } catch (error) {
+          console.error("Failed to fetch category content:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      fetchCategoryContent();
+    }
+  }, [selectedCategory]);
+
+  // UPDATED: Use the BouncingLoader component instead of static text
+  if (status === "loading" || isLoading) {
+    return <BouncingLoader />;
+  }
+
+  if (status === "unauthenticated") {
+    window.location.href = "/auth/signin";
+    return null;
+  }
 
   if (selectedCategory) {
     return (
@@ -220,10 +171,10 @@ export default function CategoriesPage() {
             {/* Left: Title and description */}
             <div className="flex flex-col items-start min-w-0 flex-1">
               <h1 className="text-lg font-semibold text-primary truncate">
-                Legal Categories
+                {selectedCategory.group_name}
               </h1>
               <p className="text-sm text-muted-foreground truncate">
-                Explore legal topics by category
+                Explore topics in this category
               </p>
             </div>
             {/* Hamburger icon for mobile */}
@@ -288,39 +239,31 @@ export default function CategoriesPage() {
 
         <div className="container mx-auto p-4">
           <div className="grid gap-4">
-            {selectedCategory.topics.map((topic, index) => (
+            {selectedCategoryContent.map((content, index) => (
               <MotionWrapper
-                key={topic.id}
+                key={content.id}
                 animation="staggerIn"
                 delay={index * 100}
               >
-                <Card className="hover:shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer">
-                  <CardContent className="p-4 md:p-6 space-y-2">
-                    <div className="flex justify-between items-start mb-3">
-                      <h3 className="text-lg font-semibold text-primary">
-                        {topic.title}
-                      </h3>
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          className={difficultyColors[topic.difficulty]}
-                          variant="secondary"
-                        >
-                          {topic.difficulty}
-                        </Badge>
-                        <Badge variant="outline">{topic.readTime}</Badge>
+                <a
+                  href={content.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block"
+                >
+                  <Card className="hover:shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer">
+                    <CardContent className="p-4 md:p-6 space-y-2">
+                      <div className="flex justify-between items-start mb-3">
+                        <h3 className="text-lg font-semibold text-primary">
+                          {content.name}
+                        </h3>
                       </div>
-                    </div>
-                    <p className="text-muted-foreground mb-4 leading-relaxed">
-                      {topic.description}
-                    </p>
-                    <Button
-                      size="sm"
-                      className="hover:scale-105 transition-transform"
-                    >
-                      Read Article
-                    </Button>
-                  </CardContent>
-                </Card>
+                      <p className="text-muted-foreground mb-4 leading-relaxed">
+                        {content.description}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </a>
               </MotionWrapper>
             ))}
           </div>
@@ -382,6 +325,15 @@ export default function CategoriesPage() {
       {/* Header */}
       <header className="bg-card/80 backdrop-blur-sm border-b border-border p-4 sticky top-0 z-50">
         <div className="w-full flex items-center px-2 gap-4">
+          <div className="flex-shrink-0">
+            <img
+              src="/logo (1).svg"
+              alt="LawGen Logo"
+              width={56}
+              height={56}
+              className="h-14 w-14 rounded-full object-cover border border-muted shadow"
+            />
+          </div>
           {/* Left: Title and description */}
           <div className="flex flex-col items-start min-w-0 flex-1">
             <h1 className="text-lg font-semibold text-primary truncate">
@@ -449,9 +401,9 @@ export default function CategoriesPage() {
 
       <div className="container mx-auto p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          {mockCategories.map((category, index) => (
+          {categories.map((category, index) => (
             <MotionWrapper
-              key={category.id}
+              key={category.group_id}
               animation="staggerIn"
               delay={index * 100}
             >
@@ -460,26 +412,11 @@ export default function CategoriesPage() {
                 onClick={() => setSelectedCategory(category)}
               >
                 <CardHeader className="text-center">
-                  <div className="text-4xl mb-2">{category.icon}</div>
                   <CardTitle className="text-primary">
-                    {category.name}
+                    {category.group_name}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="text-center space-y-2 md:space-y-4">
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    {category.description}
-                  </p>
-                  <div className="flex flex-wrap justify-center gap-2">
-                    <Badge variant="secondary">
-                      {category.topicCount} topics
-                    </Badge>
-                    <Badge
-                      className={difficultyColors[category.difficulty]}
-                      variant="secondary"
-                    >
-                      {category.difficulty}
-                    </Badge>
-                  </div>
                   <Button className="w-full hover:scale-105 transition-transform mt-2">
                     Explore Topics
                   </Button>

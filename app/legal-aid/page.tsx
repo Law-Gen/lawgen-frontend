@@ -12,14 +12,23 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 // ADDED: Import the BottomNavigation component
 import { BottomNavigation } from "@/components/ui/bottom-navigation";
+import { useTheme } from "next-themes"; // Add this import if you want theme toggle
 
 const FEEDBACK_API_BASE_URL = process.env.NEXT_PUBLIC_FEEDBACK_API_BASE_URL;
 
-// Custom fetch for legal aid using feedback base url
+// Custom fetch for legal aid using feedback base url with Bearer token
 const fetchLegalAid = async (path: string, options: RequestInit = {}) => {
+  let token = "";
+  if (typeof window !== "undefined") {
+    token = localStorage.getItem("access_token") || "";
+  }
   const res = await fetch(`${FEEDBACK_API_BASE_URL}${path}`, {
     method: "GET",
     credentials: "include",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    },
     ...options,
   });
   if (!res.ok) throw new Error("Failed to fetch legal aid data");
@@ -73,10 +82,11 @@ const organizationTypeColors = {
 };
 
 export default function LegalAidPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState<string>("all");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { theme, setTheme } = useTheme(); // Add this line for theme toggle
 
   const [organizations, setOrganizations] = useState<LegalOrganization[]>([]);
   const [loading, setLoading] = useState(true);
@@ -143,13 +153,26 @@ export default function LegalAidPage() {
       {/* Header */}
       <header className="bg-card/80 backdrop-blur-sm border-b border-border p-4 sticky top-0 z-50">
         <div className="w-full flex items-center px-2 gap-4">
-          <div className="flex flex-col items-start min-w-0 flex-1">
-            <h1 className="text-lg font-semibold text-primary truncate">
-              Legal Aid Directory
-            </h1>
-            <p className="text-sm text-muted-foreground truncate">
-              Find legal assistance near you
-            </p>
+          <div className="flex flex-1 flex-col items-start min-w-0">
+            <div className="flex items-center gap-4">
+              <div className="flex-shrink-0">
+                <img
+                  src="/logo (1).svg"
+                  alt="LawGen Logo"
+                  width={56}
+                  height={56}
+                  className="h-14 w-14 rounded-full object-cover border border-muted shadow"
+                />
+              </div>
+              <div>
+                <h1 className="text-lg font-semibold text-primary truncate">
+                  Legal Aid Directory
+                </h1>
+                <p className="text-sm text-muted-foreground truncate">
+                  Find legal assistance near you
+                </p>
+              </div>
+            </div>
           </div>
           <div className="md:hidden" style={{ marginLeft: "4px" }}>
             <button
@@ -173,6 +196,14 @@ export default function LegalAidPage() {
             <MainNavigation />
           </div>
           <div className="hidden md:flex items-center gap-3 min-w-0 ml-auto">
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="px-2 py-1 rounded border"
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
+              {theme === "dark" ? "🌙" : "☀️"}
+            </button>
             <LanguageToggle />
             {!session && (
               <Link href="/auth/signin">
@@ -280,7 +311,7 @@ export default function LegalAidPage() {
         {!loading && !error && (
           <>
             <div className="grid gap-4">
-              {filteredOrganizations.map((org, index) => (
+              {organizations.map((org, index) => (
                 <MotionWrapper
                   key={org.id}
                   animation="staggerIn"
@@ -403,7 +434,7 @@ export default function LegalAidPage() {
                 </MotionWrapper>
               ))}
             </div>
-            {filteredOrganizations.length === 0 && (
+            {organizations.length === 0 && (
               <MotionWrapper animation="fadeInUp">
                 <Card className="text-center py-12">
                   <CardContent>

@@ -56,18 +56,6 @@ export default function FeedbackFiler({
               className="pl-10"
             />
           </div>
-          <Select value={typeFilter} onValueChange={onTypeChange}>
-            <SelectTrigger className="w-full sm:w-[140px]">
-              <SelectValue placeholder="All Types" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="bug">Bug</SelectItem>
-              <SelectItem value="feature">Feature Request</SelectItem>
-              <SelectItem value="improvement">Improvement</SelectItem>
-              <SelectItem value="general">General Feedback</SelectItem>
-            </SelectContent>
-          </Select>
 
           <Select value={severityFilter} onValueChange={onSeverityChange}>
             <SelectTrigger className="w-full sm:w-[140px]">
@@ -87,7 +75,6 @@ export default function FeedbackFiler({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="open">Open</SelectItem>
               <SelectItem value="in-progress">In Progress</SelectItem>
               <SelectItem value="under-review">Under Review</SelectItem>
               <SelectItem value="resolved">Resolved</SelectItem>

@@ -130,7 +130,7 @@ export default function SubscriptionTab({ profile, loading, error }: Subscriptio
                     Features:
                   </h4>
                   <ul className="space-y-1">
-                    {plan.features.map((feature, index) => (
+                    {plan.features.map((feature: string, index: number) => (
                       <li
                         key={index}
                         className="text-sm text-muted-foreground flex items-center gap-2"

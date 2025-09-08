@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   X,
   User,
@@ -23,7 +24,7 @@ import {
 } from "@/components/ui";
 
 import { motion, AnimatePresence } from "framer-motion";
-import type { Feedback } from "./FeedbackCard";
+import type { Feedback } from "@/src/store/slices/feedbackSlice";
 
 interface UpdateFeedbackProps {
   feedback: Feedback | null;
@@ -35,7 +36,6 @@ interface UpdateFeedbackProps {
 }
 
 const statusLabels = {
-  open: "Open",
   "in-progress": "In Progress",
   "under-review": "Under Review",
   resolved: "Resolved",
@@ -54,32 +54,26 @@ const severityColors = {
   low: "bg-green-100 text-green-800",
 };
 
-const typeIcons = {
-  bug: AlertTriangle,
-  feature: Lightbulb,
-  improvement: Zap,
-  general: MessageCircle,
-};
-
-const typeColors = {
-  bug: "text-red-600 bg-red-50",
-  feature: "text-yellow-600 bg-yellow-50",
-  improvement: "text-blue-600 bg-blue-50",
-  general: "text-gray-600 bg-gray-50",
-};
-
 export default function UpdateFeedback({
   feedback,
   isOpen,
   onClose,
   onUpdateStatus,
-}: //   onUpdateSeverity,
-//   onUpdateType,
-UpdateFeedbackProps) {
+}: UpdateFeedbackProps) {
+  const [selectedStatus, setSelectedStatus] = useState<string>(
+    feedback?.status || "in-progress"
+  );
+  const [internalNotes, setInternalNotes] = useState<string>("");
+
   if (!feedback) return null;
 
   const handleSave = () => {
-    console.log("[v0] Saving feedback updates for:", feedback.id);
+    const updates: Partial<Feedback> = {
+      status: selectedStatus as "in-progress" | "under-review" | "resolved",
+    };
+
+    onUpdateStatus(feedback.id, updates);
+    console.log("[v0] Saving feedback updates for:", feedback.id, updates);
     onClose();
   };
 
@@ -117,9 +111,12 @@ UpdateFeedbackProps) {
                   <label className="text-sm font-medium text-foreground">
                     Status
                   </label>
-                  <Select defaultValue="">
+                  <Select
+                    value={selectedStatus}
+                    onValueChange={setSelectedStatus}
+                  >
                     <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select Timeline" />
+                      <SelectValue placeholder="Select Status" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="in-progress">In Progress</SelectItem>
@@ -129,7 +126,7 @@ UpdateFeedbackProps) {
                   </Select>
                 </div>
 
-                <div>
+                {/* <div>
                   <label className="text-sm font-medium text-foreground">
                     Internal Notes
                   </label>
@@ -137,7 +134,7 @@ UpdateFeedbackProps) {
                     placeholder="Add internal notes about this feedback..."
                     className="mt-1 min-h-[100px]"
                   />
-                </div>
+                </div> */}
               </div>
 
               <div className="space-y-4">
@@ -148,30 +145,24 @@ UpdateFeedbackProps) {
                     <User className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">
                       <span className="font-medium">Submitted by:</span>{" "}
-                      {feedback.submittedBy}
+                      {feedback.submitter_user_id}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">
-                      <span className="font-medium">Date:</span> {feedback.date}
+                      <span className="font-medium">Date:</span>{" "}
+                      {feedback.timestamp}
                     </span>
                   </div>
 
-                  {/* <div className="flex items-center gap-2">
-                    <span className="text-sm">
-                      <span className="font-medium">Category:</span>{" "}
-                      {feedback.category}
-                    </span>
-                  </div> */}
-
-                  {feedback.device && (
+                  {feedback.type && (
                     <div className="flex items-center gap-2">
                       <Monitor className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm">
                         <span className="font-medium">Device:</span>{" "}
-                        {feedback.device}
+                        {feedback.id}
                       </span>
                     </div>
                   )}

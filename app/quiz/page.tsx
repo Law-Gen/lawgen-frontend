@@ -96,6 +96,12 @@ const BouncingDotsLoader = () => (
 // --- Main Component ---
 export default function QuizPage() {
   const { data: session, status } = useSession();
+  // Redirect to signin if not authenticated
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      window.location.href = "/auth/signin";
+    }
+  }, [status]);
   const { theme, setTheme } = useTheme();
 
   // --- General State ---
@@ -116,13 +122,12 @@ export default function QuizPage() {
   );
 
   // --- Active Quiz Session State ---
-  const [activeQuizQuestions, setActiveQuizQuestions] = useState<
-    QuizQuestion[]
-  >([]);
+  const [activeQuizQuestions, setActiveQuizQuestions] = useState<QuizQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [score, setScore] = useState(0);
+  const [resumeAvailable, setResumeAvailable] = useState(false);
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_QUIZ_BASE_URL;
 
@@ -141,12 +146,13 @@ export default function QuizPage() {
               Authorization: `Bearer ${session.accessToken}`,
             } as HeadersInit,
           });
-          if (!response.ok)
-            throw new Error(
-              `Failed to fetch categories: ${response.statusText}`
-            );
+          if (!response.ok) throw new Error(`Failed to fetch categories: ${response.statusText}`);
           const data = await response.json();
           setQuizCategories(data.items || []);
+          try {
+            const saved = localStorage.getItem("quizState");
+            if (saved) setResumeAvailable(true);
+          } catch {}
         } catch (err: any) {
           setError(err.message);
         } finally {
@@ -205,8 +211,7 @@ export default function QuizPage() {
       question: q.text,
       options: Object.values(q.options),
       answer: q.options[q.correct_option],
-      difficulty:
-        q.difficulty || quiz.difficulty || selectedCategory!.difficulty,
+      difficulty: q.difficulty || quiz.difficulty || selectedCategory!.difficulty,
     }));
     setActiveQuizQuestions(questions);
     setCurrentQuestionIndex(0);
@@ -214,24 +219,64 @@ export default function QuizPage() {
     setSelectedAnswer(null);
     setIsAnswered(false);
     setViewState("active");
+    try {
+      localStorage.setItem(
+        "quizState",
+        JSON.stringify({
+          selectedCategory: selectedCategory ? { id: selectedCategory.id, name: selectedCategory.name } : null,
+          questions,
+          currentQuestionIndex: 0,
+          score: 0,
+          viewState: "active",
+        })
+      );
+    } catch {}
   };
 
   const handleAnswerSelect = (answer: string) => {
     if (isAnswered) return;
     setSelectedAnswer(answer);
     setIsAnswered(true);
-    if (answer === activeQuizQuestions[currentQuestionIndex].answer) {
-      setScore((prev) => prev + 1);
-    }
+    const correct = answer === activeQuizQuestions[currentQuestionIndex].answer;
+    if (correct) setScore((prev) => prev + 1);
+    try {
+      const raw = localStorage.getItem("quizState");
+      const saved = raw ? JSON.parse(raw) : {};
+      localStorage.setItem(
+        "quizState",
+        JSON.stringify({
+          ...saved,
+          currentQuestionIndex,
+          score: correct ? (saved?.score || 0) + 1 : saved?.score || 0,
+        })
+      );
+    } catch {}
   };
 
   const handleNextQuestion = () => {
     if (currentQuestionIndex < activeQuizQuestions.length - 1) {
-      setCurrentQuestionIndex((prev) => prev + 1);
+      const next = currentQuestionIndex + 1;
+      setCurrentQuestionIndex(next);
       setSelectedAnswer(null);
       setIsAnswered(false);
+      try {
+        const raw = localStorage.getItem("quizState");
+        const saved = raw ? JSON.parse(raw) : {};
+        localStorage.setItem(
+          "quizState",
+          JSON.stringify({ ...saved, currentQuestionIndex: next })
+        );
+      } catch {}
     } else {
       setViewState("finished");
+      try {
+        const raw = localStorage.getItem("quizState");
+        const saved = raw ? JSON.parse(raw) : {};
+        localStorage.setItem(
+          "quizState",
+          JSON.stringify({ ...saved, viewState: "finished" })
+        );
+      } catch {}
     }
   };
 
@@ -240,6 +285,10 @@ export default function QuizPage() {
     setSelectedCategory(null);
     setQuizzesForCategory([]);
     setActiveQuizQuestions([]);
+    try {
+      localStorage.removeItem("quizState");
+      setResumeAvailable(false);
+    } catch {}
   };
 
   const PageLayout = ({
@@ -292,6 +341,15 @@ export default function QuizPage() {
       </aside>
       <header className="bg-card/80 backdrop-blur-sm border-b border-border p-4 sticky top-0 z-50">
         <div className="w-full flex items-center px-2 gap-4">
+          <div className="flex-shrink-0">
+            <img
+              src="/logo (1).svg"
+              alt="LawGen Logo"
+              width={56}
+              height={56}
+              className="h-14 w-14 rounded-full object-cover border border-muted shadow"
+            />
+          </div>
           <div className="flex flex-col items-start min-w-0 flex-1">
             <h1 className="text-lg font-semibold text-primary truncate">
               {title}
@@ -519,40 +577,45 @@ export default function QuizPage() {
         </PageLayout>
       );
 
-    default: // "categories" view
+    default:
       return (
         <PageLayout title="Quiz Categories">
+          {resumeAvailable && (
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">You have an unfinished quiz.</p>
+              <Button
+                size="sm"
+                onClick={() => {
+                  try {
+                    const raw = localStorage.getItem("quizState");
+                    if (!raw) return;
+                    const saved = JSON.parse(raw);
+                    if (saved?.questions?.length) {
+                      setActiveQuizQuestions(saved.questions);
+                      setCurrentQuestionIndex(saved.currentQuestionIndex || 0);
+                      setScore(saved.score || 0);
+                      setViewState(saved.viewState || "active");
+                    }
+                  } catch {}
+                }}
+              >
+                Resume
+              </Button>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {quizCategories.map((category, index) => (
-              <MotionWrapper
-                key={category.id}
-                animation="staggerIn"
-                delay={index * 100}
-              >
-                <Card
-                  className="hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer h-full"
-                  onClick={() => handleSelectCategory(category)}
-                >
+              <MotionWrapper key={category.id} animation="staggerIn" delay={index * 100}>
+                <Card className="hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer h-full" onClick={() => handleSelectCategory(category)}>
                   <CardHeader className="text-center">
                     <div className="text-4xl mb-2">{category.icon || "📚"}</div>
-                    <CardTitle className="text-primary">
-                      {category.name}
-                    </CardTitle>
+                    <CardTitle className="text-primary">{category.name}</CardTitle>
                   </CardHeader>
                   <CardContent className="text-center space-y-4">
-                    <p className="text-muted-foreground text-sm">
-                      {category.description}
-                    </p>
+                    <p className="text-muted-foreground text-sm">{category.description}</p>
                     <div className="flex justify-center gap-2">
-                      <Badge variant="secondary">
-                        {category.quizCount} quizzes
-                      </Badge>
-                      <Badge
-                        className={difficultyColors[category.difficulty]}
-                        variant="secondary"
-                      >
-                        {category.difficulty}
-                      </Badge>
+                      <Badge variant="secondary">{category.quizCount} quizzes</Badge>
+                      <Badge className={difficultyColors[category.difficulty]} variant="secondary">{category.difficulty}</Badge>
                     </div>
                   </CardContent>
                 </Card>

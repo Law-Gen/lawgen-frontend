@@ -13,10 +13,8 @@ export default function SettingSidebar({
   onSectionChange,
 }: SettingsSidebarProps) {
   const sidebarItems = [
-    { id: "general", label: "General", icon: Settings },
     { id: "account", label: "Account", icon: User },
     { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "security", label: "Security", icon: Shield },
   ];
 
   return (

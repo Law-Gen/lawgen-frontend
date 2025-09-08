@@ -29,6 +29,7 @@ export default function UploadDocument({
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
+  const [language, setLanguage] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
@@ -49,27 +50,29 @@ export default function UploadDocument({
   };
 
   const handleSubmit = () => {
-    if (!title || !category || !file || !description) {
+    if (!title || !category || !file || !description || !language) {
       alert("please fill in all requied fields and select a file");
       return;
     }
+
     const documentData = {
       title,
       category,
       description,
       file,
+      language,
     };
-  
+
     onUpload(documentData);
-  
+
     //reset form
     setTitle("");
     setCategory("");
     setDescription("");
+    setLanguage("");
     setFile(null);
     onClose();
   };
-
 
   if (!isOpen) return null;
 
@@ -104,7 +107,7 @@ export default function UploadDocument({
               />
             </div>
 
-            {/* Document Category */}
+            {/* Document Category should be fetched from the legal content category I will create */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">
@@ -143,6 +146,22 @@ export default function UploadDocument({
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
               />
+            </div>
+
+            {/* languague */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Languague <span className="text-red-500">*</span>
+              </label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select languague" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="eng">English</SelectItem>
+                  <SelectItem value="amh">Amharic</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* file Upload */}

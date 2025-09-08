@@ -20,6 +20,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useAppDispatch } from "@/src/store/hooks";
+import { createLegalEntity } from "@/src/store/slices/legalAidSlice";
 
 interface AddAidProps {
   isOpen: boolean;
@@ -28,45 +30,64 @@ interface AddAidProps {
 }
 
 export default function AddAid({ isOpen, onClose, onAdd }: AddAidProps) {
+  const dispatch = useAppDispatch();
   const [formData, setFormData] = useState({
     name: "",
-    type: "organization",
+    entity_type: "PRIVATE_LAW_FIRM",
     email: "",
     phone: "",
-    address: "",
     website: "",
-    languages: "",
-    specialization: "",
-    availability: "",
+    city: "",
+    sub_city: "",
+    woreda: "",
+    street_address: "",
     description: "",
+    services_offered: "",
+    jurisdiction: "",
+    working_hours: "",
+    contact_person: "",
+    date_of_establishment: "",
+    status: "ACTIVE",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const serviceData = {
+    // Prepare the payload as expected by the backend
+    const payload = {
       ...formData,
-      id: Date.now().toString(),
-      specialization: formData.specialization.split(",").map((s) => s.trim()),
-      languages: formData.languages.split(",").map((l) => l.trim()),
+      phone: formData.phone
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean),
+      email: formData.email
+        .split(",")
+        .map((e) => e.trim())
+        .filter(Boolean),
+      services_offered: formData.services_offered
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
     };
-
-    onAdd(serviceData);
-
+    await dispatch(createLegalEntity(payload));
     // Reset form
     setFormData({
       name: "",
-      type: "organization",
+      entity_type: "PRIVATE_LAW_FIRM",
       email: "",
       phone: "",
-      address: "",
       website: "",
-      languages: "",
-      specialization: "",
-      availability: "",
+      city: "",
+      sub_city: "",
+      woreda: "",
+      street_address: "",
       description: "",
+      services_offered: "",
+      jurisdiction: "",
+      working_hours: "",
+      contact_person: "",
+      date_of_establishment: "",
+      status: "ACTIVE",
     });
-
     onClose();
   };
 
@@ -104,17 +125,26 @@ export default function AddAid({ isOpen, onClose, onAdd }: AddAidProps) {
                 />
               </div>
               <div>
-                <Label htmlFor="type">Type *</Label>
+                <Label htmlFor="entity_type">Entity Type *</Label>
                 <Select
-                  value={formData.type}
-                  onValueChange={(value) => handleInputChange("type", value)}
+                  value={formData.entity_type}
+                  onValueChange={(value) =>
+                    handleInputChange("entity_type", value)
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="organization">Organization</SelectItem>
-                    <SelectItem value="lawyer">Lawyer</SelectItem>
+                    <SelectItem value="PRIVATE_LAW_FIRM">
+                      Private Law Firm
+                    </SelectItem>
+                    <SelectItem value="LEGAL_AID_ORGANIZATION">
+                      Legal Aid Organization
+                    </SelectItem>
+                    <SelectItem value="PRO_BONO_LAWYER">
+                      Pro Bono Lawyer
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -142,7 +172,7 @@ export default function AddAid({ isOpen, onClose, onAdd }: AddAidProps) {
                 <Label htmlFor="phone">Phone *</Label>
                 <Input
                   id="phone"
-                  placeholder="+1 (555) 123-4567"
+                  placeholder="+251-"
                   value={formData.phone}
                   onChange={(e) => handleInputChange("phone", e.target.value)}
                   required
@@ -151,12 +181,14 @@ export default function AddAid({ isOpen, onClose, onAdd }: AddAidProps) {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               <div>
-                <Label htmlFor="address">Address</Label>
+                <Label htmlFor="street_address">Street Address</Label>
                 <Input
-                  id="address"
+                  id="street_address"
                   placeholder="123 Main St, City, State, ZIP"
-                  value={formData.address}
-                  onChange={(e) => handleInputChange("address", e.target.value)}
+                  value={formData.street_address}
+                  onChange={(e) =>
+                    handleInputChange("street_address", e.target.value)
+                  }
                 />
               </div>
               <div>
@@ -170,12 +202,30 @@ export default function AddAid({ isOpen, onClose, onAdd }: AddAidProps) {
               </div>
             </div>
             <div className="mt-4">
-              <Label htmlFor="languages">Languages Spoken</Label>
+              <Label htmlFor="city">City</Label>
               <Input
-                id="languages"
-                placeholder="English, Spanish, French"
-                value={formData.languages}
-                onChange={(e) => handleInputChange("languages", e.target.value)}
+                id="city"
+                placeholder="Addis Ababa"
+                value={formData.city}
+                onChange={(e) => handleInputChange("city", e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="sub_city">Sub City</Label>
+              <Input
+                id="sub_city"
+                placeholder="Bole"
+                value={formData.sub_city}
+                onChange={(e) => handleInputChange("sub_city", e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="woreda">Woreda</Label>
+              <Input
+                id="woreda"
+                placeholder="03"
+                value={formData.woreda}
+                onChange={(e) => handleInputChange("woreda", e.target.value)}
               />
             </div>
           </div>
@@ -186,25 +236,25 @@ export default function AddAid({ isOpen, onClose, onAdd }: AddAidProps) {
               Service Information
             </h3>
             <div>
-              <Label htmlFor="specialization">Specialization *</Label>
+              <Label htmlFor="services_offered">Services Offered *</Label>
               <Input
-                id="specialization"
-                placeholder="Family Law, Immigration Law, Housing Rights"
-                value={formData.specialization}
+                id="services_offered"
+                placeholder="Corporate Law, Civil Litigation"
+                value={formData.services_offered}
                 onChange={(e) =>
-                  handleInputChange("specialization", e.target.value)
+                  handleInputChange("services_offered", e.target.value)
                 }
                 required
               />
             </div>
             <div className="mt-4">
-              <Label htmlFor="availability">Availability</Label>
+              <Label htmlFor="working_hours">Working Hours</Label>
               <Input
-                id="availability"
-                placeholder="Mon-Fri 9AM-5PM, Tue/Thu 2PM-6PM"
-                value={formData.availability}
+                id="working_hours"
+                placeholder="Mon-Fri 08:00-17:00"
+                value={formData.working_hours}
                 onChange={(e) =>
-                  handleInputChange("availability", e.target.value)
+                  handleInputChange("working_hours", e.target.value)
                 }
               />
             </div>
@@ -219,6 +269,41 @@ export default function AddAid({ isOpen, onClose, onAdd }: AddAidProps) {
                 }
                 rows={4}
                 required
+              />
+            </div>
+            <div className="mt-4">
+              <Label htmlFor="jurisdiction">Jurisdiction</Label>
+              <Input
+                id="jurisdiction"
+                placeholder="Federal"
+                value={formData.jurisdiction}
+                onChange={(e) =>
+                  handleInputChange("jurisdiction", e.target.value)
+                }
+              />
+            </div>
+            <div className="mt-4">
+              <Label htmlFor="contact_person">Contact Person</Label>
+              <Input
+                id="contact_person"
+                placeholder="John Doe"
+                value={formData.contact_person}
+                onChange={(e) =>
+                  handleInputChange("contact_person", e.target.value)
+                }
+              />
+            </div>
+            <div className="mt-4">
+              <Label htmlFor="date_of_establishment">
+                Date of Establishment
+              </Label>
+              <Input
+                id="date_of_establishment"
+                type="date"
+                value={formData.date_of_establishment}
+                onChange={(e) =>
+                  handleInputChange("date_of_establishment", e.target.value)
+                }
               />
             </div>
           </div>

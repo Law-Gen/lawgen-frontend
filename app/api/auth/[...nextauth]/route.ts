@@ -1,43 +1,25 @@
 import NextAuth from "next-auth";
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 import CredentialsProvider from "next-auth/providers/credentials";
 import type { NextAuthOptions, User } from "next-auth";
 
-// Extend the User, Session, and JWT types to include custom fields
-import type { JWT } from "next-auth/jwt";
-declare module "next-auth" {
-  interface User {
-    role?: string;
-    accessToken?: string;
-    refreshToken?: string;
-    name?: string | null;
-    email?: string | null;
-  }
-  interface Session {
-    user: {
-      name?: string | null;
-      email?: string | null;
-      image?: string | null;
-      id?: string;
-      role?: string;
-    };
-    accessToken?: string;
-    refreshToken?: string;
-  }
-}
-declare module "next-auth/jwt" {
-  interface JWT {
-    role?: string;
-    accessToken?: string;
-    refreshToken?: string;
-    id?: string;
-    name?: string | null;
-    email?: string | null;
-    accessTokenExpires?: number;
-  }
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+// Debug logging to help identify the issue
+console.log("NextAuth API_BASE_URL:", API_BASE_URL);
+console.log(
+  "All env vars:",
+  Object.keys(process.env).filter((key) => key.includes("API"))
+);
+
+if (!API_BASE_URL) {
+  console.error(
+    "NEXT_PUBLIC_API_URL is not defined! Please check your .env file."
+  );
 }
 
-export const authOptions: NextAuthOptions = {
+// *** REMOVE 'export' from here ***
+const authOptions: NextAuthOptions = {
+  // Change 'export const' to 'const'
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -49,8 +31,17 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
+
+        if (!API_BASE_URL) {
+          console.error("API_BASE_URL is undefined. Cannot authenticate user.");
+          return null;
+        }
+
         try {
-          const res = await fetch(`${API_BASE_URL}/auth/login`, {
+          const loginUrl = `${API_BASE_URL}/auth/login`;
+          console.log("Attempting login to:", loginUrl);
+
+          const res = await fetch(loginUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -70,7 +61,6 @@ export const authOptions: NextAuthOptions = {
             data,
           });
           if (res.ok && data.access_token) {
-           
             // You can also store user info if returned by your backend
             // Return user object and tokens
             return {
@@ -81,11 +71,74 @@ export const authOptions: NextAuthOptions = {
               accessToken: data.access_token,
               refreshToken: data.refresh_token,
             };
-
           }
           return null;
         } catch (e) {
           console.log("AUTH ERROR:", e);
+          return null;
+        }
+      },
+    }),
+    CredentialsProvider({
+      id: "google-backend",
+      name: "Google Backend",
+      credentials: {
+        authorizationCode: { label: "Authorization Code", type: "text" },
+      },
+      async authorize(credentials) {
+        try {
+          if (!credentials?.authorizationCode) {
+            console.log("No authorization code provided");
+            return null;
+          }
+
+          console.log("Processing Google authorization code");
+
+          // Exchange authorization code for tokens via your backend
+          const response = await fetch(
+            "https://lawgen-backend.onrender.com/auth/google",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                authorization_code: credentials.authorizationCode,
+                redirect_uri: `${process.env.NEXTAUTH_URL}/auth/google/callback`,
+              }),
+            }
+          );
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error(
+              "Backend Google auth failed:",
+              response.status,
+              errorText
+            );
+            return null;
+          }
+
+          const data = await response.json();
+          console.log("Google auth response:", data);
+
+          // Expected response: { access_token, refresh_token, user: {...} }
+          if (data.access_token && data.user) {
+            return {
+              id: data.user.id || data.user.email,
+              email: data.user.email,
+              name: data.user.name,
+              image: data.user.picture || data.user.avatar,
+              role: data.user.role || "user",
+              accessToken: data.access_token,
+              refreshToken: data.refresh_token,
+            };
+          }
+
+          console.error("Invalid response from backend:", data);
+          return null;
+        } catch (error) {
+          console.error("Google auth error:", error);
           return null;
         }
       },
@@ -99,7 +152,6 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user }) {
-      // On initial sign in
       if (user) {
         token.role = user.role;
         token.accessToken = user.accessToken;
@@ -107,12 +159,10 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.email = user.email;
         token.name = user.name;
-        // Set expiry to 15 minutes from now (or your backend's expiry time)
         token.accessTokenExpires = Date.now() + 15 * 60 * 1000;
         return token;
       }
 
-      // If token is not expired, return it
       if (
         token.accessToken &&
         token.accessTokenExpires &&
@@ -121,7 +171,6 @@ export const authOptions: NextAuthOptions = {
         return token;
       }
 
-      // If token is expired, try to refresh
       if (token.refreshToken) {
         try {
           const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
@@ -134,13 +183,11 @@ export const authOptions: NextAuthOptions = {
           if (res.ok && data.access_token) {
             token.accessToken = data.access_token;
             token.accessTokenExpires = Date.now() + 15 * 60 * 1000;
-            // Optionally update refreshToken if backend returns a new one
             if (data.refresh_token) {
               token.refreshToken = data.refresh_token;
             }
             return token;
           } else {
-            // Refresh failed, force sign out
             return {
               ...token,
               accessToken: undefined,
@@ -148,28 +195,24 @@ export const authOptions: NextAuthOptions = {
             };
           }
         } catch (e) {
-          // Refresh failed, force sign out
           return { ...token, accessToken: undefined, refreshToken: undefined };
         }
       }
-      // No refresh token, force sign out
       return { ...token, accessToken: undefined, refreshToken: undefined };
     },
     async session({ session, token }) {
       if (token && session.user) {
-        session.user.id = typeof token.id === "string" ? token.id : undefined;
-        session.user.role =
-          typeof token.role === "string" ? token.role : undefined;
-        session.accessToken =
-          typeof token.accessToken === "string" ? token.accessToken : undefined;
-        session.refreshToken =
-          typeof token.refreshToken === "string"
-            ? token.refreshToken
-            : undefined;
-        session.user.email =
-          typeof token.email === "string" ? token.email : undefined;
-        session.user.name =
-          typeof token.name === "string" ? token.name : undefined;
+        session.user = {
+          ...session.user,
+          id: String(token.id || token.sub || ""),
+          role: token.role as string | undefined,
+          email: token.email as string | null | undefined,
+          name: token.name as string | null | undefined,
+          image: session.user.image,
+        };
+        session.accessToken = token.accessToken as string | undefined;
+        session.refreshToken = token.refreshToken as string | undefined;
+        session.error = token.error as string | undefined;
       }
       return session;
     },
@@ -177,6 +220,7 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 };
 
+// This part remains the same, as you correctly export the handler for GET and POST
 const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };

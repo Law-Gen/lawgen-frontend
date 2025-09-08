@@ -1,18 +1,6 @@
 "use client";
 import { Button, Badge, Avatar, AvatarFallback } from "@/components/ui";
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: "admin" | "user";
-  status: "active" | "inactive";
-  joinedDate: string;
-  subscription?: string;
-  avatar?: string;
-  gender?: "male" | "female" | "prefer-not-to-say";
-  birthdate: string;
-}
+import type { User } from "@/src/store/slices/userSlice";
 
 interface UserListProps {
   users: User[];
@@ -31,12 +19,30 @@ export default function UserList({ users, onViewUser }: UserListProps) {
     }
   };
 
-  const getInitials = (name: string) => {
-    return name
+  // Get initials from full name
+  const getInitials = (full_name: string) => {
+    return full_name
       .split(" ")
       .map((n) => n[0])
       .join("")
       .toUpperCase();
+  };
+
+  const getSubscriptionDisplay = (status: string) => {
+    switch (status) {
+      case "enterprise":
+        return "Enterprise";
+      case "premium":
+        return "Premium";
+      case "free":
+        return "Free";
+      default:
+        return "Free";
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString();
   };
 
   return (
@@ -63,11 +69,21 @@ export default function UserList({ users, onViewUser }: UserListProps) {
             {/* profile picture or the initials of the person */}
             <div className="flex items-center gap-3">
               <Avatar className="w-10 h-10 bg-primary text-primary-foreground">
-                <AvatarFallback className="bg-primary text-primary-foreground font-medium">
-                  {getInitials(user.name)}
-                </AvatarFallback>
+                {user.profile.profile_picture_url ? (
+                  <img
+                    src={user.profile.profile_picture_url || "/placeholder.svg"}
+                    alt={user.full_name}
+                    className="w-full h-full object-coverr rounded-full"
+                  />
+                ) : (
+                  <AvatarFallback className="bg-primary text-primary-foreground font-medium">
+                    {getInitials(user.full_name)}
+                  </AvatarFallback>
+                )}
               </Avatar>
-              <span className="font-medium text-foreground">{user.name}</span>
+              <span className="font-medium text-foreground">
+                {user.full_name}
+              </span>
             </div>
 
             {/* user email */}
@@ -83,22 +99,28 @@ export default function UserList({ users, onViewUser }: UserListProps) {
             {/* subscription */}
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground capitalize">
-                {user.subscription}
+                {user.subscription_status}
               </span>
             </div>
 
             {/* joined date */}
-            <div className="text-muted-foreground">{user.joinedDate}</div>
+            <div className="text-muted-foreground">{user.created_at}</div>
 
             {/* user gender */}
             <div className="text-muted-foreground">
-              {user.gender
-                ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1)
+              {user.profile.gender
+                ? user.profile.gender.charAt(0).toUpperCase() +
+                  user.profile.gender.slice(1)
                 : "N/A"}
             </div>
 
             {/* birthdate */}
-            <div className="text-muted-foreground">{user.birthdate}</div>
+            <div className="text-muted-foreground">
+              {user.profile.birth_date &&
+              user.profile.birth_date !== "0001-01-01T00:00:00Z"
+                ? formatDate(user.profile.birth_date)
+                : "N/A"}
+            </div>
 
             {/* view button */}
             <div>
