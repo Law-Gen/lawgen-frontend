@@ -16,6 +16,8 @@ import {
 } from "@/components/ui";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, Trash2 } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
+import { createQuiz, addQuestion, Quiz } from "@/src/store/slices/quizSlice";
 
 interface Question {
   id: string;
@@ -27,8 +29,6 @@ interface Question {
 interface QuizData {
   title: string;
   category: string;
-  difficulty: string;
-  duration: string;
   description: string;
   questions: Question[];
 }
@@ -44,12 +44,13 @@ export default function CreateQuiz({
   onClose,
   onSubmit,
 }: CreateQuizProps) {
+  const dispatch = useAppDispatch();
+  const categories = useAppSelector((state) => state.quizzes.categories);
   const [step, setStep] = useState(1);
+  const [quizId, setQuizId] = useState<string | null>(null);
   const [quizData, setQuizData] = useState<QuizData>({
     title: "",
     category: "",
-    difficulty: "",
-    duration: "",
     description: "",
     questions: [],
   });
@@ -82,27 +83,64 @@ export default function CreateQuiz({
     }));
   };
 
-  const addQuestion = () => {
-    if (currentQuestion.question && currentQuestion.correctAnswer !== -1) {
-      const newQuestion: Question = {
-        id: Date.now().toString(),
-        question: currentQuestion.question,
-        options: currentQuestion.options.filter((opt) => opt.trim() !== ""),
-        correctAnswer: currentQuestion.correctAnswer,
-      };
-
-      setQuizData((prev) => ({
-        ...prev,
-        questions: [...prev.questions, newQuestion],
-      }));
-
-      // Reset current question
-      setCurrentQuestion({
-        question: "",
-        options: ["", "", "", ""],
-        correctAnswer: -1,
-      });
+  // Create quiz when moving to step 2
+  const handleNextStep = async () => {
+    if (!quizData.title || !quizData.category) return;
+    const result = await dispatch(
+      createQuiz({
+        category_id: quizData.category,
+        name: quizData.title,
+        description: quizData.description,
+      })
+    );
+    // @ts-ignore
+    if (result.payload && result.payload.id) {
+      setQuizId(result.payload.id);
+      setStep(2);
     }
+  };
+
+  // Add question handler (only after quiz is created)
+  const handleAddQuestion = async () => {
+    if (!quizId) return;
+    if (!currentQuestion.question || currentQuestion.correctAnswer === -1)
+      return;
+    // Convert options to {A: ..., B: ..., C: ...} format
+    const filteredOptions = currentQuestion.options.filter(
+      (opt) => opt.trim() !== ""
+    );
+    const optionsObj: Record<string, string> = {};
+    filteredOptions.forEach((opt, idx) => {
+      optionsObj[String.fromCharCode(65 + idx)] = opt;
+    });
+    const correctOption = String.fromCharCode(
+      65 + currentQuestion.correctAnswer
+    );
+    await dispatch(
+      addQuestion({
+        quizId,
+        text: currentQuestion.question,
+        options: optionsObj,
+        correct_option: correctOption,
+      })
+    );
+    setQuizData((prev) => ({
+      ...prev,
+      questions: [
+        ...prev.questions,
+        {
+          id: Date.now().toString(),
+          question: currentQuestion.question,
+          options: filteredOptions,
+          correctAnswer: currentQuestion.correctAnswer,
+        },
+      ],
+    }));
+    setCurrentQuestion({
+      question: "",
+      options: ["", "", "", ""],
+      correctAnswer: -1,
+    });
   };
 
   const removeQuestion = (questionId: string) => {
@@ -120,8 +158,6 @@ export default function CreateQuiz({
     setQuizData({
       title: "",
       category: "",
-      difficulty: "",
-      duration: "",
       description: "",
       questions: [],
     });
@@ -212,66 +248,11 @@ export default function CreateQuiz({
                             <SelectValue placeholder="Select category" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="corporate-law">
-                              Corporate Law
-                            </SelectItem>
-                            <SelectItem value="criminal-law">
-                              Criminal Law
-                            </SelectItem>
-                            <SelectItem value="civil-law">Civil Law</SelectItem>
-                            <SelectItem value="intellectual-property">
-                              Intellectual Property
-                            </SelectItem>
-                            <SelectItem value="employment-law">
-                              Employment Law
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700">
-                          Difficulty
-                        </Label>
-                        <Select
-                          value={quizData.difficulty}
-                          onValueChange={(value) =>
-                            handleQuizInfoChange("difficulty", value)
-                          }
-                        >
-                          <SelectTrigger className="mt-1">
-                            <SelectValue placeholder="Select difficulty" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="beginner">Beginner</SelectItem>
-                            <SelectItem value="intermediate">
-                              Intermediate
-                            </SelectItem>
-                            <SelectItem value="advanced">Advanced</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700">
-                          Duration (minutes)
-                        </Label>
-                        <Select
-                          value={quizData.duration}
-                          onValueChange={(value) =>
-                            handleQuizInfoChange("duration", value)
-                          }
-                        >
-                          <SelectTrigger className="mt-1">
-                            <SelectValue placeholder="Select duration" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="10">10 minutes</SelectItem>
-                            <SelectItem value="15">15 minutes</SelectItem>
-                            <SelectItem value="20">20 minutes</SelectItem>
-                            <SelectItem value="30">30 minutes</SelectItem>
-                            <SelectItem value="45">45 minutes</SelectItem>
-                            <SelectItem value="60">60 minutes</SelectItem>
+                            {categories.map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -371,7 +352,7 @@ export default function CreateQuiz({
 
                     <div className="flex justify-end">
                       <Button
-                        onClick={addQuestion}
+                        onClick={handleAddQuestion}
                         disabled={
                           !currentQuestion.question ||
                           currentQuestion.correctAnswer === -1
@@ -460,13 +441,8 @@ export default function CreateQuiz({
           <div>
             {step === 1 ? (
               <Button
-                onClick={() => setStep(2)}
-                disabled={
-                  !quizData.title ||
-                  !quizData.category ||
-                  !quizData.difficulty ||
-                  !quizData.duration
-                }
+                onClick={handleNextStep}
+                disabled={!quizData.title || !quizData.category}
                 className="bg-amber-600 hover:bg-amber-700"
               >
                 Next: Add Questions

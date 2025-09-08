@@ -7,41 +7,45 @@ import {
   Button,
   Input,
   Label,
-  Textarea,
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui";
-// import { X } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
+import { createQuizCategory } from "@/src/store/slices/quizSlice";
 
 interface AddCategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (categoryData: { name: string; description: string }) => void;
 }
 
 export default function AddCategoryModal({
   isOpen,
   onClose,
-  onSubmit,
 }: AddCategoryModalProps) {
+  const dispatch = useAppDispatch();
+  const createCategoryStatus = useAppSelector(
+    (state) => state.quizzes.createCategoryStatus
+  );
+  const createCategoryError = useAppSelector(
+    (state) => state.quizzes.createCategoryError
+  );
   const [formData, setFormData] = useState({
     name: "",
-    description: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.name.trim()) {
-      onSubmit(formData);
-      setFormData({ name: "", description: "" });
+      await dispatch(createQuizCategory(formData.name));
+      setFormData({ name: "" });
       onClose();
     }
   };
 
   const handleClose = () => {
-    setFormData({ name: "", description: "" });
+    setFormData({ name: "" });
     onClose();
   };
 
@@ -81,28 +85,6 @@ export default function AddCategoryModal({
             <p className="text-xs text-gray-500 mt-1">
               Category names should be clear and descriptive.
             </p>
-          </div>
-
-          <div>
-            <Label
-              htmlFor="categoryDescription"
-              className="text-sm font-medium text-gray-700"
-            >
-              Description
-            </Label>
-            <Textarea
-              id="categoryDescription"
-              placeholder="Enter category description"
-              value={formData.description}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  description: e.target.value,
-                }))
-              }
-              className="mt-1 border-amber-200 focus:border-amber-500 focus:ring-amber-500"
-              rows={3}
-            />
           </div>
 
           <div className="flex justify-end gap-3 pt-4">

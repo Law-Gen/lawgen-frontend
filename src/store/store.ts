@@ -4,7 +4,7 @@ import profileReducer from "./slices/profileSlice";
 import legalContentReducer from "./slices/legalContentSlice";
 import legalAidReducer from "./slices/legalAidSlice";
 import feedbackReducer from "./slices/feedbackSlice";
-// import quizReducer from "./slices/quizSlice";
+import quizReducer from "./slices/quizSlice";
 // import quizCategoryReducer from "./slices/quizCategorySlice";
 
 export const store = configureStore({
@@ -14,7 +14,7 @@ export const store = configureStore({
     legalContent: legalContentReducer,
     legalAid: legalAidReducer,
     feedback: feedbackReducer,
-    // quizzes: quizReducer,
+    quizzes: quizReducer,
     // quizCategories: quizCategoryReducer,
   },
 });

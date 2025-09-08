@@ -4,31 +4,22 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Briefcase } from "lucide-react";
 import { Button, Input, Textarea, Label } from "@/components/ui";
-
-interface Category {
-  id: string;
-  name: string;
-  description: string;
-  quizCount: number;
-  lastUpdated: string;
-  color: "brown" | "yellow" | "red";
-}
+import { useAppDispatch } from "@/src/store/hooks";
+import { updateQuizCategory, QuizCategory } from "@/src/store/slices/quizSlice";
 
 interface CategoryEditProps {
   isOpen: boolean;
   onClose: () => void;
-  category: Category | null;
-  onSave: (
-    categoryId: string,
-    updates: { name: string; description: string }
-  ) => void;
+  category: {
+    id: string;
+    name: string;
+    description?: string;
+    quizCount: number;
+    lastUpdated: string;
+    color: "brown" | "yellow" | "red";
+  };
+  onSave: (id: string, data: { name: string }) => void;
 }
-
-const colorClasses = {
-  brown: "bg-amber-100 text-amber-800",
-  yellow: "bg-yellow-100 text-yellow-800",
-  red: "bg-red-100 text-red-800",
-};
 
 export default function CategoryEdit({
   isOpen,
@@ -36,31 +27,39 @@ export default function CategoryEdit({
   category,
   onSave,
 }: CategoryEditProps) {
+  const dispatch = useAppDispatch();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 
   useEffect(() => {
     if (category) {
       setName(category.name);
-      setDescription(category.description);
     }
   }, [category]);
 
   const handleSave = () => {
-    if (category && name.trim() && description.trim()) {
-      onSave(category.id, {
-        name: name.trim(),
-        description: description.trim(),
-      });
+    if (category && name.trim()) {
+      dispatch(
+        updateQuizCategory({ categoryId: category.id, name: name.trim() })
+      );
+      if (onSave)
+        onSave(category.id, {
+          name: name.trim(),
+        });
       onClose();
     }
   };
   const handleCancel = () => {
     if (category) {
       setName(category.name);
-      setDescription(category.description);
     }
     onClose();
+  };
+
+  const colorClasses = {
+    brown: "bg-brown-100 text-brown-800",
+    yellow: "bg-yellow-100 text-yellow-800",
+    red: "bg-red-100 text-red-800",
   };
 
   return (
@@ -99,10 +98,13 @@ export default function CategoryEdit({
             <div className="flex-1 p-6 space-y-6 overflow-y-auto">
               <div className="flex flex-col items-center space-y-4">
                 <div
-                  className={`p-4 rounded-full ${colorClasses[category.color]}`}
+                  className={`p-4 rounded-full ${
+                    colorClasses[category.color as "brown" | "yellow" | "red"]
+                  }`}
                 >
                   <Briefcase className="w-8 h-8" />
                 </div>
+
                 <div className="text-center">
                   <h3 className="font-semibold text-primary-900">
                     {category.name}
@@ -126,23 +128,6 @@ export default function CategoryEdit({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Enter category name"
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label
-                    htmlFor="category-description"
-                    className="text-sm font-medium text-primary-700"
-                  >
-                    Description
-                  </Label>
-                  <Textarea
-                    id="category-description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Enter category description"
-                    rows={4}
                     className="mt-1"
                   />
                 </div>
@@ -179,7 +164,7 @@ export default function CategoryEdit({
               </Button>
               <Button
                 onClick={handleSave}
-                disabled={!name.trim() || !description.trim()}
+                disabled={!name.trim()}
                 className="flex-1 bg-primary-600 hover:bg-primary-700"
               >
                 Save Changes

@@ -10,7 +10,7 @@ export default function CategoryHeader({ onCreateClick }: CategoryHeaderProps) {
   return (
     <div className="flex items-center justify-content: justify-between">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Quizze Categories</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Quizz Categories</h1>
         <p className="text-gray-600 mt-1"></p>
       </div>
       <Button

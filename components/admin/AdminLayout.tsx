@@ -11,8 +11,8 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({
   children,
-  userName = "John Doe",
-  role = "Senior Partner",
+  userName,
+  role,
 }: AdminLayoutProps) {
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
 
