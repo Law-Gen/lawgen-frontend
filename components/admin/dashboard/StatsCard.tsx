@@ -55,6 +55,37 @@ function MetricCard({
 }
 
 export default function StatsCards() {
+  const metrics = [
+    {
+      title: "Total Users",
+      value: "2,543",
+      description: "Total Users vs last month",
+      growth: "+12.5%",
+      icon: <Users className="w-4 h-4" />,
+    },
+    {
+      title: "Quizzes Created",
+      value: "145",
+      description: "Quizzes Created vs last month",
+      growth: "+5.2%",
+      icon: <ClipboardList className="w-4 h-4" />,
+    },
+    {
+      title: "Legal Documents",
+      value: "382",
+      description: "Legal Documents vs last month",
+      growth: "+8.1%",
+      icon: <FileText className="w-4 h-4" />,
+    },
+    {
+      title: "Monthly Growth",
+      value: "18.2%",
+      description: "Monthly Growth vs last month",
+      growth: "+2.3%",
+      icon: <TrendingUp className="w-4 h-4" />,
+    },
+  ];
+
   return (
     <div className="flex-1 p-6 space-y-6">
       {/* key matrics */}
