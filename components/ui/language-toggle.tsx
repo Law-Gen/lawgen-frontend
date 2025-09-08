@@ -1,15 +1,15 @@
 "use client"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/hooks/use-language"
 
 interface LanguageToggleProps {
   className?: string
 }
 
 export function LanguageToggle({ className }: LanguageToggleProps) {
-  const [language, setLanguage] = useState<"en" | "am">("en")
+  const { language, setLanguage } = useLanguage()
 
   return (
     <div className={cn("flex items-center gap-1 p-1 bg-secondary rounded-lg", className)}>

@@ -20,6 +20,8 @@ import { useRouter } from "next/navigation";
 import { MainNavigation } from "@/components/ui/main-navigation";
 import FeedbackForm from "@/components/feedback-form";
 import { useTheme } from "next-themes";
+import { Moon, Sun } from "lucide-react";
+//import { useLanguage } from "@/hooks/use-language";
 import ChapaPayment from "@/components/payment/ChapaPayment";
 // import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 // import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -369,7 +371,10 @@ export default function ProfilePage() {
     const formData = new FormData();
 
     // Only append fields if they are changed and not empty
-    if (profile.gender && ["male", "female", "other"].includes(profile.gender)) {
+    if (
+      profile.gender &&
+      ["male", "female", "other"].includes(profile.gender)
+    ) {
       formData.append("gender", profile.gender);
     }
     if (profile.birthdate && /^\d{4}-\d{2}-\d{2}$/.test(profile.birthdate)) {
@@ -513,26 +518,50 @@ export default function ProfilePage() {
     }
     if (activeTab === "subscription") {
       return (
-        <>
-          <h1 className="text-lg font-semibold text-primary truncate">
-            Subscription
-          </h1>
-          <p className="text-sm text-muted-foreground truncate">
-            View and manage your subscription plan
-          </p>
-        </>
+        <div className="flex items-center gap-4">
+          <div className="flex-shrink-0">
+            {/* Logo to the left of the text, circular and larger */}
+            <img
+              src="/logo (1).svg"
+              alt="LawGen Logo"
+              width={56}
+              height={56}
+              className="h-14 w-14 rounded-full object-cover border border-muted shadow"
+            />
+          </div>
+          <div>
+            <h1 className="text-lg font-semibold text-primary truncate">
+              Subscription
+            </h1>
+            <p className="text-sm text-muted-foreground truncate">
+              View and manage your subscription plan
+            </p>
+          </div>
+        </div>
       );
     }
     if (activeTab === "feedback") {
       return (
-        <>
-          <h1 className="text-lg font-semibold text-primary truncate">
-            Feedback
-          </h1>
-          <p className="text-sm text-muted-foreground truncate">
-            Share your thoughts and help us improve
-          </p>
-        </>
+        <div className="flex items-center gap-4">
+          <div className="flex-shrink-0">
+            {/* Logo to the left of the text, circular and larger */}
+            <img
+              src="/logo (1).svg"
+              alt="LawGen Logo"
+              width={56}
+              height={56}
+              className="h-14 w-14 rounded-full object-cover border border-muted shadow"
+            />
+          </div>
+          <div>
+            <h1 className="text-lg font-semibold text-primary truncate">
+              Feedback
+            </h1>
+            <p className="text-sm text-muted-foreground truncate">
+              Share your thoughts and help us improve
+            </p>
+          </div>
+        </div>
       );
     }
     return null;
@@ -605,7 +634,28 @@ export default function ProfilePage() {
               &times;
             </button>
           </div>
-          {/* You can add mobile nav items here */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="px-2 py-1 rounded border"
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
+              {theme === "dark" ? (
+                <Moon className="w-4 h-4" />
+              ) : (
+                <Sun className="w-4 h-4" />
+              )}
+            </button>
+            <LanguageToggle />
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => signOut({ callbackUrl: "/" })}
+            className="bg-transparent hover:bg-primary hover:text-white text-primary dark:text-white border-primary"
+          >
+            Sign Out
+          </Button>
         </div>
       </aside>
 
@@ -701,7 +751,11 @@ export default function ProfilePage() {
               aria-label="Toggle dark mode"
               title="Toggle dark mode"
             >
-              {theme === "dark" ? "🌙" : "☀️"}
+              {theme === "dark" ? (
+                <Moon className="w-4 h-4" />
+              ) : (
+                <Sun className="w-4 h-4" />
+              )}
             </button>
             <LanguageToggle />
             <Button
@@ -712,6 +766,21 @@ export default function ProfilePage() {
             >
               Sign Out
             </Button>
+          </div>
+          <div className="md:hidden ml-auto flex items-center gap-2">
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="px-2 py-1 rounded border"
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
+              {theme === "dark" ? (
+                <Moon className="w-4 h-4" />
+              ) : (
+                <Sun className="w-4 h-4" />
+              )}
+            </button>
+            <LanguageToggle />
           </div>
         </div>
       </header>

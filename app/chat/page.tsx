@@ -116,6 +116,8 @@ export default function ChatPage() {
   const audioChunks = useRef<Blob[]>([]);
   const audioContext = useRef<AudioContext | null>(null);
 
+  const { theme, setTheme } = useTheme();
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };

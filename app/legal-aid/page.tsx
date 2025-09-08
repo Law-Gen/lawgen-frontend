@@ -13,6 +13,7 @@ import Link from "next/link";
 // ADDED: Import the BottomNavigation component
 import { BottomNavigation } from "@/components/ui/bottom-navigation";
 import { useTheme } from "next-themes"; // Add this import if you want theme toggle
+import { Moon, Sun } from "lucide-react";
 
 const FEEDBACK_API_BASE_URL = process.env.NEXT_PUBLIC_FEEDBACK_API_BASE_URL;
 
@@ -202,7 +203,11 @@ export default function LegalAidPage() {
               aria-label="Toggle dark mode"
               title="Toggle dark mode"
             >
-              {theme === "dark" ? "🌙" : "☀️"}
+              {theme === "dark" ? (
+                <Moon className="w-4 h-4" />
+              ) : (
+                <Sun className="w-4 h-4" />
+              )}
             </button>
             <LanguageToggle />
             {!session && (

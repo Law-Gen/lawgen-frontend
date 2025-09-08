@@ -7,6 +7,7 @@ import { ChatProvider } from "@/contexts/chat-context";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/toaster";
+import { LanguageProvider } from "@/hooks/use-language";
 
 export const metadata: Metadata = {
   title: "LegalAid - Legal Information & Assistance Platform",
@@ -29,7 +30,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SessionProvider>
-            <ChatProvider>{children}</ChatProvider>
+            <LanguageProvider>
+              <ChatProvider>{children}</ChatProvider>
+            </LanguageProvider>
           </SessionProvider>
           <Toaster />
         </ThemeProvider>
