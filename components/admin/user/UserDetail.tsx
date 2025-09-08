@@ -193,7 +193,17 @@ export default function UserDetail({ user, isOpen, onClose }: UserDetailProps) {
                 Promote to Admin
               </Button>
             )}
-
+            {role === "user" && user.role === "admin" && (
+              <Button
+                onClick={async () => {
+                  await dispatch(demoteToUser(user.email));
+                  onClose();
+                }}
+                className="w-full bg-destructive hover:bg-destructive/90"
+              >
+                Demote to User
+              </Button>
+            )}
             <div className="flex gap-3">
               <Button
                 onClick={handleActivate}

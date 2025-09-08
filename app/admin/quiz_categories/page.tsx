@@ -1,7 +1,7 @@
 "use client";
 
-import { useAppSelector } from "@/src/store/hooks";
-import { useState } from "react";
+import { useAppDispatch, useAppSelector } from "@/src/store/hooks";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AdminLayout from "@/components/admin/AdminLayout";
 import {
@@ -11,8 +11,10 @@ import {
   AddCategory,
   CategoryEdit,
 } from "@/components/admin/quiz_category";
+import { fetchQuizCategories } from "@/src/store/slices/quizSlice";
 
 export default function QuizCategoriesPage() {
+  const dispatch = useAppDispatch();
   const categories = useAppSelector((state) => state.quizzes.categories);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -23,6 +25,10 @@ export default function QuizCategoriesPage() {
   const filteredCategories = categories.filter((category) =>
     category.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  useEffect(() => {
+    dispatch(fetchQuizCategories());
+  }, [dispatch]);
 
   const handleEditCategory = (category: any) => {
     setSelectedCategory(category);
