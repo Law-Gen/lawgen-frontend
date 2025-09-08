@@ -3,7 +3,7 @@
 import type React from "react";
 
 import { useState, useEffect } from "react";
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL; // <-- Fix the env var name
 import { api } from "@/src/lib/api";
 import { MotionWrapper } from "@/components/ui/motion-wrapper";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,8 @@ import { useRouter } from "next/navigation";
 import { MainNavigation } from "@/components/ui/main-navigation";
 import FeedbackForm from "@/components/feedback-form";
 import { useTheme } from "next-themes";
+import { Moon, Sun } from "lucide-react";
+//import { useLanguage } from "@/hooks/use-language";
 import ChapaPayment from "@/components/payment/ChapaPayment";
 // import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 // import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -39,7 +41,7 @@ interface UserProfile {
   name: string;
   email: string;
   phone: string;
-  avatar?: string;
+  avatar?: string | File;
   birthdate?: string;
   gender?: "male" | "female" | "other";
   joinDate: string;
@@ -162,6 +164,12 @@ export default function ProfilePage() {
     }
   };
   const { data: session, status } = useSession();
+  // Redirect to signin if not authenticated
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      window.location.href = "/auth/signin";
+    }
+  }, [status]);
   const router = useRouter();
 
   useEffect(() => {
@@ -354,33 +362,77 @@ export default function ProfilePage() {
     }
   };
 
-  // const handleSaveProfile = async () => {
-  //   if (!profile) return;
-  //   try {
-  //     const payload = {
-  //       full_name: profile.name,
-  //       profile: {
-  //         phone: profile.phone,
-  //         birth_date: profile.birthdate,
-  //         gender: profile.gender,
-  //         language_preference:
-  //           profile.preferences.language === "amharic" ? "am" : "en",
-  //       },
-  //     };
-  //     await api.put("/users/me", payload);
-  //     setIsEditing(false);
-  //     toast({
-  //       title: "Profile Updated",
-  //       description: "Your profile has been updated successfully.",
-  //     });
-  //   } catch (err: any) {
-  //     toast({
-  //       title: "Update Failed",
-  //       description: err.message || "Failed to update profile. Please try again.",
-  //       variant: "destructive",
-  //     });
-  //   }
-  // };
+  // Replace your handleSaveProfile with this version:
+  const handleSaveProfile = async () => {
+    if (!profile) return;
+
+    // Only allow editing gender, birthdate, language, and avatar
+    // Do not allow editing name or email
+    const formData = new FormData();
+
+    // Only append fields if they are changed and not empty
+    if (
+      profile.gender &&
+      ["male", "female", "other"].includes(profile.gender)
+    ) {
+      formData.append("gender", profile.gender);
+    }
+    if (profile.birthdate && /^\d{4}-\d{2}-\d{2}$/.test(profile.birthdate)) {
+      formData.append("birth_date", profile.birthdate);
+    }
+    if (
+      profile.preferences.language &&
+      ["english", "amharic"].includes(profile.preferences.language)
+    ) {
+      formData.append(
+        "language_preference",
+        profile.preferences.language === "amharic" ? "am" : "en"
+      );
+    }
+    if (
+      profile.avatar &&
+      typeof profile.avatar !== "string" &&
+      typeof window !== "undefined" &&
+      window.File &&
+      (profile.avatar as any) instanceof window.File
+    ) {
+      formData.append("profile_picture", profile.avatar);
+    }
+
+    // If nothing to update, show a message and return
+    if (formData.keys().next().done) {
+      alert("No changes to update.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/users/me`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${session?.accessToken}`,
+        },
+        body: formData,
+      });
+      if (!res.ok) {
+        let errMsg = "Failed to update profile";
+        try {
+          const errData = await res.json();
+          errMsg = errData?.message || JSON.stringify(errData, null, 2);
+        } catch (e) {
+          errMsg += " (no JSON error body)";
+        }
+        alert("Backend error: " + errMsg);
+        throw new Error(errMsg);
+      }
+      setIsEditing(false);
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been updated successfully.",
+      });
+    } catch (err: any) {
+      alert(err.message || "Failed to update profile");
+    }
+  };
 
   // Redirect if not logged in - MOVED TO useEffect to prevent render error
   // if (!session && !profileLoading) {
@@ -410,83 +462,6 @@ export default function ProfilePage() {
       </div>
     );
   }
-
-  const handleSaveProfile = async () => {
-    if (!profile) return;
-    // Validate gender
-    if (
-      !profile.gender ||
-      !["male", "female", "other"].includes(profile.gender)
-    ) {
-      alert("Please select a gender.");
-      return;
-    }
-    if (
-      !profile.preferences.language ||
-      !["english", "amharic"].includes(profile.preferences.language)
-    ) {
-      alert("Please select a language preference.");
-      return;
-    }
-    // Validate and format birthdate
-    let birth_date = (profile.birthdate || "").trim();
-    // Accept both YYYY-MM-DD and MM/DD/YYYY, convert to YYYY-MM-DD
-    if (/^\d{2}\/\d{2}\/\d{4}$/.test(birth_date)) {
-      // MM/DD/YYYY to YYYY-MM-DD
-      const [mm, dd, yyyy] = birth_date.split("/");
-      birth_date = `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
-    }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(birth_date)) {
-      alert("Please enter a valid birthdate in YYYY-MM-DD format.");
-      return;
-    }
-    const formData = new FormData();
-    const gender = profile.gender.trim();
-    // Always send language as 'en' or 'am' for backend
-    let langPref: string = profile.preferences.language;
-    if (langPref === "english") langPref = "en";
-    else if (langPref === "amharic") langPref = "am";
-    formData.append("gender", gender);
-    formData.append("birth_date", birth_date);
-    formData.append("language_preference", langPref);
-    // Only include profile_picture if uploading a new image
-    if (
-      profile.avatar &&
-      typeof profile.avatar !== "string" &&
-      typeof window !== "undefined" &&
-      window.File &&
-      (profile.avatar as any) instanceof window.File
-    ) {
-      formData.append("profile_picture", profile.avatar);
-    }
-    for (const [key, value] of formData.entries()) {
-      console.log("FormData:", key, value);
-    }
-    try {
-      const res = await fetch(`${API_BASE_URL}/users/me`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${session?.accessToken}`,
-        },
-        body: formData,
-      });
-      if (!res.ok) {
-        let errMsg = "Failed to update profile";
-        try {
-          const errData = await res.json();
-          console.error("Backend error response:", errData);
-          errMsg = JSON.stringify(errData, null, 2);
-        } catch (e) {
-          errMsg += " (no JSON error body)";
-        }
-        alert("Backend error: " + errMsg);
-        throw new Error(errMsg);
-      }
-      setIsEditing(false);
-    } catch (err: any) {
-      alert(err.message || "Failed to update profile");
-    }
-  };
 
   const handleUpgrade = (plan: Plan) => {
     if (profile?.subscription.plan === plan.id) return;
@@ -519,38 +494,74 @@ export default function ProfilePage() {
   const getHeaderContent = () => {
     if (activeTab === "overview") {
       return (
-        <>
-          <h1 className="text-lg font-semibold text-primary truncate">
-            My Profile
-          </h1>
-          <p className="text-sm text-muted-foreground truncate">
-            Manage your account and preferences
-          </p>
-        </>
+        <div className="flex items-center gap-4">
+          <div className="flex-shrink-0">
+            {/* Logo to the left of the text, circular and larger */}
+            <img
+              src="/logo (1).svg"
+              alt="LawGen Logo"
+              width={56}
+              height={56}
+              className="h-14 w-14 rounded-full object-cover border border-muted shadow"
+            />
+          </div>
+          <div>
+            <h1 className="text-lg font-semibold text-primary truncate">
+              My Profile
+            </h1>
+            <p className="text-sm text-muted-foreground truncate">
+              Manage your account and preferences
+            </p>
+          </div>
+        </div>
       );
     }
     if (activeTab === "subscription") {
       return (
-        <>
-          <h1 className="text-lg font-semibold text-primary truncate">
-            Subscription
-          </h1>
-          <p className="text-sm text-muted-foreground truncate">
-            View and manage your subscription plan
-          </p>
-        </>
+        <div className="flex items-center gap-4">
+          <div className="flex-shrink-0">
+            {/* Logo to the left of the text, circular and larger */}
+            <img
+              src="/logo (1).svg"
+              alt="LawGen Logo"
+              width={56}
+              height={56}
+              className="h-14 w-14 rounded-full object-cover border border-muted shadow"
+            />
+          </div>
+          <div>
+            <h1 className="text-lg font-semibold text-primary truncate">
+              Subscription
+            </h1>
+            <p className="text-sm text-muted-foreground truncate">
+              View and manage your subscription plan
+            </p>
+          </div>
+        </div>
       );
     }
     if (activeTab === "feedback") {
       return (
-        <>
-          <h1 className="text-lg font-semibold text-primary truncate">
-            Feedback
-          </h1>
-          <p className="text-sm text-muted-foreground truncate">
-            Share your thoughts and help us improve
-          </p>
-        </>
+        <div className="flex items-center gap-4">
+          <div className="flex-shrink-0">
+            {/* Logo to the left of the text, circular and larger */}
+            <img
+              src="/logo (1).svg"
+              alt="LawGen Logo"
+              width={56}
+              height={56}
+              className="h-14 w-14 rounded-full object-cover border border-muted shadow"
+            />
+          </div>
+          <div>
+            <h1 className="text-lg font-semibold text-primary truncate">
+              Feedback
+            </h1>
+            <p className="text-sm text-muted-foreground truncate">
+              Share your thoughts and help us improve
+            </p>
+          </div>
+        </div>
       );
     }
     return null;
@@ -623,7 +634,28 @@ export default function ProfilePage() {
               &times;
             </button>
           </div>
-          {/* You can add mobile nav items here */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="px-2 py-1 rounded border"
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
+              {theme === "dark" ? (
+                <Moon className="w-4 h-4" />
+              ) : (
+                <Sun className="w-4 h-4" />
+              )}
+            </button>
+            <LanguageToggle />
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => signOut({ callbackUrl: "/" })}
+            className="bg-transparent hover:bg-primary hover:text-white text-primary dark:text-white border-primary"
+          >
+            Sign Out
+          </Button>
         </div>
       </aside>
 
@@ -719,7 +751,11 @@ export default function ProfilePage() {
               aria-label="Toggle dark mode"
               title="Toggle dark mode"
             >
-              {theme === "dark" ? "🌙" : "☀️"}
+              {theme === "dark" ? (
+                <Moon className="w-4 h-4" />
+              ) : (
+                <Sun className="w-4 h-4" />
+              )}
             </button>
             <LanguageToggle />
             <Button
@@ -730,6 +766,21 @@ export default function ProfilePage() {
             >
               Sign Out
             </Button>
+          </div>
+          <div className="md:hidden ml-auto flex items-center gap-2">
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="px-2 py-1 rounded border"
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
+              {theme === "dark" ? (
+                <Moon className="w-4 h-4" />
+              ) : (
+                <Sun className="w-4 h-4" />
+              )}
+            </button>
+            <LanguageToggle />
           </div>
         </div>
       </header>
@@ -789,6 +840,44 @@ export default function ProfilePage() {
                             .join("")}
                         </AvatarFallback>
                       </Avatar>
+                      {isEditing && (
+                        <label className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-1 cursor-pointer shadow-md flex items-center justify-center w-7 h-7">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                setProfile((p) =>
+                                  p ? { ...p, avatar: file } : null
+                                );
+                              }
+                            }}
+                          />
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <circle
+                              cx="8"
+                              cy="8"
+                              r="8"
+                              fill="currentColor"
+                              fillOpacity="0.2"
+                            />
+                            <path
+                              d="M8 4v8M4 8h8"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                        </label>
+                      )}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
@@ -808,27 +897,183 @@ export default function ProfilePage() {
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                    <div>
-                      <Label htmlFor="name">Full Name</Label>
-                      <Input
-                        id="name"
-                        value={profile.name}
-                        onChange={(e) =>
-                          setProfile({ ...profile, name: e.target.value })
-                        }
-                        disabled={!isEditing}
-                        className="mt-1"
-                      />
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="name">Full Name</Label>
+                        <Input
+                          id="name"
+                          value={profile.name}
+                          disabled
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="email">Email Address</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={profile.email}
+                          disabled
+                          className="mt-1"
+                        />
+                      </div>
+                      {/* Phone number field removed as requested */}
+                      <div>
+                        <Label htmlFor="gender">Gender</Label>
+                        <select
+                          id="gender"
+                          value={profile.gender || "male"}
+                          disabled={!isEditing}
+                          onChange={(e) =>
+                            setProfile({
+                              ...profile,
+                              gender: e.target.value as
+                                | "male"
+                                | "female"
+                                | "other",
+                            })
+                          }
+                          className="mt-1 w-full border rounded px-3 py-2"
+                        >
+                          <option value="male">Male</option>
+                          <option value="female">Female</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+                      <div>
+                        <Label htmlFor="birthdate">Birthdate</Label>
+                        <input
+                          id="birthdate"
+                          type="date"
+                          value={(() => {
+                            if (!profile.birthdate) return "";
+                            // Accepts 'yyyy-MM-dd', 'yyyy-MM-ddTHH:mm:ssZ', 'MM/DD/YYYY', etc.
+                            const isoMatch =
+                              profile.birthdate.match(/^\d{4}-\d{2}-\d{2}$/);
+                            if (isoMatch) return profile.birthdate;
+                            // Try to parse as Date and format as yyyy-MM-dd
+                            const d = new Date(profile.birthdate);
+                            if (!isNaN(d.getTime())) {
+                              const yyyy = d.getFullYear();
+                              const mm = String(d.getMonth() + 1).padStart(
+                                2,
+                                "0"
+                              );
+
+                              const dd = String(d.getDate()).padStart(2, "0");
+                              return `${yyyy}-${mm}-${dd}`;
+                            }
+                            // fallback
+                            return "";
+                          })()}
+                          disabled={!isEditing}
+                          onChange={(e) =>
+                            setProfile({
+                              ...profile,
+                              birthdate: e.target.value,
+                            })
+                          }
+                          className="mt-1 w-full border rounded px-3 py-2"
+                          pattern="\d{4}-\d{2}-\d{2}"
+                          placeholder="YYYY-MM-DD"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="language_preference">
+                          Language Preference
+                        </Label>
+                        <select
+                          id="language_preference"
+                          value={profile.preferences.language}
+                          disabled={!isEditing}
+                          onChange={(e) => {
+                            setProfile({
+                              ...profile,
+                              preferences: {
+                                ...profile.preferences,
+                                language: e.target.value as
+                                  | "english"
+                                  | "amharic",
+                              },
+                            });
+                          }}
+                          className="mt-1 w-full border rounded px-3 py-2"
+                        >
+                          <option value="en">English</option>
+                          <option value="amharic">Amharic</option>
+                        </select>
+                      </div>
                     </div>
-                    <div>
-                      <Label htmlFor="email">Email Address</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={profile.email}
-                        disabled
-                        className="mt-1"
-                      />
+                    <div className="space-y-4">
+                      {isEditing && (
+                        <div className="mt-8">
+                          <h3 className="text-lg font-semibold mb-2">
+                            Security
+                          </h3>
+                          <button
+                            className="text-primary underline hover:no-underline text-sm mb-2"
+                            onClick={() => setShowPasswordForm((v) => !v)}
+                            type="button"
+                          >
+                            {showPasswordForm ? "Cancel" : "Change Password"}
+                          </button>
+                          {showPasswordForm && (
+                            <form
+                              onSubmit={handleChangePassword}
+                              className="space-y-3 max-w-sm"
+                            >
+                              <div>
+                                <label className="block text-sm font-medium mb-1">
+                                  Old Password
+                                </label>
+                                <input
+                                  type="password"
+                                  value={oldPassword}
+                                  onChange={(e) =>
+                                    setOldPassword(e.target.value)
+                                  }
+                                  required
+                                  className="w-full border rounded px-3 py-2"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium mb-1">
+                                  New Password
+                                </label>
+                                <input
+                                  type="password"
+                                  value={newPassword}
+                                  onChange={(e) =>
+                                    setNewPassword(e.target.value)
+                                  }
+                                  required
+                                  className="w-full border rounded px-3 py-2"
+                                />
+                              </div>
+                              {passwordError && (
+                                <div className="text-red-500 text-xs">
+                                  {passwordError}
+                                </div>
+                              )}
+                              {passwordSuccess && (
+                                <div className="text-green-600 text-xs">
+                                  {passwordSuccess}
+                                </div>
+                              )}
+                              <button
+                                type="submit"
+                                className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90 w-full"
+                                disabled={passwordLoading}
+                              >
+                                {passwordLoading
+                                  ? "Updating..."
+                                  : "Update Password"}
+                              </button>
+                            </form>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                   {isEditing && (

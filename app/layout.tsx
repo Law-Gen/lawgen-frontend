@@ -3,9 +3,11 @@ import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { SessionProvider } from "./providers/session-provider";
+import { ChatProvider } from "@/contexts/chat-context";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/toaster";
+import { LanguageProvider } from "@/hooks/use-language";
 
 export const metadata: Metadata = {
   title: "LegalAid - Legal Information & Assistance Platform",
@@ -19,10 +21,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <SessionProvider>{children}</SessionProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <SessionProvider>
+            <LanguageProvider>
+              <ChatProvider>{children}</ChatProvider>
+            </LanguageProvider>
+          </SessionProvider>
           <Toaster />
         </ThemeProvider>
       </body>

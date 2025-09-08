@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MotionWrapper } from "@/components/ui/motion-wrapper";
-import { LanguageToggle } from "@/components/ui/language-toggle";
+//import { LanguageToggle } from "@/components/ui/language-toggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
@@ -71,20 +71,22 @@ export default function LandingPage() {
               &times;
             </button>
           </div>
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="px-2 py-1 rounded border w-full flex items-center gap-2"
-            aria-label="Toggle dark mode"
-            title="Toggle dark mode"
-          >
-            {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
-          </button>
-          <LanguageToggle />
-          <Link href="/chat" className="w-full">
-            <Button size="lg" className="w-full mb-2">
-              Try Chat
-            </Button>
-          </Link>
+<div className="flex items-center gap-3">
+  <button
+    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+    className="px-2 py-1 rounded border"
+    aria-label="Toggle dark mode"
+    title="Toggle dark mode"
+  >
+    {theme === "dark" ? <Moon className="w-4 h-4"/> : <Sun className="w-4 h-4"/>}
+  </button>
+  {/* <LanguageToggle /> */}
+</div>
+<Link href="/chat" className="w-full">
+  <Button size="lg" className="w-full mb-2">
+    Try Chat
+  </Button>
+</Link>
           <Link href="/auth/signin" className="w-full">
             <Button className=" text-center  dark:text-white mb-2">
               Sign In
@@ -98,13 +100,24 @@ export default function LandingPage() {
         <div className="w-full flex items-center px-2 gap-4">
           {/* Sidebar menu button for mobile (move to right) */}
           <div className="flex flex-1 items-center min-w-0">
-            <div className="flex flex-col items-start min-w-0">
-              <h1 className="text-lg font-semibold text-primary truncate">
-                LegalAid
-              </h1>
-              <p className="text-sm text-muted-foreground truncate">
-                Your trusted platform for legal clarity and justice
-              </p>
+            <div className="flex items-center gap-4">
+              <div className="flex-shrink-0">
+                <img
+                  src="/logo (1).svg"
+                  alt="LawGen Logo"
+                  width={56}
+                  height={56}
+                  className="h-14 w-14 rounded-full object-cover border border-muted shadow"
+                />
+              </div>
+              <div className="flex flex-col items-start min-w-0">
+                <h1 className="text-lg font-semibold text-primary truncate">
+                  LegalAid
+                </h1>
+                <p className="text-sm text-muted-foreground truncate">
+                  Your trusted platform for legal clarity and justice
+                </p>
+              </div>
             </div>
           </div>
           {/* Hamburger icon only, no box */}
@@ -134,14 +147,26 @@ export default function LandingPage() {
               aria-label="Toggle dark mode"
               title="Toggle dark mode"
             >
-              {theme === "dark" ? "🌙" : "☀️"}
+              {theme === "dark" ? <Moon className="w-4 h-4"/> : <Sun className="w-4 h-4"/>}
             </button>
-            <LanguageToggle />
+            {/* {<LanguageToggle />} */}
             <Link href="/auth/signin">
               <Button className="text-center  dark:text-white mb-2">
                 Sign In
               </Button>
             </Link>
+          </div>
+          {/* Mobile toggles on the right */}
+          <div className="md:hidden ml-auto flex items-center gap-2">
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="px-2 py-1 rounded border"
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
+              {theme === "dark" ? <Moon className="w-4 h-4"/> : <Sun className="w-4 h-4"/>}
+            </button>
+            {/* {<LanguageToggle />} */}
           </div>
         </div>
       </header>
@@ -149,15 +174,26 @@ export default function LandingPage() {
       <section
         ref={heroRef}
         className="relative min-h-screen flex items-center justify-center pt-20 pb-32 overflow-hidden"
+        style={{
+          backgroundImage: "url('/University Of Law.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
       >
+        {/* Overlay to fade the image and make text readable */}
+        <div className="absolute inset-0 bg-black/60" />
+
+        {/* Optional: keep your gradient overlays for extra effect */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-secondary/10"></div>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(120,119,198,0.1),transparent_50%)]"></div>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(139,92,246,0.1),transparent_50%)]"></div>
 
+        {/* Content */}
         <div className="container mx-auto px-4 text-center relative z-10">
           <MotionWrapper animation="fadeInUp" delay={200}>
-            <h2 className="text-5xl md:text-7xl lg:text-8xl font-bold text-primary mb-8 text-balance leading-tight">
-              Legal Information &
+            <h2 className="text-5xl md:text-7xl lg:text-8xl font-bold text-primary-foreground mb-8 text-balance leading-tight drop-shadow-lg">
+              Legal Information &amp;
               <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 {" "}
                 Assistance
@@ -166,7 +202,7 @@ export default function LandingPage() {
           </MotionWrapper>
 
           <MotionWrapper animation="fadeInUp" delay={400}>
-            <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-4xl mx-auto text-pretty leading-relaxed">
+            <p className="text-xl md:text-2xl text-primary-foreground mb-12 max-w-4xl mx-auto text-pretty leading-relaxed drop-shadow">
               Get instant legal guidance, connect with professionals, and access
               comprehensive legal resources in English and Amharic. Your trusted
               companion for legal clarity and justice.
@@ -191,20 +227,6 @@ export default function LandingPage() {
                   Get Started Free
                 </Button>
               </Link>
-            </div>
-          </MotionWrapper>
-
-          <MotionWrapper animation="scaleIn" delay={800}>
-            <div className="relative max-w-6xl mx-auto">
-              <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-3xl p-8 backdrop-blur-sm border border-border/50 shadow-2xl">
-                <img
-                  src="/modern-legal-platform-dashboard-interface-with-bro.png"
-                  alt="LegalAid Platform Dashboard Preview"
-                  className="w-full h-auto rounded-2xl shadow-2xl hover:scale-105 transition-transform duration-700"
-                />
-              </div>
-              <div className="absolute -top-4 -right-4 w-24 h-24 bg-accent/20 rounded-full blur-xl"></div>
-              <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-primary/20 rounded-full blur-xl"></div>
             </div>
           </MotionWrapper>
         </div>
