@@ -6,6 +6,7 @@ import React, {
   useReducer,
   useEffect,
   useCallback,
+  useState,
 } from "react";
 import { useChatService } from "@/lib/chat-service";
 
@@ -222,7 +223,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     } finally {
       dispatch({ type: "SET_SESSIONS_LOADING", payload: false });
     }
-  }, [chatService]);
+  }, [chatService.getSessions]);
 
   const loadMessages = useCallback(
     async (sessionId: string) => {
@@ -250,7 +251,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         dispatch({ type: "SET_MESSAGES_LOADING", payload: false });
       }
     },
-    [chatService]
+    [chatService.getSessionMessages, chatService.isAuthenticated]
   );
 
   const selectSession = useCallback(
@@ -275,13 +276,51 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         console.error("Error selecting session:", error);
       }
     },
-    [chatService, loadMessages]
+    [chatService.isAuthenticated, loadMessages]
   );
 
   // Load sessions on mount
   useEffect(() => {
-    loadSessions();
-  }, [loadSessions]);
+    // Only load once on mount, don't depend on loadSessions to avoid infinite loops
+    const loadSessionsOnMount = async () => {
+      try {
+        dispatch({ type: "SET_SESSIONS_LOADING", payload: true });
+        dispatch({ type: "SET_SESSIONS_ERROR", payload: null });
+
+        const response = await chatService.getSessions(1, 50);
+        const sessions: ChatSession[] = response.items.map((session) => ({
+          id: session.id,
+          title: session.title || "Untitled Chat",
+          lastMessage: session.lastMessage || "",
+          timestamp: session.timestamp || Date.now(),
+          messageCount: session.messageCount || 0,
+        }));
+
+        dispatch({ type: "SET_SESSIONS", payload: sessions });
+        localStorage.setItem("chatSessions", JSON.stringify(sessions));
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Failed to load sessions";
+        dispatch({ type: "SET_SESSIONS_ERROR", payload: errorMessage });
+        console.error("Error loading sessions:", error);
+
+        // Fallback to localStorage
+        const localSessions = localStorage.getItem("chatSessions");
+        if (localSessions) {
+          try {
+            const sessions = JSON.parse(localSessions);
+            dispatch({ type: "SET_SESSIONS", payload: sessions });
+          } catch (parseError) {
+            console.error("Error parsing local sessions:", parseError);
+          }
+        }
+      } finally {
+        dispatch({ type: "SET_SESSIONS_LOADING", payload: false });
+      }
+    };
+
+    loadSessionsOnMount();
+  }, []); // Empty dependency array - only run once on mount
 
   // Load session from localStorage on mount
   useEffect(() => {
@@ -323,7 +362,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
     },
-    [chatService, state.sessions]
+    [chatService.createSession, chatService.isAuthenticated, state.sessions]
   );
 
   const deleteSession = useCallback(
@@ -354,7 +393,12 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
     },
-    [chatService, state.sessions, state.currentSessionId]
+    [
+      chatService.deleteSession,
+      chatService.isAuthenticated,
+      state.sessions,
+      state.currentSessionId,
+    ]
   );
 
   const updateSessionTitle = useCallback(
@@ -379,7 +423,11 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
     },
-    [chatService, state.sessions]
+    [
+      chatService.updateSessionTitle,
+      chatService.isAuthenticated,
+      state.sessions,
+    ]
   );
 
   const sendMessage = useCallback(

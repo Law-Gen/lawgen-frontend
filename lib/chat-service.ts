@@ -1,4 +1,5 @@
 import { useAuthSession } from "@/hooks/use-auth-session";
+import { useMemo } from "react";
 
 interface ChatSession {
   id: string;
@@ -307,71 +308,76 @@ export const chatService = new ChatService();
 export function useChatService() {
   const { user, isAuthenticated } = useAuthSession();
 
-  const getUserInfo = () => {
-    if (!isAuthenticated || !user) {
-      return { userID: undefined, planID: undefined };
-    }
+  return useMemo(() => {
+    const getUserInfo = () => {
+      if (!isAuthenticated || !user) {
+        return { userID: undefined, planID: undefined };
+      }
+
+      return {
+        userID: user.id || "anonymous",
+        planID: (user as any).plan || "free",
+      };
+    };
+
+    const getSessions = async (page = 1, limit = 10) => {
+      const { userID, planID } = getUserInfo();
+      return chatService.getSessions(page, limit, userID, planID);
+    };
+
+    const getSessionMessages = async (
+      sessionId: string,
+      page = 1,
+      limit = 50
+    ) => {
+      const { userID, planID } = getUserInfo();
+      return chatService.getSessionMessages(
+        sessionId,
+        page,
+        limit,
+        userID,
+        planID
+      );
+    };
+
+    const createSession = async (title: string) => {
+      const { userID, planID } = getUserInfo();
+      return chatService.createSession(title, userID, planID);
+    };
+
+    const deleteSession = async (sessionId: string) => {
+      const { userID, planID } = getUserInfo();
+      return chatService.deleteSession(sessionId, userID, planID);
+    };
+
+    const sendMessage = async (sessionId: string, content: string) => {
+      const { userID, planID } = getUserInfo();
+      return chatService.sendMessage(sessionId, content, userID, planID);
+    };
+
+    const sendVoiceMessage = async (
+      audioFile: File,
+      language: string = "en"
+    ) => {
+      const { userID, planID } = getUserInfo();
+      return chatService.sendVoiceMessage(audioFile, language, userID, planID);
+    };
+
+    const updateSessionTitle = async (sessionId: string, title: string) => {
+      const { userID, planID } = getUserInfo();
+      return chatService.updateSessionTitle(sessionId, title, userID, planID);
+    };
 
     return {
-      userID: user.id || "anonymous",
-      planID: (user as any).plan || "free",
+      getSessions,
+      getSessionMessages,
+      createSession,
+      deleteSession,
+      sendMessage,
+      sendVoiceMessage,
+      updateSessionTitle,
+      isAuthenticated,
+      user,
     };
-  };
-
-  const getSessions = async (page = 1, limit = 10) => {
-    const { userID, planID } = getUserInfo();
-    return chatService.getSessions(page, limit, userID, planID);
-  };
-
-  const getSessionMessages = async (
-    sessionId: string,
-    page = 1,
-    limit = 50
-  ) => {
-    const { userID, planID } = getUserInfo();
-    return chatService.getSessionMessages(
-      sessionId,
-      page,
-      limit,
-      userID,
-      planID
-    );
-  };
-
-  const createSession = async (title: string) => {
-    const { userID, planID } = getUserInfo();
-    return chatService.createSession(title, userID, planID);
-  };
-
-  const deleteSession = async (sessionId: string) => {
-    const { userID, planID } = getUserInfo();
-    return chatService.deleteSession(sessionId, userID, planID);
-  };
-
-  const sendMessage = async (sessionId: string, content: string) => {
-    const { userID, planID } = getUserInfo();
-    return chatService.sendMessage(sessionId, content, userID, planID);
-  };
-
-  const sendVoiceMessage = async (audioFile: File, language: string = "en") => {
-    const { userID, planID } = getUserInfo();
-    return chatService.sendVoiceMessage(audioFile, language, userID, planID);
-  };
-
-  const updateSessionTitle = async (sessionId: string, title: string) => {
-    const { userID, planID } = getUserInfo();
-    return chatService.updateSessionTitle(sessionId, title, userID, planID);
-  };
-
-  return {
-    getSessions,
-    getSessionMessages,
-    createSession,
-    deleteSession,
-    sendMessage,
-    sendVoiceMessage,
-    updateSessionTitle,
-    isAuthenticated,
-    user,
-  };
+  }, [user, isAuthenticated]);
 }
