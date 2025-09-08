@@ -82,19 +82,7 @@ export const fetchFeedbacks = createAsyncThunk("feedback/fetchFeedbacks", async 
         return rejectWithValue(error instanceof Error ? error.message : "unknown error")
     }
 })
-// fetching individual feedback by id
-// export const fetchFeebackById = createAsyncThunk("feedback/fetchFeedbackById", async(id:string, {rejectWithValue}) =>{
-//     try{
-//         const response = await fetch("https://lawgen-backend-1.onrender.com/api/v1/feedback")
-//         if(!response.ok){
-//             throw new Error("failed to fetch feedback")
 
-//         }
-
-//     }catch(error){
-//         return rejectWithValue(error instanceof Error? error.message:"unknown error")
-//     }
-// })
 
 // storing the status change on local storage
 const saveLocalStatusChange = (feedbackId: string, statusChange: any) => {
