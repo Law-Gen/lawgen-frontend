@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MotionWrapper } from "@/components/ui/motion-wrapper";
-import { LanguageToggle } from "@/components/ui/language-toggle";
+//import { LanguageToggle } from "@/components/ui/language-toggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
@@ -71,22 +71,22 @@ export default function LandingPage() {
               &times;
             </button>
           </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="px-2 py-1 rounded border"
-              aria-label="Toggle dark mode"
-              title="Toggle dark mode"
-            >
-              {theme === "dark" ? <Moon className="w-4 h-4"/> : <Sun className="w-4 h-4"/>}
-            </button>
-            <LanguageToggle />
-          </div>
-          <Link href="/chat" className="w-full">
-            <Button size="lg" className="w-full mb-2">
-              Try Chat
-            </Button>
-          </Link>
+<div className="flex items-center gap-3">
+  <button
+    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+    className="px-2 py-1 rounded border"
+    aria-label="Toggle dark mode"
+    title="Toggle dark mode"
+  >
+    {theme === "dark" ? <Moon className="w-4 h-4"/> : <Sun className="w-4 h-4"/>}
+  </button>
+  {/* <LanguageToggle /> */}
+</div>
+<Link href="/chat" className="w-full">
+  <Button size="lg" className="w-full mb-2">
+    Try Chat
+  </Button>
+</Link>
           <Link href="/auth/signin" className="w-full">
             <Button className=" text-center  dark:text-white mb-2">
               Sign In
@@ -149,7 +149,7 @@ export default function LandingPage() {
             >
               {theme === "dark" ? <Moon className="w-4 h-4"/> : <Sun className="w-4 h-4"/>}
             </button>
-            <LanguageToggle />
+            {/* {<LanguageToggle />} */}
             <Link href="/auth/signin">
               <Button className="text-center  dark:text-white mb-2">
                 Sign In
@@ -166,7 +166,7 @@ export default function LandingPage() {
             >
               {theme === "dark" ? <Moon className="w-4 h-4"/> : <Sun className="w-4 h-4"/>}
             </button>
-            <LanguageToggle />
+            {/* {<LanguageToggle />} */}
           </div>
         </div>
       </header>

@@ -21,7 +21,7 @@ import { MainNavigation } from "@/components/ui/main-navigation";
 import FeedbackForm from "@/components/feedback-form";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
-import { useLanguage } from "@/hooks/use-language";
+//import { useLanguage } from "@/hooks/use-language";
 import ChapaPayment from "@/components/payment/ChapaPayment";
 // import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 // import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -491,8 +491,6 @@ export default function ProfilePage() {
     }
   };
 
-  const { t } = useLanguage();
-
   const getHeaderContent = () => {
     if (activeTab === "overview") {
       return (
@@ -509,10 +507,10 @@ export default function ProfilePage() {
           </div>
           <div>
             <h1 className="text-lg font-semibold text-primary truncate">
-              {t("my_profile")}
+              My Profile
             </h1>
             <p className="text-sm text-muted-foreground truncate">
-              {t("manage_account")}
+              Manage your account and preferences
             </p>
           </div>
         </div>
@@ -520,54 +518,50 @@ export default function ProfilePage() {
     }
     if (activeTab === "subscription") {
       return (
-        <>
-          <div className="flex items-center gap-4">
-            <div className="flex-shrink-0">
-              {/* Logo to the left of the text, circular and larger */}
-              <img
-                src="/logo (1).svg"
-                alt="LawGen Logo"
-                width={56}
-                height={56}
-                className="h-14 w-14 rounded-full object-cover border border-muted shadow"
-              />
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold text-primary truncate">
-                {t("subscription")}
-              </h1>
-              <p className="text-sm text-muted-foreground truncate">
-                {t("view_manage_subscription")}
-              </p>
-            </div>
+        <div className="flex items-center gap-4">
+          <div className="flex-shrink-0">
+            {/* Logo to the left of the text, circular and larger */}
+            <img
+              src="/logo (1).svg"
+              alt="LawGen Logo"
+              width={56}
+              height={56}
+              className="h-14 w-14 rounded-full object-cover border border-muted shadow"
+            />
           </div>
-        </>
+          <div>
+            <h1 className="text-lg font-semibold text-primary truncate">
+              Subscription
+            </h1>
+            <p className="text-sm text-muted-foreground truncate">
+              View and manage your subscription plan
+            </p>
+          </div>
+        </div>
       );
     }
     if (activeTab === "feedback") {
       return (
-        <>
-          <div className="flex items-center gap-4">
-            <div className="flex-shrink-0">
-              {/* Logo to the left of the text, circular and larger */}
-              <img
-                src="/logo (1).svg"
-                alt="LawGen Logo"
-                width={56}
-                height={56}
-                className="h-14 w-14 rounded-full object-cover border border-muted shadow"
-              />
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold text-primary truncate">
-                {t("feedback")}
-              </h1>
-              <p className="text-sm text-muted-foreground truncate">
-                {t("share_thoughts")}
-              </p>
-            </div>
+        <div className="flex items-center gap-4">
+          <div className="flex-shrink-0">
+            {/* Logo to the left of the text, circular and larger */}
+            <img
+              src="/logo (1).svg"
+              alt="LawGen Logo"
+              width={56}
+              height={56}
+              className="h-14 w-14 rounded-full object-cover border border-muted shadow"
+            />
           </div>
-        </>
+          <div>
+            <h1 className="text-lg font-semibold text-primary truncate">
+              Feedback
+            </h1>
+            <p className="text-sm text-muted-foreground truncate">
+              Share your thoughts and help us improve
+            </p>
+          </div>
+        </div>
       );
     }
     return null;
