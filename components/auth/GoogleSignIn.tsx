@@ -1,57 +1,72 @@
 "use client";
 
 import { useTheme } from "next-themes";
-
-function base64URLEncode(buffer: ArrayBuffer | Uint8Array) {
-  const uint8Array =
-    buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
-  return btoa(String.fromCharCode(...uint8Array))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-}
-
-async function generatePKCE() {
-  const code_verifier = base64URLEncode(
-    crypto.getRandomValues(new Uint8Array(32))
-  );
-  const encoder = new TextEncoder();
-  const data = encoder.encode(code_verifier);
-  const digest = await window.crypto.subtle.digest("SHA-256", data);
-  const code_challenge = base64URLEncode(digest);
-  return { code_verifier, code_challenge };
-}
+import { useState, useEffect } from "react";
 
 export default function GoogleSignIn() {
-  const { theme } = useTheme();
+  const { theme, resolvedTheme } = useTheme();
+  const [isLoading, setIsLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   async function handleGoogleSignIn() {
-    const { code_verifier, code_challenge } = await generatePKCE();
-    localStorage.setItem("pkce_verifier", code_verifier);
+    setIsLoading(true);
 
-    const client_id = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    const redirect_uri = window.location.origin + "/auth/google/callback";
-    const scope = "openid email profile";
-    const state = Math.random().toString(36).substring(2);
+    try {
+      // Generate a secure state parameter
+      const state =
+        Math.random().toString(36).substring(2, 15) +
+        Math.random().toString(36).substring(2, 15);
 
-    const url = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${client_id}&redirect_uri=${encodeURIComponent(
-      redirect_uri
-    )}&scope=${encodeURIComponent(
-      scope
-    )}&state=${state}&code_challenge=${code_challenge}&code_challenge_method=S256`;
+      // Store state in sessionStorage for verification
+      sessionStorage.setItem("oauth_state", state);
 
-    window.location.href = url;
+      // Redirect directly to your backend's Google OAuth endpoint
+      const redirectUri = `${window.location.origin}/auth/google/callback`;
+      const backendOAuthUrl = `https://lawgen-backend.onrender.com/auth/google/oauth?redirect_uri=${encodeURIComponent(
+        redirectUri
+      )}&state=${state}`;
+
+      // Redirect to backend OAuth endpoint
+      window.location.href = backendOAuthUrl;
+    } catch (error) {
+      console.error("Google Sign-In failed:", error);
+      setIsLoading(false);
+    }
   }
 
+  // Prevent hydration mismatch by not rendering theme-dependent content until mounted
+  if (!mounted) {
+    return (
+      <div className="w-full">
+        <button
+          type="button"
+          disabled
+          className="w-full flex justify-center items-center min-h-[44px] py-2 rounded-lg shadow-sm font-semibold text-base bg-gray-200 text-gray-800"
+        >
+          Continue with Google
+        </button>
+      </div>
+    );
+  }
+
+  const isDark = resolvedTheme === "dark";
+
   return (
-    <button
-      type="button"
-      onClick={handleGoogleSignIn}
-      className={`w-full flex justify-center items-center min-h-[44px] py-2 rounded-lg shadow-sm font-semibold text-base ${
-        theme === "dark" ? "bg-zinc-800 text-white" : "bg-[#f5ede6] text-black"
-      }`}
-    >
-      Continue with Google
-    </button>
+    <div className="w-full">
+      <button
+        type="button"
+        onClick={handleGoogleSignIn}
+        disabled={isLoading}
+        className={`w-full flex justify-center items-center min-h-[44px] py-2 rounded-lg shadow-sm font-semibold text-base transition-opacity ${
+          isDark ? "bg-zinc-800 text-white" : "bg-[#f5ede6] text-black"
+        } ${isLoading ? "opacity-50 cursor-not-allowed" : "hover:opacity-90"}`}
+      >
+        {isLoading ? "Redirecting..." : "Continue with Google"}
+      </button>
+    </div>
   );
 }

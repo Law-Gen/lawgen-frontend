@@ -14,7 +14,7 @@ async function handle(res: Response) {
   return res.json ? res.json() : res.text();
 }
 
-function getAuthHeader(sessionAccessToken?: string | null) {
+function getAuthHeader(sessionAccessToken?: string | null): Record<string, string> {
   const tokenFromSession = sessionAccessToken || null;
   let tokenFromStorage: string | null = null;
   if (typeof window !== "undefined") {
@@ -23,7 +23,10 @@ function getAuthHeader(sessionAccessToken?: string | null) {
     } catch {}
   }
   const token = tokenFromSession || tokenFromStorage;
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  if (token) {
+    return { Authorization: `Bearer ${token}` };
+  }
+  return {};
 }
 
 export const api = {
@@ -36,9 +39,9 @@ export const api = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...getAuthHeader(session?.accessToken as string | undefined),
-        ...(options.headers || {}),
-      },
+        ...(getAuthHeader(session?.accessToken as string | undefined) as Record<string, string>),
+        ...(options.headers ? (options.headers as Record<string, string>) : {}),
+      } as HeadersInit,
       body: body ? JSON.stringify(body) : undefined,
       credentials: "include",
       ...options,

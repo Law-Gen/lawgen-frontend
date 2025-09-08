@@ -472,9 +472,7 @@ export default function QuizPage() {
       const progress =
         ((currentQuestionIndex + 1) / activeQuizQuestions.length) * 100;
       return (
-        <PageLayout
-          title={selectedCategory?.name || t("quiz")}
-        >
+        <PageLayout title={selectedCategory?.name || t("quiz")}>
           <MotionWrapper
             animation="fadeInUp"
             className="w-full max-w-3xl mx-auto"

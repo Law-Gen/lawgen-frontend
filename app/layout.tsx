@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { SessionProvider } from "./providers/session-provider";
+import { ChatProvider } from "@/contexts/chat-context";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/toaster";
@@ -21,18 +22,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="icon" href="/logo (1).svg" type="image/svg+xml" />
-      </head>
-      <body
-        className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}
-        suppressHydrationWarning
-      >
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <LanguageProvider>
-            <SessionProvider>{children}</SessionProvider>
-            <Toaster />
-          </LanguageProvider>
+      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <SessionProvider>
+            <LanguageProvider>
+              <ChatProvider>{children}</ChatProvider>
+            </LanguageProvider>
+          </SessionProvider>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>
