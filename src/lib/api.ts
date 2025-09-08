@@ -1,15 +1,6 @@
-
 import { getSession } from "next-auth/react";
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-// Debug logging to help identify the issue
-console.log("API.ts API_BASE_URL:", API_BASE_URL);
-console.log("API.ts env vars:", Object.keys(process.env).filter(key => key.includes('API')));
-
-if (!API_BASE_URL) {
-  console.error("NEXT_PUBLIC_API_URL is not defined in api.ts! Please check your .env file.");
-}
 
 async function handle(res: Response) {
   if (!res.ok) {
@@ -17,10 +8,25 @@ async function handle(res: Response) {
     try {
       const data = await res.json();
       msg = data.message || JSON.stringify(data);
-    } catch { }
+    } catch {}
     throw new Error(msg);
   }
   return res.json ? res.json() : res.text();
+}
+
+function getAuthHeader(sessionAccessToken?: string | null): Record<string, string> {
+  const tokenFromSession = sessionAccessToken || null;
+  let tokenFromStorage: string | null = null;
+  if (typeof window !== "undefined") {
+    try {
+      tokenFromStorage = localStorage.getItem("access_token");
+    } catch {}
+  }
+  const token = tokenFromSession || tokenFromStorage;
+  if (token) {
+    return { Authorization: `Bearer ${token}` };
+  }
+  return {};
 }
 
 export const api = {
@@ -33,11 +39,9 @@ export const api = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(session?.accessToken
-          ? { Authorization: `Bearer ${session.accessToken}` }
-          : {}),
-        ...(options.headers || {}),
-      },
+        ...(getAuthHeader(session?.accessToken as string | undefined) as Record<string, string>),
+        ...(options.headers ? (options.headers as Record<string, string>) : {}),
+      } as HeadersInit,
       body: body ? JSON.stringify(body) : undefined,
       credentials: "include",
       ...options,
@@ -52,9 +56,7 @@ export const api = {
     const res = await fetch(`${API_BASE_URL}${path}`, {
       method: "GET",
       headers: {
-        ...(session?.accessToken
-          ? { Authorization: `Bearer ${session.accessToken}` }
-          : {}),
+        ...getAuthHeader(session?.accessToken as string | undefined),
         ...(options.headers || {}),
       },
       credentials: "include",
@@ -71,9 +73,7 @@ export const api = {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        ...(session?.accessToken
-          ? { Authorization: `Bearer ${session.accessToken}` }
-          : {}),
+        ...getAuthHeader(session?.accessToken as string | undefined),
         ...(options.headers || {}),
       },
       body: body ? JSON.stringify(body) : undefined,
@@ -91,9 +91,7 @@ export const api = {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        ...(session?.accessToken
-          ? { Authorization: `Bearer ${session.accessToken}` }
-          : {}),
+        ...getAuthHeader(session?.accessToken as string | undefined),
         ...(options.headers || {}),
       },
       body: body ? JSON.stringify(body) : undefined,

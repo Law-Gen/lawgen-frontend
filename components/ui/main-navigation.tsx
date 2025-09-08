@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { MessageCircle, BookOpen, FileText, User , LayoutDashboard} from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -22,6 +22,16 @@ export function MainNavigation() {
     const { data: session } = useSession(); // Get session data
     console.log("session on nav",session?.user)
   const userSubscription = session?.user?.subscription_status;
+  const router = useRouter();
+  const { status } = useSession();
+  // Only require auth for these routes
+  const protectedRoutes = ["/categories", "/quiz", "/profile"];
+  const handleNavClick = (e: React.MouseEvent, href: string) => {
+    if (protectedRoutes.includes(href) && status !== "authenticated") {
+      e.preventDefault();
+      router.push("/auth/signin");
+    }
+  };
   return (
     <nav className="hidden md:flex w-full mr:50 py-4">
      <div className="flex gap-40">
@@ -37,6 +47,7 @@ export function MainNavigation() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={(e) => handleNavClick(e, item.href)}
               className={cn(
                 "flex flex-col items-center gap-1 px-2 py-1 transition-all duration-200",
                 isActive
