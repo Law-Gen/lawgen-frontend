@@ -22,7 +22,7 @@ function SingleQuizCard({ quiz, onEdit, onDelete }: SingleQuizCardProps) {
   };
 
   return (
-    <div className="group bg-card rounded-2xl border border-border hover:border-primary/30 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden">
+    <div className="group bg-card rounded-lg border border-border hover:border-primary/30 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden">
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
       <div className="flex items-start justify-between">
@@ -105,7 +105,7 @@ export function QuizCard({ categoryId, onEdit, onDelete }: QuizCardListProps) {
     }
   }, [dispatch, categoryId]);
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {quizzes.map((quiz: any) => (
         <SingleQuizCard
           key={quiz.id}

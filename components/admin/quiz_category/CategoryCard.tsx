@@ -191,11 +191,9 @@ export default function CategoryCard({
 
   return (
     <div
-      className={`${cardVariant} rounded-xl border-2 p-6 hover:shadow-lg hover:shadow-black/5 transition-all duration-300 cursor-pointer group relative overflow-hidden`}
+      className={`bg-card rounded-lg border border-border p-6 hover:shadow-md transition-shadow cursor-pointer group relative overflow-hidden`}
       onClick={handleCardClick}
     >
-      <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
       <div className="relative z-10">
         <div className="flex items-start justify-between mb-4">
           <div className={`p-3 rounded-xl ${iconVariant} shadow-sm`}>
@@ -240,7 +238,7 @@ export default function CategoryCard({
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-4 border-t border-white/30">
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
           <div className="flex items-center text-sm text-gray-600">
             <Calendar className="w-4 h-4 mr-1" />
             <span>

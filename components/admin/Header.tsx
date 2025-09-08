@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
-import { Menu, Bell, Settings, LogOut } from "lucide-react";
+import { Menu, Bell, Settings, ChevronDown, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useAppSelector } from "@/src/store/hooks";
@@ -39,7 +39,6 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
     <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-card">
       {/* Left side - Menu button and greeting */}
       <div className="flex items-center gap-4">
-        {/* this is where the button to move the side panels happens */}
         <button
           className="p-2 rounded-lg hover:bg-accent transition-colors"
           onClick={onMenuClick}
@@ -52,17 +51,6 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
           </h2>
         </div>
       </div>
-
-      {/* Center - Search bar uneccessary so reducted */}
-      {/* <div className="flex-1 max-w-md mx-8">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search documents, cases, clients..."
-            className="pl-10 bg-background border-border focus:border-ring"
-          />
-        </div>
-      </div> */}
 
       {/* Right side - Notifications, dark mode toggle, settings, profile */}
       <div className="flex items-center gap-4">
@@ -121,7 +109,6 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
             3
           </motion.span>
         </Button>
-
         <Button
           variant="ghost"
           size="sm"
@@ -130,45 +117,37 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
         >
           <Settings className="w-6 h-6 text-muted-foreground" />
         </Button>
-
-        <div className="relative">
+        {/* Profile and dropdown */}
+        <div className="flex items-center gap-2 relative">
+          <div className="text-right hidden sm:block">
+            <p className="text-sm font-medium text-card-foreground">
+              {fullName}
+            </p>
+            <p className="text-xs text-muted-foreground">{role}</p>
+          </div>
+          {profilePic ? (
+            <img
+              src={profilePic}
+              alt={fullName}
+              className="w-9 h-9 rounded-md object-cover border border-border"
+            />
+          ) : (
+            <div className="w-9 h-9 flex items-center justify-center rounded-md bg-brown-600 text-white font-semibold">
+              {initials}
+            </div>
+          )}
           <Button
             variant="ghost"
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex items-center gap-2 p-2 hover:bg-accent"
+            onClick={() => setDropdownOpen((open) => !open)}
+            className="flex items-center gap-1 p-2 hover:bg-accent transition"
+            aria-label="Open profile menu"
           >
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-medium text-card-foreground">
-                {fullName}
-              </p>
-              <p className="text-xs text-muted-foreground">{role}</p>
-            </div>
-            {profilePic ? (
-              <img
-                src={profilePic}
-                alt={fullName}
-                className="w-9 h-9 rounded-md object-cover border border-border"
-              />
-            ) : (
-              <div className="w-9 h-9 flex items-center justify-center rounded-md bg-brown-600 text-white font-semibold">
-                {initials}
-              </div>
-            )}
-            <svg
-              className="ml-2 w-4 h-4 text-muted-foreground"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
+            <ChevronDown
+              className={`w-4 h-4 transition-transform duration-200 ${
+                dropdownOpen ? "rotate-180" : ""
+              }`}
+            />
           </Button>
-
           <AnimatePresence>
             {dropdownOpen && (
               <motion.div
@@ -176,16 +155,16 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
-                className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50"
+                className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50 flex flex-col"
               >
-                <Button
-                  variant="ghost"
-                  className="flex items-center gap-2 px-4 py-2 w-full text-sm text-brown-700 hover:bg-brown-50 hover:text-brown-900"
+                <button
                   onClick={handleLogoutClick}
+                  className="flex items-center gap-2 px-4 py-2 w-full text-left text-sm text-brown-700 hover:bg-brown-50 hover:text-brown-900 focus:outline-none"
+                  type="button"
                 >
                   <LogOut className="w-4 h-4" />
                   Logout
-                </Button>
+                </button>
               </motion.div>
             )}
           </AnimatePresence>

@@ -86,6 +86,32 @@ export default function CreateQuiz({
   // Create quiz when moving to step 2
   const handleNextStep = async () => {
     if (!quizData.title || !quizData.category) return;
+    const [error, setError] = useState<string | null>(null);
+
+    const handleNextStep = async () => {
+      setError(null);
+      if (!quizData.title || !quizData.category) return;
+      const result = await dispatch(
+        createQuiz({
+          category_id: quizData.category,
+          name: quizData.title,
+          description: quizData.description,
+        })
+      );
+      if ("error" in result && result.error) {
+        setError(
+          (result.error as { message?: string }).message ||
+            "Failed to create quiz. Please try again."
+        );
+        return;
+      }
+      if ("payload" in result && result.payload && (result.payload as any).id) {
+        setQuizId((result.payload as any).id);
+        setStep(2);
+      } else {
+        setError("Quiz creation failed: No quiz ID returned from server.");
+      }
+    };
     const result = await dispatch(
       createQuiz({
         category_id: quizData.category,
@@ -172,7 +198,7 @@ export default function CreateQuiz({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
         transition={{ duration: 0.2 }}
-        className="bg-background rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden border border-border"
+        className="bg-card rounded-lg shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden border border-border"
       >
         <div className="flex items-center justify-between p-8 border-b border-border bg-gradient-to-r from-muted to-secondary/20">
           <div className="flex items-center gap-6">
@@ -394,7 +420,7 @@ export default function CreateQuiz({
                           ))}
                         </RadioGroup>
                         <p className="text-xs text-muted-foreground bg-accent/10 p-3 rounded-lg border border-accent/20">
-                          💡 Select the radio button next to the correct answer
+                          Select the radio button next to the correct answer
                         </p>
                       </div>
                     </div>
