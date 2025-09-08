@@ -15,6 +15,7 @@ import { ChatHistory } from "@/components/chat/chat-history";
 import { MainNavigation } from "@/components/ui/main-navigation";
 import { useTheme } from "next-themes";
 import { CustomAudioPlayer } from "@/components/chat/custom-audio-player";
+import { Moon, Sun } from "lucide-react";
 
 // --- Helper function to convert browser audio to WAV format ---
 /**
@@ -122,6 +123,8 @@ export default function ChatPage() {
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
   const audioContext = useRef<AudioContext | null>(null);
+
+  const { theme, setTheme } = useTheme();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -468,6 +471,20 @@ export default function ChatPage() {
             <MainNavigation />
           </div>
           <div className="hidden md:flex items-center gap-3 min-w-0 ml-auto">
+            {/* Dark mode toggle */}
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="px-2 py-1 rounded border"
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
+              {theme === "dark" ? (
+                <Moon className="w-4 h-4" />
+              ) : (
+                <Sun className="w-4 h-4" />
+              )}
+            </button>
+            {/* Language toggle */}
             <LanguageToggle />
           </div>
         </div>

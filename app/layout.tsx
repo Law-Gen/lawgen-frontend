@@ -21,7 +21,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/logo (1).svg" type="image/svg+xml" />
+      </head>
+      <body
+        className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}
+        suppressHydrationWarning
+      >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <LanguageProvider>
             <SessionProvider>{children}</SessionProvider>
