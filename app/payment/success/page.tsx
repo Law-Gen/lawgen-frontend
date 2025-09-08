@@ -12,7 +12,7 @@ import { useSession } from "next-auth/react";
 type Status = "idle" | "subscribing" | "success" | "failed";
 
 export default function SuccessPage() {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const searchParams = useParams();
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +47,7 @@ export default function SuccessPage() {
         setStatus("subscribing");
         setMessage("Activating your subscription...");
         console.log("planId", planId);
- console.log("session", session);
+        console.log("session", session);
         const data = await api.post(
           "/subscriptions/subscribe",
 
@@ -56,12 +56,14 @@ export default function SuccessPage() {
           },
           {
             headers: {
-              Authorization: `Bearer ${session?.accessToken || localStorage.getItem("access_token")}`,
+              Authorization: `Bearer ${
+                session?.accessToken || localStorage.getItem("access_token")
+              }`,
             },
           }
         );
 
-       
+        await update();
         setStatus("success");
         setMessage(data?.message || "Subscription activated successfully");
       } catch (e: any) {

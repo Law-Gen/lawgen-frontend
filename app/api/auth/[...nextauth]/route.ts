@@ -1,12 +1,11 @@
 import NextAuth from "next-auth";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-// Debug logging to help identify the issue
-console.log("NextAuth API_BASE_URL:", API_BASE_URL);
-console.log("All env vars:", Object.keys(process.env).filter(key => key.includes('API')));
 
 if (!API_BASE_URL) {
-  console.error("NEXT_PUBLIC_API_URL is not defined! Please check your .env file.");
+  console.error(
+    "NEXT_PUBLIC_API_URL is not defined! Please check your .env file."
+  );
 }
 import CredentialsProvider from "next-auth/providers/credentials";
 import type { NextAuthOptions, User } from "next-auth";
@@ -20,6 +19,7 @@ declare module "next-auth" {
     refreshToken?: string;
     name?: string | null;
     email?: string | null;
+    subscription_status?: string;
   }
   interface Session {
     user: {
@@ -28,6 +28,7 @@ declare module "next-auth" {
       image?: string | null;
       id?: string;
       role?: string;
+      subscription_status?: string;
     };
     accessToken?: string;
     refreshToken?: string;
@@ -40,6 +41,7 @@ declare module "next-auth/jwt" {
     refreshToken?: string;
     id?: string;
     name?: string | null;
+    subscription_status?: string;
     email?: string | null;
     accessTokenExpires?: number;
   }
@@ -87,7 +89,6 @@ export const authOptions: NextAuthOptions = {
             data,
           });
           if (res.ok && data.access_token) {
-
             // You can also store user info if returned by your backend
             // Return user object and tokens
             return {
@@ -97,8 +98,8 @@ export const authOptions: NextAuthOptions = {
               role: data.user?.role || data.role || "user",
               accessToken: data.access_token,
               refreshToken: data.refresh_token,
+              subscription_status: data.user?.subscription_status,
             };
-
           }
           return null;
         } catch (e) {
@@ -124,6 +125,7 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.email = user.email;
         token.name = user.name;
+        token.subscription_status = user.subscription_status;
         // Set expiry to 15 minutes from now (or your backend's expiry time)
         token.accessTokenExpires = Date.now() + 15 * 60 * 1000;
         return token;
@@ -185,8 +187,13 @@ export const authOptions: NextAuthOptions = {
             : undefined;
         session.user.email =
           typeof token.email === "string" ? token.email : undefined;
+          session.user.subscription_status =
+    typeof token.subscription_status === "string"
+      ? token.subscription_status:undefined
+
         session.user.name =
           typeof token.name === "string" ? token.name : undefined;
+          
       }
       return session;
     },
