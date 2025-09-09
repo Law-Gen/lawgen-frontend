@@ -1,12 +1,6 @@
 import NextAuth from "next-auth";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-// Debug logging to help identify the issue
-console.log("NextAuth API_BASE_URL:", API_BASE_URL);
-console.log(
-  "All env vars:",
-  Object.keys(process.env).filter((key) => key.includes("API"))
-);
 
 if (!API_BASE_URL) {
   console.error(

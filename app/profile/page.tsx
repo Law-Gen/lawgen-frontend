@@ -163,7 +163,7 @@ export default function ProfilePage() {
       setPasswordLoading(false);
     }
   };
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   // Redirect to signin if not authenticated
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -352,6 +352,9 @@ export default function ProfilePage() {
             }
           : null
       );
+
+      // Refresh the session to update session.user.subscription_status
+      await update();
     } catch (err: any) {
       toast({
         title: "Cancellation Failed",
