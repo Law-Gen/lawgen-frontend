@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 import { MainNavigation } from "@/components/ui/main-navigation";
-
+const API_URL = process.env.NEXT_PUBLIC_FEEDBACK_API_BASE_URL || "";
 // Define interfaces for the data fetched from the API
 interface ApiGroup {
   group_id: string;
@@ -134,7 +134,7 @@ export default function CategoriesPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        if (!process.env.NEXT_PUBLIC_FEEDBACK_API_BASE_URL) {
+        if (!API_URL) {
           console.warn(
             "NEXT_PUBLIC_FEEDBACK_API_BASE_URL not set, using fallback data"
           );
@@ -155,7 +155,7 @@ export default function CategoriesPage() {
         }
 
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_FEEDBACK_API_BASE_URL}/api/v1/contents`
+          `${API_URL}/api/v1/contents`
         );
 
         if (!response.ok) {
@@ -201,9 +201,9 @@ export default function CategoriesPage() {
           }
 
           const response = await fetch(
-            `${process.env.NEXT_PUBLIC_FEEDBACK_API_BASE_URL}/api/v1/contents/group/${selectedCategory.group_id}`
+            `${API_URL}/api/v1/contents/group/${selectedCategory.group_id}`
           );
-
+          console.log("Fetching content for category:", selectedCategory);
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }

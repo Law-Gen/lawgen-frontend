@@ -84,8 +84,8 @@ export default function CreateQuiz({
   };
 
   // Create quiz when moving to step 2
-  const handleNextStep = async () => {
-    if (!quizData.title || !quizData.category) return;
+  // const handleNextStep = async () => {
+  //   if (!quizData.title || !quizData.category) return;
     const [error, setError] = useState<string | null>(null);
 
     const handleNextStep = async () => {
@@ -111,14 +111,14 @@ export default function CreateQuiz({
       } else {
         setError("Quiz creation failed: No quiz ID returned from server.");
       }
-    };
-    const result = await dispatch(
-      createQuiz({
-        category_id: quizData.category,
-        name: quizData.title,
-        description: quizData.description,
-      })
-    );
+    // };
+    // const result = await dispatch(
+    //   createQuiz({
+    //     category_id: quizData.category,
+    //     name: quizData.title,
+    //     description: quizData.description,
+    //   })
+    // );
     // @ts-ignore
     if (result.payload && result.payload.id) {
       setQuizId(result.payload.id);

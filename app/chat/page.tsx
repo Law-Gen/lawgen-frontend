@@ -92,7 +92,7 @@ interface Message {
 }
 
 export default function ChatPage() {
-  const { state, sendMessage, createNewSession, loadMessages } = useChat();
+  const { state, sendMessage, sendVoiceMessage, createNewSession, loadMessages } = useChat();
   const { isAuthenticated, user } = useAuthSession();
   const chatService = useChatService();
 
@@ -249,26 +249,7 @@ export default function ChatPage() {
   const sendVoiceQuery = async (audioFile: File) => {
     setIsLoading(true);
     try {
-      if (!chatService) {
-        throw new Error("Chat service not available");
-      }
-
-      const response = await chatService.sendVoiceMessage(audioFile, language);
-
-      if (response.audioUrl) {
-        // Add voice response message
-        const audioMessage: Message = {
-          id: Date.now().toString(),
-          content: <CustomAudioPlayer audioUrl={response.audioUrl} />,
-          sender: "ai",
-          timestamp: new Date(),
-        };
-
-        // Add to chat context (this would need to be implemented in the context)
-        // For now, we'll handle it locally until voice messages are integrated
-        console.log("Voice response received:", response);
-      }
-
+      await sendVoiceMessage(audioFile, language);
       setVoiceStatus(null);
     } catch (error) {
       console.error("Voice query failed:", error);

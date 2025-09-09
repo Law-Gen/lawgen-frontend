@@ -50,7 +50,8 @@ export class ChatService {
     endpoint: string,
     options: RequestInit = {},
     userID?: string,
-    planID?: string
+    planID?: string,
+    accessToken?: string
   ): Promise<T> {
     if (!this.baseUrl) {
       throw new Error("Chat service base URL not configured");
@@ -63,15 +64,19 @@ export class ChatService {
       ...((options.headers as Record<string, string>) || {}),
     };
 
-    // Add authentication headers if provided
-    if (userID) headers["userID"] = userID;
-    if (planID) headers["planID"] = planID;
+    // Add authentication headers
+    if (accessToken) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
+    } else if (userID) {
+      headers["userID"] = userID;
+      // if (planID) headers["planid"] = planID;
+    }
 
     const response = await fetch(url, {
       ...options,
       headers,
     });
-
+    console.log("ayele", response, url);
     if (!response.ok) {
       const error = await response.text().catch(() => "Unknown error");
 
@@ -110,7 +115,8 @@ export class ChatService {
     page = 1,
     limit = 10,
     userID?: string,
-    planID?: string
+    planID?: string,
+    accessToken?: string
   ): Promise<ChatSessionsResponse> {
     try {
       const endpoint = `/chats/sessions?page=${page}&limit=${limit}`;
@@ -118,7 +124,8 @@ export class ChatService {
         endpoint,
         { method: "GET" },
         userID,
-        planID
+        planID,
+        accessToken
       );
 
       // Ensure we always return a valid structure
@@ -142,7 +149,8 @@ export class ChatService {
     page = 1,
     limit = 50,
     userID?: string,
-    planID?: string
+    planID?: string,
+    accessToken?: string
   ): Promise<ChatMessagesResponse> {
     try {
       const endpoint = `/chats/sessions/${sessionId}/messages?page=${page}&limit=${limit}`;
@@ -150,7 +158,8 @@ export class ChatService {
         endpoint,
         { method: "GET" },
         userID,
-        planID
+        planID,
+        accessToken
       );
 
       return {
@@ -171,7 +180,8 @@ export class ChatService {
   async createSession(
     title: string,
     userID?: string,
-    planID?: string
+    planID?: string,
+    accessToken?: string
   ): Promise<ChatSession> {
     try {
       const endpoint = "/chats/sessions";
@@ -182,7 +192,8 @@ export class ChatService {
           body: JSON.stringify({ title }),
         },
         userID,
-        planID
+        planID,
+        accessToken
       );
 
       return response;
@@ -195,7 +206,8 @@ export class ChatService {
   async deleteSession(
     sessionId: string,
     userID?: string,
-    planID?: string
+    planID?: string,
+    accessToken?: string
   ): Promise<void> {
     try {
       const endpoint = `/chats/sessions/${sessionId}`;
@@ -203,7 +215,8 @@ export class ChatService {
         endpoint,
         { method: "DELETE" },
         userID,
-        planID
+        planID,
+        accessToken
       );
     } catch (error) {
       console.error("Error deleting chat session:", error);
@@ -212,35 +225,133 @@ export class ChatService {
   }
 
   async sendMessage(
-    sessionId: string,
     content: string,
     userID?: string,
-    planID?: string
-  ): Promise<ChatMessage> {
-    try {
-      const endpoint = `/chats/sessions/${sessionId}/messages`;
-      const response = await this.makeRequest<ChatMessage>(
-        endpoint,
-        {
-          method: "POST",
-          body: JSON.stringify({ content }),
-        },
-        userID,
-        planID
-      );
-
-      return response;
-    } catch (error) {
-      console.error("Error sending message:", error);
-      throw error;
+    language?: string,
+    accessToken?: string
+  ): Promise<{
+    sessionId: string;
+    messages: ChatMessage[];
+    sources: any[];
+    suggestedQuestions: string[];
+  }> {
+    if (!this.baseUrl) {
+      throw new Error("Chat service base URL not configured");
     }
+
+    const url = `${this.baseUrl}/chats/query`;
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Accept: "text/event-stream",
+    };
+
+    if (accessToken) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
+    }
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ query: content, language }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text().catch(() => "Unknown error");
+      throw new Error(`Request failed: ${error || response.statusText}`);
+    }
+
+    return new Promise((resolve, reject) => {
+      const reader = response.body?.getReader();
+      if (!reader) {
+        reject(new Error("Response body is not readable"));
+        return;
+      }
+
+      let sessionId = "";
+      const messages: ChatMessage[] = [];
+      const sources: any[] = [];
+      let suggestedQuestions: string[] = [];
+      let buffer = "";
+      let eventType = "";
+      let currentMessageText = "";
+      let isComplete = false;
+
+      const processChunk = (chunk: string) => {
+        if (isComplete) return; // Stop processing after complete
+
+        buffer += chunk;
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || ""; // Keep incomplete line in buffer
+
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (trimmedLine.startsWith("event:")) {
+            eventType = trimmedLine.slice(6).trim();
+          } else if (trimmedLine.startsWith("data:")) {
+            const data = trimmedLine.slice(5).trim();
+            try {
+              const parsedData = JSON.parse(data);
+              if (eventType === "session_id") {
+                sessionId = parsedData.id;
+              } else if (eventType === "message") {
+                // Accumulate the message text
+                currentMessageText += parsedData.text;
+                if (parsedData.sources) {
+                  sources.push(...parsedData.sources);
+                }
+              } else if (eventType === "complete") {
+                isComplete = true;
+                // Create the final message with accumulated text
+                if (currentMessageText) {
+                  messages.push({
+                    id: Date.now().toString(),
+                    content: currentMessageText,
+                    sender: "assistant",
+                    timestamp: new Date().toISOString(),
+                    sessionId,
+                  });
+                }
+                suggestedQuestions = parsedData.suggested_questions || [];
+                resolve({
+                  sessionId,
+                  messages,
+                  sources,
+                  suggestedQuestions,
+                });
+              }
+            } catch (e) {
+              // Ignore invalid JSON
+            }
+          }
+        }
+      };
+
+      const readStream = async () => {
+        try {
+          while (!isComplete) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = new TextDecoder().decode(value);
+            processChunk(chunk);
+          }
+        } catch (error) {
+          if (!isComplete) {
+            reject(error);
+          }
+        }
+      };
+
+      readStream();
+    });
   }
 
   async sendVoiceMessage(
     audioFile: File,
     language: string = "en",
     userID?: string,
-    planID?: string
+    planID?: string,
+    accessToken?: string
   ): Promise<{ audioUrl?: string; content?: string }> {
     try {
       const formData = new FormData();
@@ -251,6 +362,7 @@ export class ChatService {
       const response = await fetch(`${this.baseUrl}${endpoint}`, {
         method: "POST",
         headers: {
+          ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
           ...(userID && { userID: userID }),
           ...(planID && { planID: planID }),
         },
@@ -279,7 +391,8 @@ export class ChatService {
     sessionId: string,
     title: string,
     userID?: string,
-    planID?: string
+    planID?: string,
+    accessToken?: string
   ): Promise<ChatSession> {
     try {
       const endpoint = `/chats/sessions/${sessionId}`;
@@ -290,7 +403,8 @@ export class ChatService {
           body: JSON.stringify({ title }),
         },
         userID,
-        planID
+        planID,
+        accessToken
       );
 
       return response;
@@ -306,7 +420,7 @@ export const chatService = new ChatService();
 
 // Hook for using chat service with authentication
 export function useChatService() {
-  const { user, isAuthenticated } = useAuthSession();
+  const { user, isAuthenticated, accessToken } = useAuthSession();
 
   return useMemo(() => {
     const getUserInfo = () => {
@@ -321,8 +435,13 @@ export function useChatService() {
     };
 
     const getSessions = async (page = 1, limit = 10) => {
-      const { userID, planID } = getUserInfo();
-      return chatService.getSessions(page, limit, userID, planID);
+      return chatService.getSessions(
+        page,
+        limit,
+        undefined,
+        undefined,
+        accessToken
+      );
     };
 
     const getSessionMessages = async (
@@ -330,29 +449,37 @@ export function useChatService() {
       page = 1,
       limit = 50
     ) => {
-      const { userID, planID } = getUserInfo();
       return chatService.getSessionMessages(
         sessionId,
         page,
         limit,
-        userID,
-        planID
+        undefined,
+        undefined,
+        accessToken
       );
     };
 
     const createSession = async (title: string) => {
-      const { userID, planID } = getUserInfo();
-      return chatService.createSession(title, userID, planID);
+      return chatService.createSession(
+        title,
+        undefined,
+        undefined,
+        accessToken
+      );
     };
 
     const deleteSession = async (sessionId: string) => {
-      const { userID, planID } = getUserInfo();
-      return chatService.deleteSession(sessionId, userID, planID);
+      return chatService.deleteSession(
+        sessionId,
+        undefined,
+        undefined,
+        accessToken
+      );
     };
 
-    const sendMessage = async (sessionId: string, content: string) => {
+    const sendMessage = async (content: string, language: string) => {
       const { userID, planID } = getUserInfo();
-      return chatService.sendMessage(sessionId, content, userID, planID);
+      return chatService.sendMessage(content, userID, language, accessToken);
     };
 
     const sendVoiceMessage = async (
@@ -360,12 +487,24 @@ export function useChatService() {
       language: string = "en"
     ) => {
       const { userID, planID } = getUserInfo();
-      return chatService.sendVoiceMessage(audioFile, language, userID, planID);
+      return chatService.sendVoiceMessage(
+        audioFile,
+        language,
+        userID,
+        planID,
+        accessToken
+      );
     };
 
     const updateSessionTitle = async (sessionId: string, title: string) => {
       const { userID, planID } = getUserInfo();
-      return chatService.updateSessionTitle(sessionId, title, userID, planID);
+      return chatService.updateSessionTitle(
+        sessionId,
+        title,
+        userID,
+        planID,
+        accessToken
+      );
     };
 
     return {
@@ -379,5 +518,5 @@ export function useChatService() {
       isAuthenticated,
       user,
     };
-  }, [user, isAuthenticated]);
+  }, [user, isAuthenticated, accessToken]);
 }
