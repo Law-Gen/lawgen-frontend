@@ -40,11 +40,14 @@ LawGen Frontend is a modern web application built with Next.js and React, design
    Create a `.env.local` file with:
 
    ```env
-   NEXT_PUBLIC_API_BASE_URL=https://lawgen-backend.onrender.com
-   NEXT_PUBLIC_FEEDBACK_API_BASE_URL=https://lawgen-backend-1.onrender.com
-   NEXT_PUBLIC_GOOGLE_CLIENT_ID=61577881271-44si49qb2p1fad77q70up8v0h77e12j0.apps.googleusercontent.com
-   NEXTAUTH_SECRET=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
-   NEXT_PUBLIC_QUIZ_BASE_URL=https://lawgen-backend-3ln1.onrender.com/api/v1
+   NEXT_PUBLIC_API_BASE_URL=
+   NEXT_PUBLIC_FEEDBACK_API_BASE_URL=
+   NEXT_PUBLIC_GOOGLE_CLIENT_ID=
+   NEXTAUTH_SECRET=
+   NEXT_PUBLIC_QUIZ_BASE_URL=
+   NEXT_PUBLIC_CHAPA_PUBLIC_KEY=
+   chapa_secret_key=
+   chapa_encryption_key=
 
    ```
 
