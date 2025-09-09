@@ -45,6 +45,9 @@ LawGen Frontend is a modern web application built with Next.js and React, design
    NEXT_PUBLIC_GOOGLE_CLIENT_ID=
    NEXTAUTH_SECRET=
    NEXT_PUBLIC_QUIZ_BASE_URL=
+   NEXT_PUBLIC_CHAPA_PUBLIC_KEY=
+   chapa_secret_key=
+   chapa_encryption_key=
 
    ```
 
